@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Icône de notification KOG - version monochrome pour petite icône -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Utiliser le logo KOG avec un filtre pour le rendre visible dans les notifications -->
+    <item>
+        <bitmap
+            android:src="@drawable/kog_launch"
+            android:gravity="center"
+            android:tint="@android:color/white" />
+    </item>
+</layer-list>
+

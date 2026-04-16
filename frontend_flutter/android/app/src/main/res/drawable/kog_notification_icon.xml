@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Background transparent -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@android:color/transparent" />
+        </shape>
+    </item>
+    <!-- Logo KOG -->
+    <item>
+        <bitmap
+            android:src="@drawable/kog_launch"
+            android:gravity="center" />
+    </item>
+</layer-list>
+

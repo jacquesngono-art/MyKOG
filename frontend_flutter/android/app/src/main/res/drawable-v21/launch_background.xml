@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Splash screen avec l'icône KOG -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Fond -->
+    <item android:drawable="@color/ic_launcher_background" />
+
+    <!-- Icône KOG centrée -->
+    <item>
+        <bitmap
+            android:gravity="center"
+            android:src="@drawable/kog_launch" />
+    </item>
+</layer-list>

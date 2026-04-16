@@ -1,0 +1,77 @@
+name: MyKOG
+description: "MyKOG is a sleek spiritual streaming app blending Spotify's intuitive design with Apple Music's elegant aesthetic, offering an immersive audio experience for a faith-based community."
+publish_to: "none"
+version: 1.0.0
+
+environment:
+  sdk: ^3.6.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  intl: any
+
+  # UI & Fonts
+  cupertino_icons: ^1.0.8
+  google_fonts: ^7.0.2
+  flutter_animate: ^4.0.0
+
+  # State management
+  provider: ^6.0.0
+
+  # Audio & Video
+  just_audio: ^0.10.5
+  just_audio_background: ^0.0.1-beta.17
+  audio_service: ^0.18.12
+  audio_session: ^0.2.2  # Override pour compatibilité Java 17 et AGP 8.9.1
+  rxdart: ^0.27.7
+  video_player: ^2.8.1
+  chewie: ^1.7.5
+  flutter_vlc_player: ^7.4.4
+
+  # Network & Storage
+  http: ^1.2.1
+  cached_network_image: ^3.0.0
+  shared_preferences: ^2.0.0
+  path_provider: ^2.1.1
+  dio: ^5.4.0
+  connectivity_plus: ^6.0.0
+
+  # Push Notifications
+  firebase_core: ^3.6.0
+  firebase_messaging: ^15.1.3
+  flutter_local_notifications: ^19.0.0
+  timezone: ^0.10.0
+
+  # Animations
+  lottie: ^2.7.0
+
+  # Responsive design
+  flutter_screenutil: ^5.9.0
+
+  # PDF Viewer
+  pdfx: ^2.9.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.13.1
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/lottie/
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: assets/images/kog.png
+  remove_alpha_ios: false
+  min_sdk_android: 21
+  adaptive_icon_background: "#000000"
+  adaptive_icon_foreground: assets/images/kog.png

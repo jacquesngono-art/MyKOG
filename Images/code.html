@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Accueil Musique</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Spline+Sans:wght@300;400;500;600;700&amp;family=Noto+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Config -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#f4d125",
+              "background-light": "#f8f8f5",
+              "background-dark": "#121212", 
+              "surface-dark": "#1e1e1e",
+            },
+            fontFamily: {
+              "display": ["Spline Sans", "Noto Sans", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        /* Hide scrollbar for Chrome, Safari and Opera */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        /* Hide scrollbar for IE, Edge and Firefox */
+        .no-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white font-display antialiased overflow-x-hidden selection:bg-primary selection:text-black pb-24">
+<!-- Top App Bar -->
+<div class="sticky top-0 z-10 bg-background-light/90 dark:bg-background-dark/90 backdrop-blur-md px-4 pt-12 pb-2 flex items-center justify-between border-b border-white/5">
+<div class="flex items-center gap-3">
+<div class="relative group cursor-pointer">
+<div class="bg-center bg-no-repeat bg-cover rounded-full h-10 w-10 border-2 border-transparent group-hover:border-primary transition-colors" data-alt="User profile picture showing a smiling person" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBUAnXRb4fU-4ADlci_51mZu0uVZfbmvNsva_v5zmRk4ABcF4qX1-he50Xn5mDD73tI5vRHx7t8HeXQHI_h-BfGkwUNotcmrO1wgUQaSLgNwh6AYjLd0f1X9i3sgQIzk9A5Hly21JtP_2dW83MnItrM0w2eACQxqQH5SMivNAnhS1MLKJcg3PFd3ThGse0FQHu-S9wFLhvoluhh8fk7v8YtZRC1n3WQUGg1micR_DTchIXY6Dt6mp4vhEvvdVMxCu9uhFRQEbcRGA");'>
+</div>
+<div class="absolute bottom-0 right-0 h-3 w-3 bg-green-500 rounded-full border-2 border-background-dark"></div>
+</div>
+<div class="flex flex-col">
+<span class="text-xs text-gray-400 font-medium uppercase tracking-wider">Bonsoir</span>
+<h2 class="text-white text-lg font-bold leading-tight">Alexandre</h2>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-white hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[28px]">notifications</span>
+</button>
+<button class="text-white hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[28px]">settings</span>
+</button>
+</div>
+</div>
+<!-- Hero Carousel Section -->
+<div class="mt-6 flex flex-col gap-4">
+<!-- Scroll Container -->
+<div class="flex w-full overflow-x-auto snap-x snap-mandatory gap-4 px-4 no-scrollbar pb-2">
+<!-- Slide 1 -->
+<div class="relative snap-center shrink-0 w-[90%] md:w-[400px] h-64 rounded-2xl overflow-hidden group shadow-lg shadow-black/50">
+<div class="absolute inset-0 bg-center bg-cover bg-no-repeat transition-transform duration-500 group-hover:scale-105" data-alt="Concert stage with golden lights and silhouette of a singer" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDBbR8cWYq5t1wMGXJ1F8Lhuj1PE967UKfHU3ReU7f-Sd-q1v5_coDuD3LFFQtvally21tzFfaWnIFe8jqQ4gDeWHCbejieNr-Fkc1iEzp58VK5P4gTKEOyhGOzfQqz0qknYtumQY4XdQYbVhjToBS6uctm_ZZZHDBbNlbIp_KzRs7UTRfBHpbdCe7g3wmkniPD9-yCGtAH_QrBz-rD4vk1B4UnVO1iZD_oT5A5E9DcILzOdTYRDt5XMJOlaO2v_VOmqfUeOc7e_g");'>
+</div>
+<div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
+<div class="absolute bottom-0 left-0 p-5 w-full">
+<span class="inline-block px-2 py-1 mb-2 text-[10px] font-bold uppercase tracking-wider text-black bg-primary rounded-sm">À la une</span>
+<h3 class="text-2xl font-bold text-white mb-1">Golden Hour Mix</h3>
+<p class="text-gray-300 text-sm line-clamp-2">L'ambiance parfaite pour vos soirées d'été. Découvrez les nouveaux titres.</p>
+<button class="absolute bottom-5 right-5 h-12 w-12 rounded-full bg-primary flex items-center justify-center text-black shadow-lg hover:scale-105 transition-transform">
+<span class="material-symbols-outlined fill-1" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+</button>
+</div>
+</div>
+<!-- Slide 2 -->
+<div class="relative snap-center shrink-0 w-[90%] md:w-[400px] h-64 rounded-2xl overflow-hidden group shadow-lg shadow-black/50">
+<div class="absolute inset-0 bg-center bg-cover bg-no-repeat transition-transform duration-500 group-hover:scale-105" data-alt="Abstract album cover art with geometric shapes" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBAjHYcISF4-Dh9LaxJn1YRHb1zW2L8txzyn7WgorBnJFwNYhfLAs5rprJiHW0tgeJBHAIfUQmevFlmK6mKIqS7fJV-y4fpJEptz-sEu1R_mHmxacxoYJcOyM9eoIo9D6qMWAhq_nXyhBekIRUMbJyKzwFageHexwOq_SaUkyvUHt8oBVK5MNB5CST5HQH3936QNYKs-sv3cL3U7Vr2fK7G_V_ziMdAOlTONg3nITHEwhfBCAZA9I6-4EujPzEksaLWv2i6vetK5w");'>
+</div>
+<div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
+<div class="absolute bottom-0 left-0 p-5 w-full">
+<span class="inline-block px-2 py-1 mb-2 text-[10px] font-bold uppercase tracking-wider text-white bg-white/20 backdrop-blur-sm rounded-sm">Nouvel Album</span>
+<h3 class="text-2xl font-bold text-white mb-1">Neon Nights</h3>
+<p class="text-gray-300 text-sm">Le dernier chef-d'œuvre synthwave qui fait vibrer la scène.</p>
+</div>
+</div>
+<!-- Slide 3 -->
+<div class="relative snap-center shrink-0 w-[90%] md:w-[400px] h-64 rounded-2xl overflow-hidden group shadow-lg shadow-black/50">
+<div class="absolute inset-0 bg-center bg-cover bg-no-repeat transition-transform duration-500 group-hover:scale-105" data-alt="Portrait of a musician playing guitar in a dark studio" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuD-WDmZbJY0DhE93A5VTgtNDMvLiEviN6rHjRFv5pzgkdh5g7E1T2KajiiY32dWNK5CfheflxZx1IIKax0p8nkYwdk9bQMPuOZIynDM5Prgx9QSht03xudt5_Uf4CPbQE09yKZ60-_d4ErEqJNqYU40cRpnoCTapd342-G-BmRfEREPdMfaZpFxnyia3WoMsunrh3-yxqDY9r9oXkI0ozdc3ghR7HXHzQQR6gcySUjY_mJ9dxHkmeXErCYzkaerGlGjyRs5rgIJWg");'>
+</div>
+<div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
+<div class="absolute bottom-0 left-0 p-5 w-full">
+<span class="inline-block px-2 py-1 mb-2 text-[10px] font-bold uppercase tracking-wider text-white bg-white/20 backdrop-blur-sm rounded-sm">Recommandé</span>
+<h3 class="text-2xl font-bold text-white mb-1">Acoustic Sessions</h3>
+<p class="text-gray-300 text-sm">Redécouvrez vos classiques en version unplugged.</p>
+</div>
+</div>
+</div>
+<!-- Indicators -->
+<div class="flex w-full flex-row items-center justify-center gap-2">
+<div class="h-1.5 w-6 rounded-full bg-primary transition-all duration-300"></div>
+<div class="h-1.5 w-1.5 rounded-full bg-white/20 hover:bg-white/40 cursor-pointer transition-all duration-300"></div>
+<div class="h-1.5 w-1.5 rounded-full bg-white/20 hover:bg-white/40 cursor-pointer transition-all duration-300"></div>
+</div>
+</div>
+<!-- Recently Played Section -->
+<div class="mt-8">
+<div class="flex items-center justify-between px-4 pb-3">
+<h2 class="text-white text-xl font-bold leading-tight">Écoutés récemment</h2>
+<button class="text-xs font-bold text-primary hover:text-white uppercase tracking-wider">Voir tout</button>
+</div>
+<!-- Horizontal List -->
+<div class="flex overflow-x-auto gap-4 px-4 pb-4 no-scrollbar">
+<!-- Item 1 -->
+<div class="flex flex-col gap-2 w-28 shrink-0 group cursor-pointer">
+<div class="w-full aspect-square bg-surface-dark rounded-md overflow-hidden relative shadow-md">
+<div class="w-full h-full bg-center bg-cover group-hover:scale-105 transition-transform duration-300" data-alt="Album cover for Top Hits France" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBQO7wUQNZvNRcbv9kvX0_SbuPcY163-aFKEF2h8c0SCNwgTwuAmndRYbdpR1fiEaQTQFPjVwjtkNWHpudd3ZP8jA6usmEbVfMYY_eeIIbVVM-pNRGGGgT9Q5UJwZwti-cN5eYTONxTueys7j6l2kW_YZu7bD4V5hjnWWJQCkctEpZ5HbV-Ho7xbhqgSSF7YPUcYWnC7dyGXw3LnBJmSHoGWPCkJ7RnqmrDkFYVeW0jbiBt3RIF-sHyxU4k7MQZeXegjuqy-NJxQQ");'></div>
+</div>
+<p class="text-white text-xs font-bold leading-tight truncate">Top Hits France</p>
+</div>
+<!-- Item 2 -->
+<div class="flex flex-col gap-2 w-28 shrink-0 group cursor-pointer">
+<div class="w-full aspect-square bg-surface-dark rounded-md overflow-hidden relative shadow-md">
+<div class="w-full h-full bg-center bg-cover group-hover:scale-105 transition-transform duration-300" data-alt="Album cover for Orelsan" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuD4s4jyqGxNGjL013rRdf8QfK9dSUnaS1SO0OiGMY-cFNHryt9yqX-Ltvy1Nycx9bJCQnChmAJMu-Wt1Y9IcGmoE0LIFFv-KEuE5nPIOf7AIPiF_YVy-dZga8B0W0GJUTcBI535otythMQ6eqoHNCOWKJx25U48tgtb019-vgkqmdQQ7Rv6Skoe0Lt4HGQ80QUN6sGolMrguVZzR8EPGmSe_PgkEfqNImi9--YFk_kWoWxBuqvyMIwrehDZPTj630NJw53a-btTkQ");'></div>
+</div>
+<p class="text-white text-xs font-bold leading-tight truncate">Civilisation</p>
+</div>
+<!-- Item 3 -->
+<div class="flex flex-col gap-2 w-28 shrink-0 group cursor-pointer">
+<div class="w-full aspect-square bg-surface-dark rounded-md overflow-hidden relative shadow-md">
+<div class="w-full h-full bg-center bg-cover group-hover:scale-105 transition-transform duration-300" data-alt="Album cover for Daily Mix 1" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAYsWmT3ruKA4kC-sY-34tPAf5Ic5AONENTtNfEuUfxqv5AHAUvs6WgpqnK-nSE1QTFuFaYqEexkLEjKvtCoN3SuZU09dAGSYUnqhYJdwPrKpn59AsYLd4Wr9r-qCf4BrQZNEoDFl7XYASsF0kTqJDgDdFsd9ci61g_jyXQO5DbD0l_xgzv4dSgENtvrJNSHC1eyy7Rgv0Bc911iire0HniG3KdLCmSBIqAgSdvVuUnO_HaUHV8TAL45YLCvRHG79NLxID92miNpw");'></div>
+</div>
+<p class="text-white text-xs font-bold leading-tight truncate">Daily Mix 1</p>
+</div>
+<!-- Item 4 -->
+<div class="flex flex-col gap-2 w-28 shrink-0 group cursor-pointer">
+<div class="w-full aspect-square bg-surface-dark rounded-md overflow-hidden relative shadow-md">
+<div class="w-full h-full bg-center bg-cover group-hover:scale-105 transition-transform duration-300" data-alt="Album cover for Weekly Discovery" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuA68n7MvTK4n15H7Q1S9qGA1X8V5IxNocuDpoEqYYtnE6lclrxD_Gdz4Sqj6pcTCYtcDxdeW6zbKjBJXYuTmYNzuA81e9KE1vFaRIWfsVRTpgDtqFYPVF-GRDxwMVU4fTBNmA8Q-gnq48-oab1kBwcIlErolgAn8g9sXv9UAMU0LAfmHQBvBwCdlwf-nR6e_pTdTOzjKuElR_ujc0V9C4k7XRKFuW1qqpDIRN3Fkt0dyKOMz_r3x6GUukN5E2SYMA0bN6eTk1o2lw");'></div>
+</div>
+<p class="text-white text-xs font-bold leading-tight truncate">Découvertes</p>
+</div>
+</div>
+</div>
+<!-- Suggested Grid Section -->
+<div class="mt-4">
+<h2 class="text-white text-xl font-bold leading-tight px-4 pb-4">Pour vous</h2>
+<div class="grid grid-cols-2 gap-3 px-4">
+<!-- Grid Item 1 -->
+<div class="bg-surface-dark/50 rounded-lg p-3 flex flex-col gap-3 hover:bg-surface-dark transition-colors cursor-pointer group">
+<div class="w-full aspect-square rounded-md overflow-hidden shadow-lg">
+<div class="w-full h-full bg-center bg-cover group-hover:scale-105 transition-transform duration-500" data-alt="Dark abstract cover art for Release Radar" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDlkWhh8IkSzh-VC0iZlLlHCGncJhtuCfsDqYuuFABZcwWDEWmhQqOhmPswKZaXH1vqIIzHkejJ5LVeLN3JTz-4JJ-yqTZW4DQWfv_eWQrj2iEAIn9JT_dJNEJu12oDWHG_gZWCOc-3T0ZZv5ba5UsvmCa_X0OkaLfEtKJ-fzX_0xbZ7dVPrYl1JvV-Ep3FeAIG8vlWuv4IEV4O746eGMfNoFOwelEENUfKlJhMti55NXx0vG7HDj3XmyOJWC0ZMrYWR06e8RC8Qg");'></div>
+</div>
+<div>
+<h3 class="text-white font-bold text-sm truncate">Release Radar</h3>
+<p class="text-gray-400 text-xs">Mises à jour chaque vendredi</p>
+</div>
+</div>
+<!-- Grid Item 2 -->
+<div class="bg-surface-dark/50 rounded-lg p-3 flex flex-col gap-3 hover:bg-surface-dark transition-colors cursor-pointer group">
+<div class="w-full aspect-square rounded-md overflow-hidden shadow-lg">
+<div class="w-full h-full bg-center bg-cover group-hover:scale-105 transition-transform duration-500" data-alt="Purple and pink gradient cover art for On Repeat" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDws99Q-YFQv4m9F86VvBtgucj-xd3zhVQigtCfP_N-7VYuo48ZKa2EKwpGJ0AyNGB9ZIyhQKupDbC_9tweaRnaz4_YWj480LmY1CZTY-F29VW2srdpO4UOFBTRMcLVM2QsqzQ414vmNUvXXWUCohTV48RjWcJ6_d469TScwioHZ5PxpdznmUN0C6n7Q4_kGgmDX3GEjOACC16HN7hUsf4-c0ZRp_yFGQnjopqAMphEUSDi8owzZRlDyXxmBphpPoxNj8u0w6LWOA");'></div>
+</div>
+<div>
+<h3 class="text-white font-bold text-sm truncate">En boucle</h3>
+<p class="text-gray-400 text-xs">Vos titres du moment</p>
+</div>
+</div>
+<!-- Grid Item 3 -->
+<div class="bg-surface-dark/50 rounded-lg p-3 flex flex-col gap-3 hover:bg-surface-dark transition-colors cursor-pointer group">
+<div class="w-full aspect-square rounded-md overflow-hidden shadow-lg">
+<div class="w-full h-full bg-center bg-cover group-hover:scale-105 transition-transform duration-500" data-alt="Vintage cassette tape cover art for Time Capsule" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCQ70uSagCxfx2j01euOjsSNI9nEIVK9HZVvYUz6LfxyFQpxYNEusQ1QG1yA3Y9Io1hPS76oO7-X9lEJS_8pXENYwUeGjx4oUdTVjStmn4xqpK5mI3v4G7wcIo5wEa1lIYdeIWrGLs7Nr1ZNKXj5nNGXoruN66Q8EKkOg1KWMExlEbFi3hqTvMoXJ-AfnFXOdXH6qVEk-S7sYfY0jeIKi5Fk1lEqkWu6biB9s5g6ms9J1bcVW_-rNibag6k1lWtkkOS-KwPTXCxeQ");'></div>
+</div>
+<div>
+<h3 class="text-white font-bold text-sm truncate">Capsule Temporelle</h3>
+<p class="text-gray-400 text-xs">Vos souvenirs</p>
+</div>
+</div>
+<!-- Grid Item 4 -->
+<div class="bg-surface-dark/50 rounded-lg p-3 flex flex-col gap-3 hover:bg-surface-dark transition-colors cursor-pointer group">
+<div class="w-full aspect-square rounded-md overflow-hidden shadow-lg">
+<div class="w-full h-full bg-center bg-cover group-hover:scale-105 transition-transform duration-500" data-alt="Minimalist design cover art for Chill Hits" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuD6Si3N5PwwWP0za8NDOPZT_xVErvVUFPFeCoGAfpof-CB5tvls3BktCdG6MO3oJ3QqMa3yvKc1C15RKA3O_Bx_4riZi6kgwZWWd5ID7sJPM64L4AqKIvbTFZTm9e2Rxs2KZ0xriea8F7oE1B_1Cuzbhzt7ps2rO6hFwHC7s7DlIPUjLLNnpARGdKhLpYgTRe51sFYM55IwHAGGCXfE76I1xWY9JX4l-B3OvrQtAribCoEIY0Pc3JZzIo7ZUhh5fI9IAzFS6xLSKA");'></div>
+</div>
+<div>
+<h3 class="text-white font-bold text-sm truncate">Chill Hits</h3>
+<p class="text-gray-400 text-xs">Détente assurée</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Navigation -->
+<div class="fixed bottom-0 w-full bg-black/80 backdrop-blur-xl border-t border-white/5 pb-6 pt-3 px-6 flex justify-around items-center z-50">
+<button class="flex flex-col items-center gap-1 text-primary group">
+<span class="material-symbols-outlined fill-1 text-[28px]" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="text-[10px] font-medium">Accueil</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-gray-400 hover:text-white transition-colors group">
+<span class="material-symbols-outlined text-[28px]">search</span>
+<span class="text-[10px] font-medium">Rechercher</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-gray-400 hover:text-white transition-colors group">
+<span class="material-symbols-outlined text-[28px]">library_music</span>
+<span class="text-[10px] font-medium">Bibliothèque</span>
+</button>
+</div>
+</body></html>

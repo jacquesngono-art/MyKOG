@@ -179,6 +179,37 @@ class LiveApiService {
     }
   }
 
+  /// Obtenir un token LiveKit pour rejoindre une room en tant que viewer
+  Future<Map<String, dynamic>?> getViewerToken(String id, {String? userId}) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse('${await baseUrl}/$id/token'),
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode({'userId': userId}),
+          )
+          .timeout(_timeout);
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(response.body);
+        debugPrint('🎫 Token LiveKit obtenu pour le live $id');
+        return data;
+      } else {
+        debugPrint('❌ Erreur getViewerToken: ${response.statusCode}');
+        return null;
+      }
+    } on SocketException catch (e) {
+      debugPrint('SocketException getViewerToken: $e');
+      return null;
+    } on TimeoutException catch (e) {
+      debugPrint('TimeoutException getViewerToken: $e');
+      return null;
+    } catch (e) {
+      debugPrint('❌ Erreur getViewerToken: $e');
+      return null;
+    }
+  }
+
   /// Mettre à jour le statut d'un live
   Future<bool> updateLiveStatus(String id, String status) async {
     try {

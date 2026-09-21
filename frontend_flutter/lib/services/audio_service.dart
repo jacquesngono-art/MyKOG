@@ -1,12 +1,14 @@
 import 'dart:async';
+import 'package:audio_service/audio_service.dart' as audio_service;
 import 'package:just_audio/just_audio.dart';
-import 'package:just_audio_background/just_audio_background.dart';
 import 'package:flutter/foundation.dart';
 import 'package:MyKOG/models/teaching.dart';
-import 'package:MyKOG/services/storage_service.dart';
+import 'package:MyKOG/services/hive_storage_service.dart';
 import 'package:MyKOG/services/user_service.dart';
 import 'package:MyKOG/services/teaching_service.dart';
 import 'package:MyKOG/services/download_service.dart';
+import 'package:MyKOG/services/b2_stream_refresher.dart';
+import 'package:MyKOG/services/audio_handler.dart';
 
 enum PlayerState { stopped, loading, playing, paused, completed }
 
@@ -61,8 +63,29 @@ class AudioService {
   bool get hasNext => _currentIndex < _queue.length - 1;
   bool get hasPrevious => _currentIndex > 0;
 
+  audio_service.AudioHandler? _audioHandler;
+  audio_service.AudioHandler? get audioHandler => _audioHandler;
+
   Future<void> initialize() async {
-    debugPrint('ℹ️ AudioService initialisé avec just_audio_background');
+    if (_audioHandler != null) return;
+    debugPrint('ℹ️ AudioService: création de la session audio Android…');
+
+    // Session audio UNIQUE : le player utilisé par l'UI est celui qui
+    // pilote la notification média (play/pause/seek depuis la notification
+    // agissent sur le vrai lecteur → le son sort toujours).
+    _audioHandler = await audio_service.AudioService.init(
+      builder: () => MyAudioHandler(_player),
+      config: audio_service.AudioServiceConfig(
+        androidNotificationChannelId: 'com.mykog.audio.channel',
+        androidNotificationChannelName: 'MyKOG Audio Playback',
+        androidNotificationChannelDescription: 'Lecture audio en arrière-plan',
+        androidNotificationOngoing: true,
+        androidShowNotificationBadge: true,
+        androidStopForegroundOnPause: false,
+        androidNotificationIcon: 'mipmap/ic_launcher',
+      ),
+    );
+    debugPrint('✅ Session audio créée (player unique branché)');
 
     // Listen to player state changes
     final player = _player;
@@ -102,53 +125,21 @@ class AudioService {
       _durationController.add(duration);
     });
 
-    await _loadSavedState();
-  }
-
-  Future<void> _loadSavedState() async {
-    try {
-      final currentPlayingJson = StorageService.getJson(
-        StorageService.currentPlayingKey,
-      );
-      if (currentPlayingJson != null) {
-        final teachingId = currentPlayingJson['teachingId'] as String?;
-        if (teachingId != null) {
-          final teaching = await TeachingService.getTeachingById(teachingId);
-          if (teaching != null) {
-            _currentTeaching = teaching;
-            _currentTeachingController.add(_currentTeaching);
-          }
-        }
-      }
-
-      final queueJson = StorageService.getJsonList(StorageService.queueKey);
-      if (queueJson.isNotEmpty) {
-        _queue = queueJson.map((json) => Teaching.fromJson(json)).toList();
-        _queueController.add(_queue);
-      }
-    } catch (e) {
-      // Handle corrupted saved state
-    }
-  }
-
-  Future<void> _saveCurrentState() async {
-    if (_currentTeaching != null) {
-      final position = _player.position;
-      await StorageService.storeJson(StorageService.currentPlayingKey, {
-        'teachingId': _currentTeaching!.id,
-        'position': position.inSeconds,
-      });
-    }
-
-    if (_queue.isNotEmpty) {
-      final queueJson = _queue.map((t) => t.toJson()).toList();
-      await StorageService.storeJsonList(StorageService.queueKey, queueJson);
+    // Nettoyage one-shot des clés legacy de persistance audio.
+    // La persistance est désormais gérée uniquement par AudioPlayerProvider
+    // (clés audio_current_teaching / audio_position_ms / audio_queue).
+    if (HiveStorageService.containsKey('audio_state_cleaned_v2') == false) {
+      await HiveStorageService.delete('current_playing');
+      await HiveStorageService.delete('queue');
+      await HiveStorageService.storeBool('audio_state_cleaned_v2', true);
+      debugPrint('🧹 Anciennes clés audio (legacy) supprimées');
     }
   }
 
   Future<void> playTeaching(
     Teaching teaching, {
     List<Teaching>? playlist,
+    bool trackMetrics = true,
   }) async {
     try {
       _currentTeaching = teaching;
@@ -168,7 +159,7 @@ class AudioService {
 
       _queueController.add(_queue);
 
-      // Créer les sources audio avec MediaItem tags pour just_audio_background
+      // Créer les sources audio avec MediaItem tags pour la notification
       final sources = await Future.wait(
         _queue.map((t) => _createAudioSource(t)),
       );
@@ -192,10 +183,19 @@ class AudioService {
       await _player.play();
       debugPrint('▶️ Lecture avec background: ${teaching.title}');
 
-      // Track play count and recently played
-      await TeachingService.incrementPlayCount(teaching.id);
-      await UserService.addToRecentlyPlayed(teaching.id);
-      await _saveCurrentState();
+      // Track play count and recently played (non-bloquant, en arrière-plan)
+      if (trackMetrics) {
+        unawaited(
+          Future.wait<Object?>([
+            TeachingService.incrementPlayCount(teaching.id),
+            UserService.addToRecentlyPlayed(teaching.id),
+          ]).then(
+            (values) => debugPrint('✅ Metrics trackées'),
+            onError: (Object e, StackTrace st) =>
+                debugPrint('⚠️ Track metrics: $e'),
+          ),
+        );
+      }
     } catch (e) {
       debugPrint('❌ Erreur playTeaching: $e');
       _playerStateController.add(PlayerState.stopped);
@@ -211,20 +211,36 @@ class AudioService {
 
     if (DownloadService.isDownloaded(teaching.id)) {
       final localPath = await DownloadService.getLocalAudioPath(teaching.id);
-      if (localPath != null && localPath.isNotEmpty) {
+      if (localPath != null && localPath.isNotEmpty && !localPath.startsWith('assets/')) {
         debugPrint('🎵 Source locale: $localPath');
         audioSource = localPath;
         isLocalFile = true;
       }
     }
 
+    if (!isLocalFile && !audioSource.startsWith('assets/')) {
+      // Régénérer les URLs B2 signées si proches de l'expiration
+      try {
+        audioSource =
+            await B2StreamRefresher.instance.refresh(audioSource);
+      } catch (e) {
+        debugPrint('⚠️ Refresh URL audio impossible, fallback URL originale: $e');
+      }
+    }
+
     // Créer MediaItem pour la notification
     Uri? artUri;
     if (teaching.artworkUrl.startsWith('http')) {
-      artUri = Uri.parse(teaching.artworkUrl);
+      try {
+        final freshArtwork =
+            await B2StreamRefresher.instance.refresh(teaching.artworkUrl);
+        artUri = Uri.parse(freshArtwork);
+      } catch (e) {
+        debugPrint('⚠️ Refresh artwork impossible: $e');
+      }
     }
 
-    final mediaItem = MediaItem(
+    final mediaItem = audio_service.MediaItem(
       id: teaching.id,
       album: teaching.category,
       title: teaching.title,
@@ -365,7 +381,6 @@ class AudioService {
   Future<void> addToQueue(Teaching teaching) async {
     _queue.add(teaching);
     _queueController.add(_queue);
-    await _saveCurrentState();
   }
 
   Future<void> removeFromQueue(int index) async {
@@ -383,7 +398,6 @@ class AudioService {
         }
       }
       _queueController.add(_queue);
-      await _saveCurrentState();
     }
   }
 
@@ -392,7 +406,6 @@ class AudioService {
     _queue.clear();
     _currentIndex = 0;
     _queueController.add(_queue);
-    await StorageService.remove(StorageService.queueKey);
   }
 
   void dispose() {

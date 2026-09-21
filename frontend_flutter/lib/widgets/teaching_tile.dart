@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import 'package:MyKOG/models/teaching.dart';
 import 'package:MyKOG/theme.dart';
@@ -8,6 +8,7 @@ import 'package:MyKOG/providers/user_provider.dart';
 import 'package:MyKOG/services/download_service.dart';
 import 'package:MyKOG/services/badge_service.dart';
 import 'package:MyKOG/l10n/app_localizations.dart';
+import 'package:MyKOG/widgets/teaching_artwork.dart';
 
 class TeachingTile extends StatelessWidget {
   final Teaching teaching;
@@ -37,23 +38,23 @@ class TeachingTile extends StatelessWidget {
         final isPlaying = isCurrentlyPlaying && audioProvider.isPlaying;
 
         return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
           decoration: BoxDecoration(
             color: isCurrentlyPlaying
                 ? (isDark ? MyKOGColors.secondary : Colors.grey.shade100)
                 : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(12.r),
             border: isCurrentlyPlaying
                 ? Border.all(
                     color: MyKOGColors.accent.withValues(alpha: 0.3),
-                    width: 1,
+                    width: 1.w,
                   )
                 : null,
           ),
           child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 8,
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: 12.w,
+              vertical: 8.h,
             ),
             leading: showArtwork ? _buildArtwork(context, isPlaying) : null,
             title: Row(
@@ -73,17 +74,17 @@ class TeachingTile extends StatelessWidget {
                 // Badge "NEW" si publié dans les 2 derniers jours
                 if (BadgeService().isTeachingNew(teaching.id, teaching.publishedAt))
                   Container(
-                    margin: const EdgeInsets.only(left: 8),
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    margin: EdgeInsets.only(left: 8.w),
+                    padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
                     decoration: BoxDecoration(
                       color: Colors.green,
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(8.r),
                     ),
                     child: Text(
                       'NEW',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: Colors.white,
-                        fontSize: 10,
+                        fontSize: 10.sp,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -103,24 +104,24 @@ class TeachingTile extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 2),
+                SizedBox(height: 2.h),
                 if (teaching.typeCulte != null && teaching.typeCulte!.isNotEmpty)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
                     decoration: BoxDecoration(
                       color: MyKOGColors.primary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(8.r),
                     ),
                     child: Text(
                       teaching.typeCulte!,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: MyKOGColors.primary,
-                        fontSize: 11,
+                        fontSize: 11.sp,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
                   ),
-                const SizedBox(height: 4),
+                SizedBox(height: 4.h),
                 Row(
                   children: [
                     Text(
@@ -129,33 +130,33 @@ class TeachingTile extends StatelessWidget {
                         color: isDark
                             ? MyKOGColors.textTertiary
                             : Colors.grey.shade500,
-                        fontSize: 12,
+                        fontSize: 12.sp,
                       ),
                     ),
                     if (teaching.isNew) ...[
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8.w),
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 6.w, vertical: 2.h),
                         decoration: BoxDecoration(
                           color: MyKOGColors.success,
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(8.r),
                         ),
                         child: Text(
                           'NEW',
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: Colors.white,
-                            fontSize: 10,
+                            fontSize: 10.sp,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
                     ],
                     if (teaching.isFeatured) ...[
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8.w),
                       Icon(
                         Icons.star,
-                        size: 14,
+                        size: 14.sp,
                         color: MyKOGColors.accent,
                       ),
                     ],
@@ -174,10 +175,10 @@ class TeachingTile extends StatelessWidget {
 
   Widget _buildArtwork(BuildContext context, bool isPlaying) {
     return Container(
-      width: 56,
-      height: 56,
+      width: 56.w,
+      height: 56.h,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(8.r),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.2),
@@ -186,60 +187,14 @@ class TeachingTile extends StatelessWidget {
           ),
         ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: Stack(
-          children: [
-            teaching.artworkUrl.startsWith('assets/')
-                ? Image.asset(
-                    teaching.artworkUrl,
-                    width: 56,
-                    height: 56,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      color: MyKOGColors.secondary,
-                      child: const Icon(
-                        Icons.music_note,
-                        color: MyKOGColors.accent,
-                        size: 24,
-                      ),
-                    ),
-                  )
-                : CachedNetworkImage(
-                    imageUrl: teaching.artworkUrl,
-                    width: 56,
-                    height: 56,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) => Container(
-                      color: MyKOGColors.secondary,
-                      child: const Icon(
-                        Icons.music_note,
-                        color: MyKOGColors.accent,
-                        size: 24,
-                      ),
-                    ),
-                    errorWidget: (context, url, error) => Container(
-                      color: MyKOGColors.secondary,
-                      child: const Icon(
-                        Icons.music_note,
-                        color: MyKOGColors.accent,
-                        size: 24,
-                      ),
-                    ),
-                  ),
-            if (isPlaying)
-              Container(
-                color: Colors.black.withValues(alpha: 0.4),
-                child: const Center(
-                  child: Icon(
-                    Icons.graphic_eq,
-                    color: MyKOGColors.accent,
-                    size: 24,
-                  ),
-                ),
-              ),
-          ],
-        ),
+      child: TeachingArtwork(
+        teaching: teaching,
+        width: 56.w,
+        height: 56.h,
+        borderRadius: 8.r,
+        showPlayingOverlay: true,
+        isPlaying: isPlaying,
+        iconSize: 24.sp,
       ),
     );
   }
@@ -268,7 +223,7 @@ class TeachingTile extends StatelessWidget {
                     ? Colors.red
                     : MyKOGColors.textSecondary,
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12.w),
               Text(DownloadService.isDownloaded(teaching.id)
                   ? l10n.deleteDownload
                   : l10n.download),
@@ -280,7 +235,7 @@ class TeachingTile extends StatelessWidget {
           child: Row(
             children: [
               Icon(Icons.queue_music, color: MyKOGColors.textSecondary),
-              const SizedBox(width: 12),
+              SizedBox(width: 12.w),
               Text(l10n.addToQueue),
             ],
           ),
@@ -299,7 +254,7 @@ class TeachingTile extends StatelessWidget {
                   );
                 },
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12.w),
               FutureBuilder<bool>(
                 future: userProvider.isFavorite(teaching.id),
                 builder: (context, snapshot) {
@@ -317,7 +272,7 @@ class TeachingTile extends StatelessWidget {
           child: Row(
             children: [
               Icon(Icons.share, color: MyKOGColors.textSecondary),
-              const SizedBox(width: 12),
+              SizedBox(width: 12.w),
               Text(l10n.share),
             ],
           ),

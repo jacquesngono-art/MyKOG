@@ -1,8 +1,12 @@
 import 'dart:typed_data';
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:pdfx/pdfx.dart';
 import 'package:http/http.dart' as http;
 import 'package:MyKOG/models/text_resume.dart';
+import 'package:MyKOG/services/file_storage_service.dart';
+import 'package:MyKOG/services/hive_storage_service.dart';
 import 'package:MyKOG/theme.dart';
 
 class TextResumeViewerScreen extends StatefulWidget {
@@ -38,13 +42,36 @@ class _TextResumeViewerScreenState extends State<TextResumeViewerScreen> {
         _hasError = false;
       });
 
-      // Télécharger le PDF
-      final response = await http.get(Uri.parse(widget.textResume.pdfUrl));
-      if (response.statusCode != 200) {
-        throw Exception('Erreur HTTP: ${response.statusCode}');
-      }
+      Uint8List pdfBytes;
+      final pdfUrl = widget.textResume.pdfUrl;
+      final cacheKey = 'pdf_cache_${widget.textResume.id}';
+      final cachePath = HiveStorageService.getString(cacheKey);
 
-      final Uint8List pdfBytes = response.bodyBytes;
+      // Vérifier le cache local d'abord
+      if (cachePath != null && await FileStorageService.fileExists(cachePath)) {
+        final file = File(cachePath);
+        pdfBytes = await file.readAsBytes();
+      } else {
+        // Télécharger le PDF
+        final response = await http.get(Uri.parse(pdfUrl));
+        if (response.statusCode != 200) {
+          throw Exception('Erreur HTTP: ${response.statusCode}');
+        }
+        pdfBytes = response.bodyBytes;
+
+        // Sauvegarder dans le cache local
+        try {
+          final filePath = await FileStorageService.getPdfFilePath(
+            widget.textResume.id,
+            pdfUrl,
+          );
+          final file = File(filePath);
+          await file.writeAsBytes(pdfBytes);
+          await HiveStorageService.storeString(cacheKey, filePath);
+        } catch (e) {
+          debugPrint('Erreur sauvegarde PDF cache: $e');
+        }
+      }
 
       _pdfController = PdfController(
         document: PdfDocument.openData(pdfBytes),
@@ -100,6 +127,7 @@ class _TextResumeViewerScreenState extends State<TextResumeViewerScreen> {
 
     return Scaffold(
       backgroundColor: MyKOGColors.primaryDark,
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         backgroundColor: MyKOGColors.primaryDark,
         elevation: 0,
@@ -153,13 +181,14 @@ class _TextResumeViewerScreenState extends State<TextResumeViewerScreen> {
           ],
         ],
       ),
-      body: _isLoading
+      body: SafeArea(
+        child: _isLoading
           ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const CircularProgressIndicator(color: MyKOGColors.accent),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16.h),
                   Text(
                     'Chargement du PDF...',
                     style: theme.textTheme.bodyMedium?.copyWith(
@@ -176,17 +205,17 @@ class _TextResumeViewerScreenState extends State<TextResumeViewerScreen> {
                     children: [
                       Icon(
                         Icons.error_outline,
-                        size: 64,
+                        size: 64.w,
                         color: MyKOGColors.error,
                       ),
-                      const SizedBox(height: 16),
+                      SizedBox(height: 16.h),
                       Text(
                         'Erreur de chargement',
                         style: theme.textTheme.titleMedium?.copyWith(
                           color: MyKOGColors.textPrimary,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: 8.h),
                       Text(
                         _errorMessage ?? 'Impossible de charger le PDF',
                         style: theme.textTheme.bodySmall?.copyWith(
@@ -194,7 +223,7 @@ class _TextResumeViewerScreenState extends State<TextResumeViewerScreen> {
                         ),
                         textAlign: TextAlign.center,
                       ),
-                      const SizedBox(height: 24),
+                      SizedBox(height: 24.h),
                       ElevatedButton(
                         onPressed: _loadPdf,
                         style: ElevatedButton.styleFrom(
@@ -221,9 +250,9 @@ class _TextResumeViewerScreenState extends State<TextResumeViewerScreen> {
                     // Barre de navigation en bas
                     if (_totalPages > 0)
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 16.w,
+                          vertical: 12.h,
                         ),
                         decoration: BoxDecoration(
                           color: MyKOGColors.secondary,
@@ -276,6 +305,7 @@ class _TextResumeViewerScreenState extends State<TextResumeViewerScreen> {
                       ),
                   ],
                 ),
+      ),
     );
   }
 }

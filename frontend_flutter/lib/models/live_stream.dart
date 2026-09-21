@@ -5,6 +5,8 @@ class LiveStream {
   final String pastor;
   final String thumbnailUrl;
   final String streamUrl;
+  final String roomName;
+  final String livekitUrl;
   final LiveStreamStatus status;
   final DateTime? scheduledAt;
   final DateTime? startedAt;
@@ -20,6 +22,8 @@ class LiveStream {
     required this.pastor,
     required this.thumbnailUrl,
     required this.streamUrl,
+    required this.roomName,
+    required this.livekitUrl,
     required this.status,
     this.scheduledAt,
     this.startedAt,
@@ -36,6 +40,8 @@ class LiveStream {
     String? pastor,
     String? thumbnailUrl,
     String? streamUrl,
+    String? roomName,
+    String? livekitUrl,
     LiveStreamStatus? status,
     DateTime? scheduledAt,
     DateTime? startedAt,
@@ -51,6 +57,8 @@ class LiveStream {
       pastor: pastor ?? this.pastor,
       thumbnailUrl: thumbnailUrl ?? this.thumbnailUrl,
       streamUrl: streamUrl ?? this.streamUrl,
+      roomName: roomName ?? this.roomName,
+      livekitUrl: livekitUrl ?? this.livekitUrl,
       status: status ?? this.status,
       scheduledAt: scheduledAt ?? this.scheduledAt,
       startedAt: startedAt ?? this.startedAt,
@@ -69,6 +77,8 @@ class LiveStream {
       'pastor': pastor,
       'thumbnailUrl': thumbnailUrl,
       'streamUrl': streamUrl,
+      'roomName': roomName,
+      'livekitUrl': livekitUrl,
       'status': status.toString(),
       'scheduledAt': scheduledAt?.toIso8601String(),
       'startedAt': startedAt?.toIso8601String(),
@@ -99,6 +109,8 @@ class LiveStream {
       pastor: json['pastor']?.toString() ?? '',
       thumbnailUrl: json['thumbnailUrl']?.toString() ?? '',
       streamUrl: json['streamUrl']?.toString() ?? '',
+      roomName: json['roomName']?.toString() ?? '',
+      livekitUrl: json['livekitUrl']?.toString() ?? '',
       status: status,
       scheduledAt: json['scheduledAt'] != null 
           ? (json['scheduledAt'] is String 

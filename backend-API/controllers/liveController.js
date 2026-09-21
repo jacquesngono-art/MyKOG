@@ -1,29 +1,18 @@
 const { db } = require('../config/firebase');
-const { 
-  STREAM_CONFIG, 
+const {
+  STREAM_CONFIG,
   getServerIP,
-  getHLSUrl, 
-  getRTMPUrl, 
+  getHLSUrl,
+  getRTMPUrl,
   getHLSUrlWithIP,
   getRTMPUrlWithIP,
   isValidStreamKey,
-  generateStreamKey 
+  generateStreamKey
 } = require('../utils/stream_helper');
-const FFmpegTranscoder = require('../utils/ffmpeg_transcoder');
-const LiveKitService = require('../services/livekitService');
-
-// Gestionnaire global des transcoders actifs
-const activeTranscoders = new Map();
-
-// Instance LiveKit Service (initialisée paresseusement)
-let liveKitService = null;
-
-const getLiveKitService = () => {
-  if (!liveKitService) {
-    liveKitService = new LiveKitService();
-  }
-  return liveKitService;
-};
+const {
+  startTranscoderForStream,
+  stopTranscoderForStream,
+} = require('../services/streamingService');
 
 // Créer un live stream
 const createLiveStream = async (req, res) => {
@@ -41,7 +30,7 @@ const createLiveStream = async (req, res) => {
 
     // Générer ou utiliser la clé de stream
     let finalStreamKey = streamKey || STREAM_CONFIG.DEFAULT_STREAM_KEY;
-    
+
     // Si une clé personnalisée est fournie, la valider
     if (streamKey && !isValidStreamKey(streamKey)) {
       return res.status(400).json({
@@ -50,11 +39,11 @@ const createLiveStream = async (req, res) => {
     }
 
     // Générer les URLs RTMP et HLS
-    const rtmpUrl = serverIP 
+    const rtmpUrl = serverIP
       ? getRTMPUrlWithIP(serverIP, finalStreamKey)
       : getRTMPUrl(finalStreamKey);
-    
-    const hlsUrl = serverIP 
+
+    const hlsUrl = serverIP
       ? getHLSUrlWithIP(serverIP, finalStreamKey)
       : getHLSUrl(finalStreamKey);
 
@@ -69,8 +58,8 @@ const createLiveStream = async (req, res) => {
       thumbnailUrl: thumbnailUrl || '',
       streamUrl: finalStreamUrl, // URL HLS pour la lecture
       streamKey: finalStreamKey, // Clé de streaming pour OBS
-      rtmpUrl: rtmpUrl, // URL RTMP pour OBS (ajouté)
-      hlsUrl: hlsUrl, // URL HLS générée (ajouté)
+      rtmpUrl: rtmpUrl, // URL RTMP pour OBS
+      hlsUrl: hlsUrl, // URL HLS générée
       status: req.body.status || 'scheduled', // scheduled, live, ended
       scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
       startedAt: null,
@@ -88,10 +77,7 @@ const createLiveStream = async (req, res) => {
     // Démarrer le transcodage automatique si le statut est "live"
     if (liveStreamData.status === 'live') {
       try {
-        const transcoder = new FFmpegTranscoder(finalStreamKey);
-        transcoder.start();
-        activeTranscoders.set(finalStreamKey, transcoder);
-        console.log(`✅ Transcoder démarré automatiquement pour: ${finalStreamKey}`);
+        startTranscoderForStream(finalStreamKey);
       } catch (error) {
         console.error(`⚠️ Erreur démarrage transcoder: ${error.message}`);
         // Ne pas faire échouer la création du live si le transcoder ne démarre pas
@@ -119,17 +105,14 @@ const getAllLiveStreams = async (req, res) => {
     const liveStreamsSnapshot = await db.collection('liveStreams').get();
     const liveStreams = [];
 
-    const { getServerIP, getHLSUrl, getRTMPUrl } = require('../utils/stream_helper');
-    const currentIP = getServerIP();
-    
     liveStreamsSnapshot.forEach(doc => {
       const data = doc.data();
       const streamKey = data.streamKey || 'mykog_live';
-      
+
       // Utiliser l'IP actuelle pour les URLs
       const currentHlsUrl = getHLSUrl(streamKey);
       const currentRtmpUrl = getRTMPUrl(streamKey);
-      
+
       liveStreams.push({
         id: doc.id,
         title: data.title || 'Live Stream',
@@ -222,40 +205,40 @@ const updateLiveStream = async (req, res) => {
     if (description !== undefined) updateData.description = description;
     if (pastor !== undefined) updateData.pastor = pastor;
     if (thumbnailUrl !== undefined) updateData.thumbnailUrl = thumbnailUrl;
-    
+
     // Gérer la clé de stream et les URLs
     const currentData = liveStreamDoc.data();
     let finalStreamKey = streamKey || currentData.streamKey || STREAM_CONFIG.DEFAULT_STREAM_KEY;
-    
+
     // Valider la clé si fournie
     if (streamKey && !isValidStreamKey(streamKey)) {
       return res.status(400).json({
         error: 'Clé de stream invalide. Utilisez uniquement des caractères alphanumériques, tirets et underscores.'
       });
     }
-    
+
     // Générer les URLs si la clé change ou si l'IP change
     if (streamKey || serverIP) {
-      const rtmpUrl = serverIP 
+      const rtmpUrl = serverIP
         ? getRTMPUrlWithIP(serverIP, finalStreamKey)
         : getRTMPUrl(finalStreamKey);
-      
-      const hlsUrl = serverIP 
+
+      const hlsUrl = serverIP
         ? getHLSUrlWithIP(serverIP, finalStreamKey)
         : getHLSUrl(finalStreamKey);
-      
+
       updateData.streamKey = finalStreamKey;
       updateData.rtmpUrl = rtmpUrl;
       updateData.hlsUrl = hlsUrl;
-      
+
       // Mettre à jour l'URL de stream si non fournie explicitement
       if (!streamUrl) {
         updateData.streamUrl = hlsUrl;
       }
     }
-    
+
     if (streamUrl !== undefined) updateData.streamUrl = streamUrl;
-    
+
     // Gérer le statut
     if (status !== undefined) {
       if (!['scheduled', 'live', 'ended'].includes(status)) {
@@ -264,21 +247,17 @@ const updateLiveStream = async (req, res) => {
         });
       }
       updateData.status = status;
-      
+
       // Ajouter timestamps selon le statut
-      const currentData = liveStreamDoc.data();
       const previousStatus = currentData.status;
-      const streamKey = currentData.streamKey || finalStreamKey || STREAM_CONFIG.DEFAULT_STREAM_KEY;
-      
+      const liveStreamKey = currentData.streamKey || finalStreamKey || STREAM_CONFIG.DEFAULT_STREAM_KEY;
+
       if (status === 'live' && !currentData.startedAt) {
         updateData.startedAt = now;
         // Démarrer le transcodage si on passe à "live"
         if (previousStatus !== 'live') {
           try {
-            const transcoder = new FFmpegTranscoder(streamKey);
-            transcoder.start();
-            activeTranscoders.set(streamKey, transcoder);
-            console.log(`✅ Transcoder démarré pour: ${streamKey}`);
+            startTranscoderForStream(liveStreamKey);
           } catch (error) {
             console.error(`⚠️ Erreur démarrage transcoder: ${error.message}`);
           }
@@ -287,12 +266,7 @@ const updateLiveStream = async (req, res) => {
         updateData.endedAt = now;
         // Arrêter le transcodage si on passe à "ended"
         if (previousStatus === 'live') {
-          const transcoder = activeTranscoders.get(streamKey);
-          if (transcoder) {
-            transcoder.stop();
-            activeTranscoders.delete(streamKey);
-            console.log(`🛑 Transcoder arrêté pour: ${streamKey}`);
-          }
+          stopTranscoderForStream(liveStreamKey);
         }
       }
     }
@@ -363,10 +337,7 @@ const updateLiveStreamStatus = async (req, res) => {
       // Démarrer le transcodage si on passe à "live"
       if (previousStatus !== 'live') {
         try {
-          const transcoder = new FFmpegTranscoder(streamKey);
-          transcoder.start();
-          activeTranscoders.set(streamKey, transcoder);
-          console.log(`✅ Transcoder démarré pour: ${streamKey}`);
+          startTranscoderForStream(streamKey);
         } catch (error) {
           console.error(`⚠️ Erreur démarrage transcoder: ${error.message}`);
         }
@@ -375,12 +346,7 @@ const updateLiveStreamStatus = async (req, res) => {
       updateData.endedAt = now;
       // Arrêter le transcodage si on passe à "ended"
       if (previousStatus === 'live') {
-        const transcoder = activeTranscoders.get(streamKey);
-        if (transcoder) {
-          transcoder.stop();
-          activeTranscoders.delete(streamKey);
-          console.log(`🛑 Transcoder arrêté pour: ${streamKey}`);
-        }
+        stopTranscoderForStream(streamKey);
       }
     }
 
@@ -509,7 +475,7 @@ const getActiveLive = async (req, res) => {
   try {
     // Récupérer tous les lives et filtrer côté serveur pour éviter l'index Firestore
     const liveStreamsSnapshot = await db.collection('liveStreams').get();
-    
+
     // Filtrer les lives actifs et trier par startedAt
     const activeLives = [];
     liveStreamsSnapshot.forEach(doc => {
@@ -522,10 +488,10 @@ const getActiveLive = async (req, res) => {
         });
       }
     });
-    
+
     // Trier par startedAt (le plus récent en premier)
     activeLives.sort((a, b) => b.startedAt.getTime() - a.startedAt.getTime());
-    
+
     if (activeLives.length === 0) {
       return res.status(404).json({
         error: 'Aucun live actif',
@@ -538,13 +504,12 @@ const getActiveLive = async (req, res) => {
     const data = mostRecent.data;
 
     // Utiliser l'IP actuelle du serveur pour les URLs
-    const currentIP = getServerIP();
     const streamKey = data.streamKey || 'mykog_live';
-    
+
     // Générer les URLs avec l'IP actuelle
     const currentHlsUrl = getHLSUrl(streamKey);
     const currentRtmpUrl = getRTMPUrl(streamKey);
-    
+
     res.json({
       id: mostRecent.id,
       title: data.title || 'Live en cours',
@@ -612,6 +577,12 @@ const deleteLiveStream = async (req, res) => {
       });
     }
 
+    // Arrêter le transcoder si le live était en cours
+    const data = liveStreamDoc.data();
+    if (data.status === 'live' && data.streamKey) {
+      stopTranscoderForStream(data.streamKey);
+    }
+
     await liveStreamRef.delete();
 
     res.json({
@@ -627,229 +598,57 @@ const deleteLiveStream = async (req, res) => {
   }
 };
 
-// ===== FONCTIONS LIVEKIT =====
-
-// Créer une room LiveKit
-const createLiveKitRoom = async (req, res) => {
+// Supprimer tous les live streams
+const deleteAllLiveStreams = async (req, res) => {
   try {
-    const { roomName, maxParticipants = 1000 } = req.body;
+    const liveStreamsSnapshot = await db.collection('liveStreams').get();
 
-    console.log('createLiveKitRoom - roomName:', roomName, 'maxParticipants:', maxParticipants);
-
-    if (!roomName) {
-      return res.status(400).json({
-        error: 'roomName est requis'
+    if (liveStreamsSnapshot.empty) {
+      return res.json({
+        message: 'Aucun live stream à supprimer',
+        deleted: 0
       });
     }
 
-    console.log('Appel de getLiveKitService()...');
-    const service = getLiveKitService();
-    console.log('Service obtenu, appel de createRoom...');
-    
-    const room = await service.createRoom(roomName, {
-      maxParticipants
-    });
-    
-    console.log('Room créée:', room);
-
-    res.status(201).json({
-      message: 'Room LiveKit créée avec succès',
-      room: {
-        name: room.name,
-        sid: room.sid,
-        maxParticipants: room.maxParticipants,
-        participantCount: room.participantCount,
-        createdAt: room.createdAt
+    // Arrêter les transcoders des lives en cours
+    liveStreamsSnapshot.forEach(doc => {
+      const data = doc.data();
+      if (data.status === 'live' && data.streamKey) {
+        stopTranscoderForStream(data.streamKey);
       }
     });
-  } catch (error) {
-    console.error('Erreur création room LiveKit:', error);
-    res.status(500).json({
-      error: 'Erreur lors de la création de la room LiveKit',
-      details: error.message
-    });
-  }
-};
 
-// Générer un token LiveKit
-const getLiveKitToken = async (req, res) => {
-  try {
-    const { roomName, participantName, isHost = false } = req.body;
+    // Suppression par batch (max 500 opérations par batch Firestore)
+    const BATCH_LIMIT = 500;
+    let deleted = 0;
+    let batch = db.batch();
+    let batchCount = 0;
 
-    if (!roomName || !participantName) {
-      return res.status(400).json({
-        error: 'roomName et participantName sont requis'
-      });
-    }
+    for (const doc of liveStreamsSnapshot.docs) {
+      batch.delete(doc.ref);
+      batchCount++;
+      deleted++;
 
-    const token = await getLiveKitService().generateParticipantToken(
-      roomName,
-      participantName,
-      isHost
-    );
-
-    res.json({
-      token,
-      roomName,
-      participantName,
-      isHost,
-      liveKitUrl: process.env.LIVEKIT_URL
-    });
-  } catch (error) {
-    console.error('Erreur génération token LiveKit:', error);
-    res.status(500).json({
-      error: 'Erreur lors de la génération du token LiveKit',
-      details: error.message
-    });
-  }
-};
-
-// Lister les rooms LiveKit
-const listLiveKitRooms = async (req, res) => {
-  try {
-    const rooms = await getLiveKitService().listRooms();
-    
-    res.json({
-      rooms: rooms.map(room => ({
-        name: room.name,
-        sid: room.sid,
-        maxParticipants: room.maxParticipants,
-        participantCount: room.participantCount,
-        createdAt: room.createdAt
-      }))
-    });
-  } catch (error) {
-    console.error('Erreur listage rooms LiveKit:', error);
-    res.status(500).json({
-      error: 'Erreur lors du listage des rooms LiveKit',
-      details: error.message
-    });
-  }
-};
-
-// Supprimer une room LiveKit
-const deleteLiveKitRoom = async (req, res) => {
-  try {
-    const { roomName } = req.params;
-
-    await getLiveKitService().deleteRoom(roomName);
-
-    res.json({
-      message: `Room ${roomName} supprimée avec succès`
-    });
-  } catch (error) {
-    console.error('Erreur suppression room LiveKit:', error);
-    res.status(500).json({
-      error: 'Erreur lors de la suppression de la room LiveKit',
-      details: error.message
-    });
-  }
-};
-
-// Démarrer un enregistrement LiveKit
-const startLiveKitRecording = async (req, res) => {
-  try {
-    const { roomName, outputUrl } = req.body;
-
-    if (!roomName) {
-      return res.status(400).json({
-        error: 'roomName est requis'
-      });
-    }
-
-    const egress = await getLiveKitService().startRecording(roomName, outputUrl);
-
-    res.status(201).json({
-      message: 'Enregistrement démarré avec succès',
-      egress: {
-        egressId: egress.egressId,
-        roomName: egress.roomName,
-        status: egress.status,
-        startedAt: egress.startedAt
+      if (batchCount >= BATCH_LIMIT) {
+        await batch.commit();
+        batch = db.batch();
+        batchCount = 0;
       }
-    });
-  } catch (error) {
-    console.error('Erreur démarrage enregistrement LiveKit:', error);
-    res.status(500).json({
-      error: 'Erreur lors du démarrage de l\'enregistrement LiveKit',
-      details: error.message
-    });
-  }
-};
-
-// Configuration OBS complète pour LiveKit
-const getLiveKitObsConfig = async (req, res) => {
-  try {
-    const { roomName = 'mykog-live', hostName = 'obs-broadcaster' } = req.body;
-
-    // Déterminer l'IP locale
-    const { getServerIP } = require('../utils/stream_helper');
-    const serverIP = getServerIP();
-
-    // Créer la room si elle n'existe pas encore
-    const service = getLiveKitService();
-    try {
-      await service.createRoom(roomName, { maxParticipants: 500 });
-    } catch (e) {
-      // Room probablement déjà existante, continuer
     }
 
-    // Générer le token host pour OBS (WHIP)
-    const obsToken = await service.generateParticipantToken(roomName, hostName, true);
-
-    // Générer un token viewer pour le frontend Flutter
-    const viewerToken = await service.generateParticipantToken(roomName, 'flutter-viewer', false);
+    if (batchCount > 0) {
+      await batch.commit();
+    }
 
     res.json({
-      livekit: {
-        serverUrl: `ws://${serverIP}:7880`,
-        apiKey: process.env.LIVEKIT_API_KEY,
-        roomName,
-      },
-      obs: {
-        // Pour OBS 30+ (WHIP)
-        whip: {
-          url: `http://${serverIP}:7880/rtc`,
-          bearerToken: obsToken,
-          instructions: 'OBS > Paramètres > Flux > Service: WHIP, coller URL et Bearer Token',
-        },
-        // Pour OBS classique (RTMP via nginx)
-        rtmp: {
-          url: `rtmp://${serverIP}:1935/live`,
-          streamKey: roomName,
-          instructions: 'OBS > Paramètres > Flux > Service: Personnalisé, coller URL et Stream Key',
-        },
-      },
-      flutter: {
-        viewerToken,
-        serverUrl: `ws://${serverIP}:7880`,
-        roomName,
-        instructions: 'Utiliser viewerToken + serverUrl dans le widget LiveKit Flutter',
-      },
+      message: 'Tous les live streams ont été supprimés',
+      deleted: deleted
     });
+
   } catch (error) {
-    console.error('Erreur config OBS LiveKit:', error);
+    console.error('Erreur lors de la suppression de tous les lives:', error);
     res.status(500).json({
-      error: 'Erreur lors de la génération de la config OBS',
-      details: error.message,
-    });
-  }
-};
-
-// Arrêter un enregistrement LiveKit
-const stopLiveKitRecording = async (req, res) => {
-  try {
-    const { egressId } = req.params;
-
-    await getLiveKitService().stopRecording(egressId);
-
-    res.json({
-      message: `Enregistrement ${egressId} arrêté avec succès`
-    });
-  } catch (error) {
-    console.error('Erreur arrêt enregistrement LiveKit:', error);
-    res.status(500).json({
-      error: 'Erreur lors de l\'arrêt de l\'enregistrement LiveKit',
+      error: 'Erreur lors de la suppression des live streams',
       details: error.message
     });
   }
@@ -867,13 +666,5 @@ module.exports = {
   decrementViewerCount,
   getViewerCount,
   deleteLiveStream,
-  // LiveKit
-  createLiveKitRoom,
-  getLiveKitToken,
-  listLiveKitRooms,
-  deleteLiveKitRoom,
-  startLiveKitRecording,
-  stopLiveKitRecording,
-  getLiveKitObsConfig,
+  deleteAllLiveStreams,
 };
-

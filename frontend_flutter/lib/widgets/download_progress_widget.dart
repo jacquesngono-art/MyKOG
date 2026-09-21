@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:MyKOG/models/teaching.dart';
 import 'package:MyKOG/services/download_service.dart';
 import 'package:MyKOG/l10n/app_localizations.dart';
@@ -165,9 +166,9 @@ class _DownloadProgressWidgetState extends State<DownloadProgressWidget> {
 
   Widget _buildDownloadingState() {
     return Container(
-      width: 48,
-      height: 48,
-      padding: const EdgeInsets.all(8),
+      width: 48.w,
+      height: 48.h,
+      padding: EdgeInsets.all(8.w),
       child: Stack(
         alignment: Alignment.center,
         children: [
@@ -182,15 +183,15 @@ class _DownloadProgressWidgetState extends State<DownloadProgressWidget> {
           GestureDetector(
             onTap: _cancelDownload,
             child: Container(
-              width: 24,
-              height: 24,
+              width: 24.w,
+              height: 24.h,
               decoration: BoxDecoration(
                 color: MyKOGColors.secondary,
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 Icons.close,
-                size: 16,
+                size: 16.sp,
                 color: MyKOGColors.textPrimary,
               ),
             ),
@@ -221,25 +222,25 @@ class DownloadStatusBadge extends StatelessWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
       decoration: BoxDecoration(
         color: isDownloaded ? MyKOGColors.success : MyKOGColors.accent,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(8.r),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
             isDownloaded ? Icons.download_done : Icons.downloading,
-            size: 12,
+            size: 12.sp,
             color: Colors.white,
           ),
-          const SizedBox(width: 4),
+          SizedBox(width: 4.w),
           Text(
             isDownloaded ? l10n.downloaded : l10n.downloading,
-            style: const TextStyle(
+            style: TextStyle(
               color: Colors.white,
-              fontSize: 10,
+              fontSize: 10.sp,
               fontWeight: FontWeight.w600,
             ),
           ),

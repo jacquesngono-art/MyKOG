@@ -21,10 +21,34 @@ const createCalendarEvent = async (req, res) => {
     } = req.body;
 
     // Vérifier les champs requis
-    if (!title || !startDate) {
-      return res.status(400).json({
-        error: 'Title et startDate sont requis',
-      });
+    if (!title || !title.trim()) {
+      return res.status(400).json({ error: 'Le titre est requis' });
+    }
+    if (!startDate) {
+      return res.status(400).json({ error: 'La date de début est requise' });
+    }
+    if (title.length > 200) {
+      return res.status(400).json({ error: 'Le titre ne peut pas dépasser 200 caractères' });
+    }
+    if (description && description.length > 2000) {
+      return res.status(400).json({ error: 'La description ne peut pas dépasser 2000 caractères' });
+    }
+
+    // Valider les dates
+    const parsedStartDate = new Date(startDate);
+    if (isNaN(parsedStartDate.getTime())) {
+      return res.status(400).json({ error: 'La date de début est invalide' });
+    }
+
+    let parsedEndDate = null;
+    if (endDate) {
+      parsedEndDate = new Date(endDate);
+      if (isNaN(parsedEndDate.getTime())) {
+        return res.status(400).json({ error: 'La date de fin est invalide' });
+      }
+      if (parsedEndDate <= parsedStartDate) {
+        return res.status(400).json({ error: 'La date de fin doit être postérieure à la date de début' });
+      }
     }
 
     // Générer un ID unique
@@ -36,8 +60,8 @@ const createCalendarEvent = async (req, res) => {
       id,
       title,
       description: description || null,
-      startDate: new Date(startDate),
-      endDate: endDate ? new Date(endDate) : null,
+      startDate: parsedStartDate,
+      endDate: parsedEndDate,
       location: location || null,
       category: category || null,
       color: color || null,
@@ -202,10 +226,33 @@ const updateCalendarEvent = async (req, res) => {
       updatedAt: new Date(),
     };
 
-    if (title !== undefined) updateData.title = title;
-    if (description !== undefined) updateData.description = description;
-    if (startDate !== undefined) updateData.startDate = new Date(startDate);
-    if (endDate !== undefined) updateData.endDate = endDate ? new Date(endDate) : null;
+    if (title !== undefined) {
+      if (!title.trim()) return res.status(400).json({ error: 'Le titre ne peut pas être vide' });
+      if (title.length > 200) return res.status(400).json({ error: 'Le titre ne peut pas dépasser 200 caractères' });
+      updateData.title = title;
+    }
+    if (description !== undefined) {
+      if (description.length > 2000) return res.status(400).json({ error: 'La description ne peut pas dépasser 2000 caractères' });
+      updateData.description = description;
+    }
+    if (startDate !== undefined) {
+      const parsedStart = new Date(startDate);
+      if (isNaN(parsedStart.getTime())) return res.status(400).json({ error: 'La date de début est invalide' });
+      updateData.startDate = parsedStart;
+    }
+    if (endDate !== undefined) {
+      if (endDate) {
+        const parsedEnd = new Date(endDate);
+        if (isNaN(parsedEnd.getTime())) return res.status(400).json({ error: 'La date de fin est invalide' });
+        const start = updateData.startDate || doc.data().startDate;
+        if (start && parsedEnd <= new Date(start)) {
+          return res.status(400).json({ error: 'La date de fin doit être postérieure à la date de début' });
+        }
+        updateData.endDate = parsedEnd;
+      } else {
+        updateData.endDate = null;
+      }
+    }
     if (location !== undefined) updateData.location = location;
     if (category !== undefined) updateData.category = category;
     if (color !== undefined) updateData.color = color;
@@ -280,6 +327,22 @@ const deleteCalendarEvent = async (req, res) => {
   }
 };
 
+const deleteAllCalendarEvents = async (req, res) => {
+  try {
+    const snapshot = await db.collection('calendar').get();
+    const batchSize = snapshot.size;
+    if (batchSize === 0) {
+      return res.json({ message: 'Aucun événement à supprimer', deleted: 0 });
+    }
+    const deletePromises = snapshot.docs.map(doc => doc.ref.delete());
+    await Promise.all(deletePromises);
+    res.json({ message: `${batchSize} événement(s) supprimé(s)`, deleted: batchSize });
+  } catch (error) {
+    console.error('Erreur suppression tous les événements:', error);
+    res.status(500).json({ error: 'Erreur lors de la suppression des événements' });
+  }
+};
+
 module.exports = {
   createCalendarEvent,
   getAllCalendarEvents,
@@ -287,5 +350,6 @@ module.exports = {
   getCalendarEventById,
   updateCalendarEvent,
   deleteCalendarEvent,
+  deleteAllCalendarEvents,
 };
 

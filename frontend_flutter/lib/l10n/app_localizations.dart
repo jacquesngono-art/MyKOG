@@ -137,6 +137,10 @@ class AppLocalizations {
   String get stopPlaybackConfirm => translate('stop_playback_confirm');
   String get filterByYear => translate('filter_by_year');
   String get filterByMonth => translate('filter_by_month');
+
+  // Expandable card
+  String get play => translate('play');
+  String get close => translate('close');
 }
 
 // Délégué pour les localisations
@@ -271,6 +275,10 @@ const Map<String, String> _frenchTranslations = {
   'stop_playback_confirm': 'Voulez-vous arrêter la lecture ?',
   'filter_by_year': 'Filtrer par année',
   'filter_by_month': 'Filtrer par mois',
+
+  // Card expansive
+  'play': 'Écouter',
+  'close': 'Fermer',
 };
 
 // ========================================
@@ -384,6 +392,10 @@ const Map<String, String> _englishTranslations = {
   'stop_playback_confirm': 'Do you want to stop playback?',
   'filter_by_year': 'Filter by year',
   'filter_by_month': 'Filter by month',
+
+  // Expandable card
+  'play': 'Listen',
+  'close': 'Close',
 };
 
 // ========================================
@@ -500,6 +512,10 @@ const Map<String, String> _germanTranslations = {
   'stop_playback_confirm': 'Möchten Sie die Wiedergabe stoppen?',
   'filter_by_year': 'Nach Jahr filtern',
   'filter_by_month': 'Nach Monat filtern',
+
+  // Expandierbare Karte
+  'play': 'Abspielen',
+  'close': 'Schließen',
 };
 
 // ========================================
@@ -615,4 +631,8 @@ const Map<String, String> _spanishTranslations = {
   'stop_playback_confirm': '¿Desea detener la reproducción?',
   'filter_by_year': 'Filtrar por año',
   'filter_by_month': 'Filtrar por mes',
+
+  // Tarjeta expansiva
+  'play': 'Escuchar',
+  'close': 'Cerrar',
 };

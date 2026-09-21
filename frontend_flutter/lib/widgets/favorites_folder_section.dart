@@ -1,29 +1,30 @@
 import 'dart:ui';
 import 'dart:math' as math;
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter/services.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
 
 import 'package:MyKOG/models/teaching.dart';
 import 'package:MyKOG/providers/user_provider.dart';
 import 'package:MyKOG/providers/audio_player_provider.dart';
-import 'package:MyKOG/theme.dart';
 import 'package:MyKOG/l10n/app_localizations.dart';
-import 'package:MyKOG/screens/teachings_screen.dart';
+import 'package:MyKOG/theme.dart';
+import 'package:MyKOG/screens/favorite_selection_screen.dart';
 import 'package:MyKOG/services/teaching_service.dart';
+import 'package:MyKOG/widgets/resolved_artwork_image.dart';
 
 // ─── Design tokens (Portfolio-inspired) ───────────────────────────────────────
-const _kCardWidth      = 200.0;
-const _kBackHeight     = 200.0;  // back-panel height (images zone)
-const _kFrontHeight    = 90.0;   // front-panel (glass footer)
-const _kCardHeight     = _kBackHeight; // front panel overlays the back panel
-const _kRadius         = 20.0;
-const _kBorderColor    = Color(0x0FFFFFFF); // rgba(255,255,255,0.06)
+final _kCardWidth      = 200.0.w;
+final _kBackHeight     = 200.0.w;
+final _kFrontHeight    = 90.0.h;
+final _kCardHeight     = _kBackHeight;
+final _kRadius         = 20.0.r;
+const _kBorderColor    = Color(0x0FFFFFFF);
 const _kBackBg         = Color(0xFF1E1E1E);
-const _kFrontBg        = Color(0xD91A1A1A); // rgba(26,26,26,0.85)
+const _kFrontBg        = Color(0xD91A1A1A);
 
 /// Full favorites section — header + horizontal scroll of folder-cards.
 class FavoritesFolderSection extends StatelessWidget {
@@ -40,11 +41,11 @@ class FavoritesFolderSection extends StatelessWidget {
       children: [
         // ── Section header ──────────────────────────────────────────────────
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: EdgeInsets.symmetric(horizontal: 16.w),
           child: Row(
             children: [
-              Icon(Icons.favorite, color: MyKOGColors.accent, size: 20),
-              const SizedBox(width: 8),
+              Icon(Icons.favorite, color: MyKOGColors.accent, size: 20.sp),
+              SizedBox(width: 8.w),
               Text(
                 l10n.myFavorites,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -52,19 +53,19 @@ class FavoritesFolderSection extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8.w),
               if (favorites.isNotEmpty)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
                   decoration: BoxDecoration(
                     color: MyKOGColors.accent.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(20.r),
                   ),
                   child: Text(
                     '${favorites.length}',
                     style: TextStyle(
                       color: MyKOGColors.accent,
-                      fontSize: 12,
+                      fontSize: 12.sp,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -73,7 +74,7 @@ class FavoritesFolderSection extends StatelessWidget {
           ),
         ).animate().fadeIn(duration: 300.ms).slideX(begin: -0.1),
 
-        const SizedBox(height: 14),
+        SizedBox(height: 14.h),
 
         // ── Horizontal card list ────────────────────────────────────────────
         SizedBox(
@@ -82,7 +83,7 @@ class FavoritesFolderSection extends StatelessWidget {
               ? _buildEmptyState(context, l10n)
               : ListView.builder(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: EdgeInsets.symmetric(horizontal: 16.w),
                   physics: const BouncingScrollPhysics(),
                   // +1 for the "New Favorite" slot at the end
                   itemCount: favorites.length + 1,
@@ -113,7 +114,7 @@ class FavoritesFolderSection extends StatelessWidget {
   Widget _buildEmptyState(BuildContext context, AppLocalizations l10n) {
     return ListView(
       scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: EdgeInsets.symmetric(horizontal: 16.w),
       physics: const BouncingScrollPhysics(),
       children: [
         _NewFavoriteSlot(
@@ -126,7 +127,7 @@ class FavoritesFolderSection extends StatelessWidget {
   void _navigateToTeachings(BuildContext context) {
     Navigator.of(context).push(
       PageRouteBuilder(
-        pageBuilder: (_, anim, __) => const TeachingsScreen(),
+        pageBuilder: (_, anim, __) => const FavoriteSelectionScreen(),
         transitionsBuilder: (_, anim, __, child) => FadeTransition(
           opacity: anim,
           child: SlideTransition(
@@ -267,7 +268,7 @@ class _FavoriteFolderCardState extends State<_FavoriteFolderCard>
               backgroundColor: MyKOGColors.success,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(12.r),
               ),
             ),
           );
@@ -281,7 +282,7 @@ class _FavoriteFolderCardState extends State<_FavoriteFolderCard>
               backgroundColor: const Color(0xFFE22134),
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(12.r),
               ),
             ),
           );
@@ -334,7 +335,7 @@ class _FavoriteFolderCardState extends State<_FavoriteFolderCard>
       return Container(
         width: _kCardWidth,
         height: _kCardHeight,
-        margin: const EdgeInsets.only(right: 12),
+        margin: EdgeInsets.only(right: 12.w),
         child: _buildCard(formattedDate),
       );
     }
@@ -367,7 +368,7 @@ class _FavoriteFolderCardState extends State<_FavoriteFolderCard>
         child: Container(
           width: _kCardWidth,
           height: _kCardHeight,
-          margin: const EdgeInsets.only(right: 12),
+          margin: EdgeInsets.only(right: 12.w),
           child: _buildCard(formattedDate),
         ),
       ),
@@ -384,7 +385,7 @@ class _FavoriteFolderCardState extends State<_FavoriteFolderCard>
             decoration: BoxDecoration(
               color: _kBackBg,
               borderRadius: BorderRadius.circular(_kRadius),
-              border: Border.all(color: _kBorderColor, width: 1),
+              border: Border.all(color: _kBorderColor, width: 1.w),
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(_kRadius),
@@ -399,7 +400,7 @@ class _FavoriteFolderCardState extends State<_FavoriteFolderCard>
           left: 0,
           right: 0,
           child: ClipRRect(
-            borderRadius: const BorderRadius.only(
+            borderRadius: BorderRadius.only(
               bottomLeft: Radius.circular(_kRadius),
               bottomRight: Radius.circular(_kRadius),
             ),
@@ -460,7 +461,7 @@ class _FavoriteFolderCardState extends State<_FavoriteFolderCard>
         width: width,
         height: height,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(9),
+          borderRadius: BorderRadius.circular(9.r),
           boxShadow: elevated
               ? [
                   BoxShadow(
@@ -472,13 +473,12 @@ class _FavoriteFolderCardState extends State<_FavoriteFolderCard>
               : null,
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(9),
+          borderRadius: BorderRadius.circular(9.r),
           child: url.isNotEmpty
-              ? CachedNetworkImage(
-                  imageUrl: url,
+              ? ResolvedArtworkImage(
+                  url: url,
                   fit: BoxFit.cover,
-                  placeholder: (_, __) => _placeholderBox(),
-                  errorWidget: (_, __, ___) => _placeholderBox(),
+                  placeholder: _placeholderBox(),
                 )
               : _placeholderBox(),
         ),
@@ -493,7 +493,7 @@ class _FavoriteFolderCardState extends State<_FavoriteFolderCard>
         child: Icon(
           Icons.music_note_rounded,
           color: MyKOGColors.accent.withValues(alpha: 0.45),
-          size: 22,
+          size: 22.sp,
         ),
       ),
     );
@@ -508,7 +508,7 @@ class _FavoriteFolderCardState extends State<_FavoriteFolderCard>
       decoration: BoxDecoration(
         color: _kFrontBg,
         border: Border(
-          top: BorderSide(color: const Color(0x0AFFFFFF), width: 1),
+          top: BorderSide(color: const Color(0x0AFFFFFF), width: 1.w),
         ),
       ),
       child: Column(
@@ -519,7 +519,7 @@ class _FavoriteFolderCardState extends State<_FavoriteFolderCard>
             children: [
               // Static title
               Padding(
-                padding: const EdgeInsets.fromLTRB(12, 10, 38, 0),
+                padding: EdgeInsets.fromLTRB(12.w, 10.h, 38.w, 0.h),
                 child: Consumer<AudioPlayerProvider>(
                   builder: (_, audio, __) {
                     final isActive = audio.currentTeaching?.id == teaching.id;
@@ -534,9 +534,9 @@ class _FavoriteFolderCardState extends State<_FavoriteFolderCard>
                           color: isActive
                               ? MyKOGColors.accent
                               : const Color(0xB3FFFFFF), // white/70
-                          fontSize: 13,
+                          fontSize: 13.sp,
                           fontWeight: FontWeight.w600,
-                          height: 1.35,
+                          height: 1.35.h,
                         ),
                       ),
                     );
@@ -558,13 +558,13 @@ class _FavoriteFolderCardState extends State<_FavoriteFolderCard>
 
           // Footer: duration + date + menu
           Container(
-            height: 38,
-            decoration: const BoxDecoration(
+            height: 38.h,
+            decoration: BoxDecoration(
               border: Border(
-                top: BorderSide(color: Color(0x0AFFFFFF), width: 1),
+                top: BorderSide(color: Color(0x0AFFFFFF), width: 1.w),
               ),
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 12),
+            padding: EdgeInsets.symmetric(horizontal: 12.w),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -573,17 +573,19 @@ class _FavoriteFolderCardState extends State<_FavoriteFolderCard>
                   children: [
                     Icon(
                       Icons.play_circle_outline_rounded,
-                      size: 12,
+                      size: 12.sp,
                       color: const Color(0x99FFFFFF),
                     ),
-                    const SizedBox(width: 4),
+                    SizedBox(width: 4.w),
                     Text(
                       teaching.durationText,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Color(0x99FFFFFF),
-                        fontSize: 11,
+                        fontSize: 11.sp,
                         fontWeight: FontWeight.w500,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
@@ -596,57 +598,61 @@ class _FavoriteFolderCardState extends State<_FavoriteFolderCard>
                         behavior: HitTestBehavior.opaque,
                         onTap: _cancelEdit,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          child: const Text(
+                          padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                          child: Text(
                             'Annuler',
                             style: TextStyle(
                               color: Color(0x80FFFFFF),
-                              fontSize: 10,
+                              fontSize: 10.sp,
                             ),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 4),
+                      SizedBox(width: 4.w),
                       // Save button
                       GestureDetector(
                         behavior: HitTestBehavior.opaque,
                         onTap: _confirmEdit,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
                           decoration: BoxDecoration(
                             color: MyKOGColors.accent,
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(8.r),
                           ),
-                          child: const Text(
+                          child: Text(
                             'Enregistrer',
                             style: TextStyle(
                               color: Colors.black,
-                              fontSize: 10,
+                              fontSize: 10.sp,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
                       ),
                     ] else ...[
-                      Text(
-                        formattedDate,
-                        style: const TextStyle(
-                          color: Color(0x80FFFFFF),
-                          fontSize: 10,
+                      Flexible(
+                        child: Text(
+                          formattedDate,
+                          style: TextStyle(
+                            color: Color(0x80FFFFFF),
+                            fontSize: 10.sp,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      const SizedBox(width: 4),
+                      SizedBox(width: 4.w),
                       GestureDetector(
                         behavior: HitTestBehavior.opaque,
                         onTap: () => _showMenu(context),
                         child: Container(
-                          width: 22,
-                          height: 22,
+                          width: 22.w,
+                          height: 22.h,
                           alignment: Alignment.center,
-                          child: const Icon(
+                          child: Icon(
                             Icons.more_horiz_rounded,
                             color: Color(0x80FFFFFF),
-                            size: 16,
+                            size: 16.sp,
                           ),
                         ),
                       ),
@@ -668,10 +674,10 @@ class _FavoriteFolderCardState extends State<_FavoriteFolderCard>
       onKeyEvent: _handleEditKey,
       child: Container(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(6.r),
           border: Border.all(
             color: MyKOGColors.accent.withValues(alpha: 0.5),
-            width: 1,
+            width: 1.w,
           ),
           boxShadow: [
             BoxShadow(
@@ -686,11 +692,11 @@ class _FavoriteFolderCardState extends State<_FavoriteFolderCard>
           focusNode: _focusNode,
           autofocus: false, // Désactiver autofocus pour éviter les conflits
           maxLines: 2,
-          style: const TextStyle(
+          style: TextStyle(
             color: Color(0xFFFFFFFF),
-            fontSize: 13,
+            fontSize: 13.sp,
             fontWeight: FontWeight.w600,
-            height: 1.35,
+            height: 1.35.h,
           ),
           cursorColor: MyKOGColors.accent,
           decoration: const InputDecoration(
@@ -744,13 +750,13 @@ class _NewFavoriteSlotState extends State<_NewFavoriteSlot>
           child: Container(
             width: _kCardWidth,
             height: _kCardHeight,
-            margin: const EdgeInsets.only(right: 16),
+            margin: EdgeInsets.only(right: 16.w),
             decoration: BoxDecoration(
               color: _kBackBg,
               borderRadius: BorderRadius.circular(_kRadius),
               border: Border.all(
                 color: const Color(0x1AFFFFFF), // dashed-like subtle border
-                width: 1,
+                width: 1.w,
                 strokeAlign: BorderSide.strokeAlignInside,
               ),
             ),
@@ -774,8 +780,8 @@ class _NewFavoriteSlotState extends State<_NewFavoriteSlot>
                       child: Center(
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 250),
-                          width: 48,
-                          height: 48,
+                          width: 48.w,
+                          height: 48.h,
                           decoration: BoxDecoration(
                             color: _hovered
                                 ? MyKOGColors.accent.withValues(alpha: 0.12)
@@ -787,7 +793,7 @@ class _NewFavoriteSlotState extends State<_NewFavoriteSlot>
                             color: _hovered
                                 ? MyKOGColors.accent
                                 : const Color(0x80FFFFFF),
-                            size: 24,
+                            size: 24.sp,
                           ),
                         ),
                       ),
@@ -798,15 +804,15 @@ class _NewFavoriteSlotState extends State<_NewFavoriteSlot>
                       height: _kFrontHeight,
                       decoration: BoxDecoration(
                         color: const Color(0xCC111111),
-                        borderRadius: const BorderRadius.only(
+                        borderRadius: BorderRadius.only(
                           bottomLeft: Radius.circular(_kRadius),
                           bottomRight: Radius.circular(_kRadius),
                         ),
-                        border: const Border(
-                          top: BorderSide(color: Color(0x0AFFFFFF), width: 1),
+                        border: Border(
+                          top: BorderSide(color: Color(0x0AFFFFFF), width: 1.w),
                         ),
                       ),
-                      padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+                      padding: EdgeInsets.fromLTRB(12.w, 10.h, 12.w, 0.h),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -816,20 +822,20 @@ class _NewFavoriteSlotState extends State<_NewFavoriteSlot>
                               color: _hovered
                                   ? MyKOGColors.textPrimary
                                   : const Color(0xB3FFFFFF),
-                              fontSize: 13,
+                              fontSize: 13.sp,
                               fontWeight: FontWeight.w600,
-                              height: 1.35,
+                              height: 1.35.h,
                             ),
                             child: const Text('Nouveau favori'),
                           ),
-                          const SizedBox(height: 4),
+                          SizedBox(height: 4.h),
                           AnimatedDefaultTextStyle(
                             duration: const Duration(milliseconds: 200),
                             style: TextStyle(
                               color: _hovered
                                   ? MyKOGColors.accent
                                   : const Color(0x66FFFFFF),
-                              fontSize: 11,
+                              fontSize: 11.sp,
                             ),
                             child: const Text('Parcourir les enseignements'),
                           ),
@@ -903,16 +909,16 @@ class _FavoriteActionSheet extends StatelessWidget {
     final audioProvider = Provider.of<AudioPlayerProvider>(context, listen: false);
 
     return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
         child: Container(
-          padding: const EdgeInsets.fromLTRB(0, 12, 0, 32),
-          decoration: const BoxDecoration(
+          padding: EdgeInsets.fromLTRB(0.w, 12.h, 0.w, 32.h),
+          decoration: BoxDecoration(
             color: Color(0xF01A1A1A),
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
             border: Border(
-              top: BorderSide(color: Color(0x1AFFFFFF), width: 1),
+              top: BorderSide(color: Color(0x1AFFFFFF), width: 1.w),
             ),
           ),
           child: Column(
@@ -920,33 +926,33 @@ class _FavoriteActionSheet extends StatelessWidget {
             children: [
               // Handle
               Container(
-                width: 36,
-                height: 4,
+                width: 36.w,
+                height: 4.h,
                 decoration: BoxDecoration(
                   color: const Color(0x40FFFFFF),
-                  borderRadius: BorderRadius.circular(2),
+                  borderRadius: BorderRadius.circular(2.r),
                 ),
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20.h),
 
               // Teaching info
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: EdgeInsets.symmetric(horizontal: 20.w),
                 child: Row(
                   children: [
                     // Artwork
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(10.r),
                       child: teaching.artworkUrl.isNotEmpty
-                          ? CachedNetworkImage(
-                              imageUrl: teaching.artworkUrl,
-                              width: 52,
-                              height: 52,
+                          ? ResolvedArtworkImage(
+                              url: teaching.artworkUrl,
+                              width: 52.w,
+                              height: 52.h,
                               fit: BoxFit.cover,
                             )
                           : Container(
-                              width: 52,
-                              height: 52,
+                              width: 52.w,
+                              height: 52.h,
                               color: const Color(0xFF2A2A2A),
                               child: Icon(
                                 Icons.music_note_rounded,
@@ -954,7 +960,7 @@ class _FavoriteActionSheet extends StatelessWidget {
                               ),
                             ),
                     ),
-                    const SizedBox(width: 14),
+                    SizedBox(width: 14.w),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -963,18 +969,18 @@ class _FavoriteActionSheet extends StatelessWidget {
                             teaching.title,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: Color(0xFFFFFFFF),
-                              fontSize: 14,
+                              fontSize: 14.sp,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
-                          const SizedBox(height: 2),
+                          SizedBox(height: 2.h),
                           Text(
                             teaching.speaker,
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: Color(0x99FFFFFF),
-                              fontSize: 12,
+                              fontSize: 12.sp,
                             ),
                           ),
                         ],
@@ -984,7 +990,7 @@ class _FavoriteActionSheet extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 20),
+              SizedBox(height: 20.h),
               _sheetDivider(),
 
               // Actions
@@ -1031,7 +1037,7 @@ class _FavoriteActionSheet extends StatelessWidget {
                       behavior: SnackBarBehavior.floating,
                       backgroundColor: const Color(0xFF2A2A2A),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(12.r),
                       ),
                     ),
                   );
@@ -1056,9 +1062,9 @@ class _FavoriteActionSheet extends StatelessWidget {
 
   Widget _sheetDivider() {
     return Container(
-      height: 1,
+      height: 1.h,
       color: const Color(0x14FFFFFF),
-      margin: const EdgeInsets.symmetric(vertical: 4),
+      margin: EdgeInsets.symmetric(vertical: 4.h),
     );
   }
 
@@ -1072,20 +1078,20 @@ class _FavoriteActionSheet extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 14.h),
         child: Row(
           children: [
             Icon(
               icon,
               color: iconColor ?? const Color(0xCCFFFFFF),
-              size: 20,
+              size: 20.sp,
             ),
-            const SizedBox(width: 14),
+            SizedBox(width: 14.w),
             Text(
               label,
               style: TextStyle(
                 color: iconColor ?? const Color(0xCCFFFFFF),
-                fontSize: 15,
+                fontSize: 15.sp,
                 fontWeight: FontWeight.w500,
               ),
             ),

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:MyKOG/models/text_resume.dart';
 import 'package:MyKOG/api/text_resume_api_service.dart';
+import 'package:MyKOG/services/content_refresher.dart';
 import 'package:MyKOG/theme.dart';
 import 'package:MyKOG/screens/text_resume_viewer_screen.dart';
 
@@ -20,6 +22,8 @@ class TextResumesScreen extends StatefulWidget {
 class _TextResumesScreenState extends State<TextResumesScreen> {
   final TextResumeApiService _apiService = TextResumeApiService();
   final TextEditingController _searchController = TextEditingController();
+
+  int _lastContentVersion = ContentRefresher.instance.version;
 
   List<TextResume> _allTextResumes = [];
   List<TextResume> _filteredTextResumes = [];
@@ -40,18 +44,33 @@ class _TextResumesScreenState extends State<TextResumesScreen> {
   void initState() {
     super.initState();
     _loadData();
+    // Recharger silencieusement quand le contenu change (push FCM / polling)
+    ContentRefresher.instance.addListener(_onContentRefreshed);
   }
 
   @override
   void dispose() {
+    ContentRefresher.instance.removeListener(_onContentRefreshed);
     _searchController.dispose();
     super.dispose();
   }
 
-  Future<void> _loadData() async {
-    setState(() {
-      _isLoading = true;
-    });
+  /// Nouveau contenu disponible → recharger les textes-résumés
+  void _onContentRefreshed() {
+    if (!mounted) return;
+    final currentVersion = ContentRefresher.instance.version;
+    if (currentVersion == _lastContentVersion) return;
+    _lastContentVersion = currentVersion;
+    debugPrint('📄 Nouveau contenu détecté → rechargement textes-résumés');
+    _loadData(silent: true);
+  }
+
+  Future<void> _loadData({bool silent = false}) async {
+    if (!silent) {
+      setState(() {
+        _isLoading = true;
+      });
+    }
 
     try {
       final textResumes = await _apiService.getAllTextResumes(
@@ -196,7 +215,7 @@ class _TextResumesScreenState extends State<TextResumesScreen> {
         children: [
           // Header avec recherche et contrôles
           Container(
-            padding: const EdgeInsets.fromLTRB(16, 60, 16, 16),
+            padding: EdgeInsets.fromLTRB(16.w, 60.h, 16.w, 16.h),
             decoration: BoxDecoration(
               color: MyKOGColors.primaryDark,
               boxShadow: [
@@ -281,12 +300,12 @@ class _TextResumesScreenState extends State<TextResumesScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16.h),
                 // Barre de recherche
                 Container(
                   decoration: BoxDecoration(
                     color: MyKOGColors.secondary,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(12.r),
                     border: Border.all(
                       color: MyKOGColors.accent.withValues(alpha: 0.2),
                       width: 1,
@@ -319,9 +338,9 @@ class _TextResumesScreenState extends State<TextResumesScreen> {
                             )
                           : null,
                       border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 16.w,
+                        vertical: 12.h,
                       ),
                     ),
                     onChanged: (value) => _filterTextResumes(),
@@ -334,10 +353,10 @@ class _TextResumesScreenState extends State<TextResumesScreen> {
           // Filtres
           Container(
             height: 50,
-            padding: const EdgeInsets.symmetric(vertical: 8),
+            padding: EdgeInsets.symmetric(vertical: 8.h),
             child: ListView(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: EdgeInsets.symmetric(horizontal: 16.w),
               children: [
                 _buildFilterChip('Catégorie', _selectedCategory, _categories,
                     (value) {
@@ -379,7 +398,7 @@ class _TextResumesScreenState extends State<TextResumesScreen> {
                       children: [
                         const CircularProgressIndicator(
                             color: MyKOGColors.accent),
-                        const SizedBox(height: 16),
+                        SizedBox(height: 16.h),
                         Text(
                           'Chargement...',
                           style: theme.textTheme.bodyMedium?.copyWith(
@@ -396,10 +415,10 @@ class _TextResumesScreenState extends State<TextResumesScreen> {
                           children: [
                             Icon(
                               Icons.description_outlined,
-                              size: 64,
+                              size: 64.sp,
                               color: MyKOGColors.textSecondary,
                             ),
-                            const SizedBox(height: 16),
+                            SizedBox(height: 16.h),
                             Text(
                               'Aucun texte résumé trouvé',
                               style: theme.textTheme.titleMedium?.copyWith(
@@ -428,11 +447,11 @@ class _TextResumesScreenState extends State<TextResumesScreen> {
   ) {
     return PopupMenuButton<String>(
       child: Container(
-        margin: const EdgeInsets.only(right: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        margin: EdgeInsets.only(right: 8.w),
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
         decoration: BoxDecoration(
           color: selected != null ? MyKOGColors.accent : MyKOGColors.secondary,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(20.r),
           border: Border.all(
             color: selected != null
                 ? MyKOGColors.accent
@@ -450,13 +469,13 @@ class _TextResumesScreenState extends State<TextResumesScreen> {
                     selected != null ? Colors.black : MyKOGColors.textSecondary,
                 fontWeight:
                     selected != null ? FontWeight.w600 : FontWeight.normal,
-                fontSize: 12,
+                fontSize: 12.sp,
               ),
             ),
-            const SizedBox(width: 4),
+            SizedBox(width: 4.w),
             Icon(
               Icons.arrow_drop_down,
-              size: 16,
+              size: 16.sp,
               color:
                   selected != null ? Colors.black : MyKOGColors.textSecondary,
             ),
@@ -486,7 +505,7 @@ class _TextResumesScreenState extends State<TextResumesScreen> {
 
   Widget _buildGridView() {
     return GridView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16.w),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         crossAxisSpacing: 16,
@@ -515,7 +534,7 @@ class _TextResumesScreenState extends State<TextResumesScreen> {
       child: Container(
         decoration: BoxDecoration(
           color: MyKOGColors.secondary,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(12.r),
           border: Border.all(
             color: MyKOGColors.accent.withValues(alpha: 0.2),
             width: 1,
@@ -529,7 +548,7 @@ class _TextResumesScreenState extends State<TextResumesScreen> {
               flex: 3,
               child: ClipRRect(
                 borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(12)),
+                    BorderRadius.vertical(top: Radius.circular(12.r)),
                 child: textResume.coverImageUrl.isNotEmpty
                     ? CachedNetworkImage(
                         imageUrl: textResume.coverImageUrl,
@@ -545,18 +564,18 @@ class _TextResumesScreenState extends State<TextResumesScreen> {
                         ),
                         errorWidget: (context, url, error) => Container(
                           color: MyKOGColors.secondary,
-                          child: const Icon(
+                          child: Icon(
                             Icons.description,
-                            size: 48,
+                            size: 48.sp,
                             color: MyKOGColors.textSecondary,
                           ),
                         ),
                       )
                     : Container(
                         color: MyKOGColors.secondary,
-                        child: const Icon(
+                        child: Icon(
                           Icons.description,
-                          size: 48,
+                          size: 48.sp,
                           color: MyKOGColors.textSecondary,
                         ),
                       ),
@@ -566,7 +585,7 @@ class _TextResumesScreenState extends State<TextResumesScreen> {
             Expanded(
               flex: 2,
               child: Padding(
-                padding: const EdgeInsets.all(12),
+                padding: EdgeInsets.all(12.w),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
@@ -580,7 +599,7 @@ class _TextResumesScreenState extends State<TextResumesScreen> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4.h),
                     Flexible(
                       child: Text(
                         textResume.speaker,
@@ -596,16 +615,16 @@ class _TextResumesScreenState extends State<TextResumesScreen> {
                       children: [
                         Icon(
                           Icons.visibility,
-                          size: 12,
+                          size: 12.sp,
                           color: MyKOGColors.textSecondary,
                         ),
-                        const SizedBox(width: 4),
+                        SizedBox(width: 4.w),
                         Text(
                           '${textResume.viewCount}',
                           style:
                               Theme.of(context).textTheme.bodySmall?.copyWith(
                                     color: MyKOGColors.textSecondary,
-                                    fontSize: 10,
+                                    fontSize: 10.sp,
                                   ),
                         ),
                         const Spacer(),
@@ -614,7 +633,7 @@ class _TextResumesScreenState extends State<TextResumesScreen> {
                           style:
                               Theme.of(context).textTheme.bodySmall?.copyWith(
                                     color: MyKOGColors.textSecondary,
-                                    fontSize: 10,
+                                    fontSize: 10.sp,
                                   ),
                         ),
                       ],
@@ -632,7 +651,7 @@ class _TextResumesScreenState extends State<TextResumesScreen> {
 
   Widget _buildCardView() {
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16.w),
       itemCount: _filteredTextResumes.length,
       itemBuilder: (context, index) {
         final textResume = _filteredTextResumes[index];
@@ -653,10 +672,10 @@ class _TextResumesScreenState extends State<TextResumesScreen> {
         );
       },
       child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
+        margin: EdgeInsets.only(bottom: 16.h),
         decoration: BoxDecoration(
           color: MyKOGColors.secondary,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(12.r),
           border: Border.all(
             color: MyKOGColors.accent.withValues(alpha: 0.2),
             width: 1,
@@ -667,16 +686,16 @@ class _TextResumesScreenState extends State<TextResumesScreen> {
             // Image
             ClipRRect(
               borderRadius:
-                  const BorderRadius.horizontal(left: Radius.circular(12)),
+                  BorderRadius.horizontal(left: Radius.circular(12.r)),
               child: textResume.coverImageUrl.isNotEmpty
                   ? CachedNetworkImage(
                       imageUrl: textResume.coverImageUrl,
-                      width: 120,
-                      height: 120,
+                      width: 120.w,
+                      height: 120.h,
                       fit: BoxFit.cover,
                       placeholder: (context, url) => Container(
-                        width: 120,
-                        height: 120,
+                        width: 120.w,
+                        height: 120.h,
                         color: MyKOGColors.secondary,
                         child: const Center(
                           child: CircularProgressIndicator(
@@ -685,23 +704,23 @@ class _TextResumesScreenState extends State<TextResumesScreen> {
                         ),
                       ),
                       errorWidget: (context, url, error) => Container(
-                        width: 120,
-                        height: 120,
+                        width: 120.w,
+                        height: 120.h,
                         color: MyKOGColors.secondary,
-                        child: const Icon(
+                        child: Icon(
                           Icons.description,
-                          size: 48,
+                          size: 48.sp,
                           color: MyKOGColors.textSecondary,
                         ),
                       ),
                     )
                   : Container(
-                      width: 120,
-                      height: 120,
+                      width: 120.w,
+                      height: 120.h,
                       color: MyKOGColors.secondary,
-                      child: const Icon(
+                      child: Icon(
                         Icons.description,
-                        size: 48,
+                        size: 48.sp,
                         color: MyKOGColors.textSecondary,
                       ),
                     ),
@@ -709,7 +728,7 @@ class _TextResumesScreenState extends State<TextResumesScreen> {
             // Contenu
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.all(16.w),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -722,7 +741,7 @@ class _TextResumesScreenState extends State<TextResumesScreen> {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8.h),
                     Text(
                       textResume.speaker,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -731,15 +750,15 @@ class _TextResumesScreenState extends State<TextResumesScreen> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8.h),
                     Row(
                       children: [
                         Icon(
                           Icons.visibility,
-                          size: 14,
+                          size: 14.sp,
                           color: MyKOGColors.textSecondary,
                         ),
-                        const SizedBox(width: 4),
+                        SizedBox(width: 4.w),
                         Text(
                           '${textResume.viewCount}',
                           style:
@@ -747,7 +766,7 @@ class _TextResumesScreenState extends State<TextResumesScreen> {
                                     color: MyKOGColors.textSecondary,
                                   ),
                         ),
-                        const SizedBox(width: 16),
+                        SizedBox(width: 16.w),
                         Text(
                           textResume.fileSizeText,
                           style:
@@ -774,7 +793,7 @@ class _TextResumesScreenState extends State<TextResumesScreen> {
 
   Widget _buildPreviewView() {
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16.w),
       itemCount: _filteredTextResumes.length,
       itemBuilder: (context, index) {
         final textResume = _filteredTextResumes[index];
@@ -795,11 +814,11 @@ class _TextResumesScreenState extends State<TextResumesScreen> {
         );
       },
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
+        margin: EdgeInsets.only(bottom: 12.h),
+        padding: EdgeInsets.all(16.w),
         decoration: BoxDecoration(
           color: MyKOGColors.secondary,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(12.r),
           border: Border.all(
             color: MyKOGColors.accent.withValues(alpha: 0.2),
             width: 1,
@@ -827,7 +846,7 @@ class _TextResumesScreenState extends State<TextResumesScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8.h),
             Text(
               textResume.speaker,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -836,7 +855,7 @@ class _TextResumesScreenState extends State<TextResumesScreen> {
             ),
             if (textResume.description != null &&
                 textResume.description!.isNotEmpty) ...[
-              const SizedBox(height: 8),
+              SizedBox(height: 8.h),
               Text(
                 textResume.description!,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -846,22 +865,22 @@ class _TextResumesScreenState extends State<TextResumesScreen> {
                 overflow: TextOverflow.ellipsis,
               ),
             ],
-            const SizedBox(height: 8),
+            SizedBox(height: 8.h),
             Row(
               children: [
                 Icon(
                   Icons.visibility,
-                  size: 14,
+                  size: 14.sp,
                   color: MyKOGColors.textSecondary,
                 ),
-                const SizedBox(width: 4),
+                SizedBox(width: 4.w),
                 Text(
                   '${textResume.viewCount}',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: MyKOGColors.textSecondary,
                       ),
                 ),
-                const SizedBox(width: 16),
+                SizedBox(width: 16.w),
                 Text(
                   textResume.fileSizeText,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(

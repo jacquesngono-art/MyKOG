@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:MyKOG/models/teaching.dart';
 import 'package:MyKOG/theme.dart';
+import 'package:MyKOG/widgets/resolved_artwork_image.dart';
 
 class CoverFlowList extends StatefulWidget {
   final List<Teaching> teachings;
@@ -86,13 +87,13 @@ class _CoverFlowListState extends State<CoverFlowList> {
     return GestureDetector(
       onTap: () => widget.onTeachingTap(teaching),
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 8),
+        margin: EdgeInsets.symmetric(horizontal: 8.w),
         child: Column(
           children: [
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(16.r),
                   boxShadow: [
                     BoxShadow(
                       color:
@@ -103,7 +104,7 @@ class _CoverFlowListState extends State<CoverFlowList> {
                   ],
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(16.r),
                   child: Stack(
                     children: [
                       teaching.artworkUrl.startsWith('assets/')
@@ -114,37 +115,27 @@ class _CoverFlowListState extends State<CoverFlowList> {
                               height: double.infinity,
                               errorBuilder: (context, error, stackTrace) => Container(
                                 color: MyKOGColors.secondary,
-                                child: const Center(
+                                child: Center(
                                   child: Icon(
                                     Icons.music_note,
                                     color: MyKOGColors.accent,
-                                    size: 32,
+                                    size: 32.sp,
                                   ),
                                 ),
                               ),
                             )
-                          : CachedNetworkImage(
-                              imageUrl: teaching.artworkUrl,
-                              fit: BoxFit.cover,
+                          : ResolvedArtworkImage(
+                              url: teaching.artworkUrl,
                               width: double.infinity,
                               height: double.infinity,
-                              placeholder: (context, url) => Container(
+                              fit: BoxFit.cover,
+                              placeholder: Container(
                                 color: MyKOGColors.secondary,
-                                child: const Center(
+                                child: Center(
                                   child: Icon(
                                     Icons.music_note,
                                     color: MyKOGColors.accent,
-                                    size: 32,
-                                  ),
-                                ),
-                              ),
-                              errorWidget: (context, url, error) => Container(
-                                color: MyKOGColors.secondary,
-                                child: const Center(
-                                  child: Icon(
-                                    Icons.music_note,
-                                    color: MyKOGColors.accent,
-                                    size: 32,
+                                    size: 32.sp,
                                   ),
                                 ),
                               ),
@@ -187,10 +178,10 @@ class _CoverFlowListState extends State<CoverFlowList> {
                                 ),
                               ],
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.play_arrow,
                               color: Colors.black,
-                              size: 20,
+                              size: 20.sp,
                             ),
                           ),
                         ).animate(delay: 200.ms).scale(),
@@ -200,11 +191,11 @@ class _CoverFlowListState extends State<CoverFlowList> {
                           top: 8,
                           left: 8,
                           child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 6, vertical: 2),
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 6.w, vertical: 2.h),
                             decoration: BoxDecoration(
                               color: MyKOGColors.success,
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(8.r),
                             ),
                             child: Text(
                               'NEW',
@@ -213,7 +204,7 @@ class _CoverFlowListState extends State<CoverFlowList> {
                                   .bodySmall
                                   ?.copyWith(
                                     color: Colors.white,
-                                    fontSize: 10,
+                                    fontSize: 10.sp,
                                     fontWeight: FontWeight.w600,
                                   ),
                             ),
@@ -231,10 +222,10 @@ class _CoverFlowListState extends State<CoverFlowList> {
                               color: MyKOGColors.accent,
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.star,
                               color: Colors.black,
-                              size: 14,
+                              size: 14.sp,
                             ),
                           ),
                         ),
@@ -244,7 +235,7 @@ class _CoverFlowListState extends State<CoverFlowList> {
               ),
             ),
             if (isCenter) ...[
-              const SizedBox(height: 8),
+              SizedBox(height: 8.h),
               Text(
                 teaching.title,
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
@@ -253,7 +244,7 @@ class _CoverFlowListState extends State<CoverFlowList> {
                     ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 2),
+              SizedBox(height: 2.h),
               Text(
                 teaching.speaker,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(

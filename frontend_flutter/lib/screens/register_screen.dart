@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 
@@ -36,7 +37,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
+              padding: EdgeInsets.all(24.w),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -48,13 +49,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     height: 1.2,
                   ),
                 ).animate().fadeIn().slideY(),
-                const SizedBox(height: 40),
-                _inputField("Nom", nameCtrl),
-                const SizedBox(height: 20),
-                _phoneFieldWithCountry(),
-                const SizedBox(height: 35),
-                _registerButton(context),
-                const SizedBox(height: 16),
+              SizedBox(height: 40.h),
+              _inputField("Nom", nameCtrl),
+              SizedBox(height: 20.h),
+              _phoneFieldWithCountry(),
+              SizedBox(height: 35.h),
+              _registerButton(context),
+              SizedBox(height: 16.h),
               ],
             ),
           ),
@@ -65,16 +66,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   Widget _inputField(String label, TextEditingController ctrl, {bool isPhone = false}) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 14),
+      padding: EdgeInsets.symmetric(vertical: 4.h, horizontal: 14.w),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(16.r),
         border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
       ),
       child: TextField(
         controller: ctrl,
         keyboardType: isPhone ? TextInputType.phone : TextInputType.text,
-        style: const TextStyle(color: Colors.white, fontSize: 16),
+        style: TextStyle(color: Colors.white, fontSize: 16.sp),
         cursorColor: MyKOGColors.accent,
         decoration: InputDecoration(
           labelText: label,
@@ -92,10 +93,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   Widget _phoneFieldWithCountry() {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 14),
+      padding: EdgeInsets.symmetric(vertical: 4.h, horizontal: 14.w),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(16.r),
         border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
       ),
       child: Row(
@@ -104,44 +105,44 @@ class _RegisterScreenState extends State<RegisterScreen> {
           GestureDetector(
             onTap: () => _showCountryPicker(),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(8.r),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     selectedCountry.flag,
-                    style: const TextStyle(fontSize: 20),
+                    style: TextStyle(fontSize: 20.sp),
                   ),
-                  const SizedBox(width: 6),
+                  SizedBox(width: 6.w),
                   Text(
                     selectedCountry.dialCode,
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.9),
-                      fontSize: 16,
+                      fontSize: 16.sp,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                  const SizedBox(width: 4),
+                  SizedBox(width: 4.w),
                   Icon(
                     Icons.arrow_drop_down,
                     color: Colors.white.withValues(alpha: 0.7),
-                    size: 20,
+                    size: 20.sp,
                   ),
                 ],
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12.w),
           // Champ de saisie du numéro
           Expanded(
             child: TextField(
               controller: phoneCtrl,
               keyboardType: TextInputType.phone,
-              style: const TextStyle(color: Colors.white, fontSize: 16),
+              style: TextStyle(color: Colors.white, fontSize: 16.sp),
               cursorColor: MyKOGColors.accent,
               decoration: InputDecoration(
                 labelText: "Téléphone",
@@ -161,8 +162,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: MyKOGColors.primaryDark,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
       ),
       isScrollControlled: true,
       builder: (context) => StatefulBuilder(
@@ -172,7 +173,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
           return Container(
             height: MediaQuery.of(context).size.height * 0.7,
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(16.w),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -183,13 +184,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16.h),
                 // Barre de recherche
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: EdgeInsets.symmetric(horizontal: 16.w),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(12.r),
                   ),
                   child: TextField(
                     autofocus: true,
@@ -219,7 +220,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     },
                   ),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16.h),
                 // Liste des pays
                 Expanded(
                   child: filteredCountries.isEmpty
@@ -228,7 +229,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             "Aucun pays trouvé",
                             style: TextStyle(
                               color: Colors.white.withValues(alpha: 0.7),
-                              fontSize: 16,
+                              fontSize: 16.sp,
                             ),
                           ),
                         )
@@ -246,22 +247,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 Navigator.pop(context);
                               },
                               child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    vertical: 12, horizontal: 16),
-                                margin: const EdgeInsets.only(bottom: 4),
+                                padding: EdgeInsets.symmetric(
+                                    vertical: 12.h, horizontal: 16.w),
+                                margin: EdgeInsets.only(bottom: 4.h),
                                 decoration: BoxDecoration(
                                   color: isSelected
                                       ? MyKOGColors.accent.withValues(alpha: 0.2)
                                       : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(12.r),
                                 ),
                                 child: Row(
                                   children: [
                                     Text(
                                       country.flag,
-                                      style: const TextStyle(fontSize: 24),
+                                      style: TextStyle(fontSize: 24.sp),
                                     ),
-                                    const SizedBox(width: 12),
+          SizedBox(width: 12.w),
                                     Expanded(
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -270,7 +271,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                             country.name,
                                             style: TextStyle(
                                               color: Colors.white,
-                                              fontSize: 16,
+                                              fontSize: 16.sp,
                                               fontWeight: isSelected
                                                   ? FontWeight.bold
                                                   : FontWeight.normal,
@@ -280,7 +281,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                             country.dialCode,
                                             style: TextStyle(
                                               color: Colors.white.withValues(alpha: 0.7),
-                                              fontSize: 14,
+                                              fontSize: 14.sp,
                                             ),
                                           ),
                                         ],
@@ -290,7 +291,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                       Icon(
                                         Icons.check_circle,
                                         color: MyKOGColors.accent,
-                                        size: 20,
+                                        size: 20.sp,
                                       ),
                                   ],
                                 ),
@@ -361,18 +362,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
             },
       child: AnimatedContainer(
         duration: 300.ms,
-        padding: const EdgeInsets.symmetric(vertical: 18),
+        padding: EdgeInsets.symmetric(vertical: 18.h),
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: loading ? Colors.white38 : MyKOGColors.accent,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(16.r),
         ),
         child: Text(
           loading ? "Creating..." : "Create Account",
-          style: const TextStyle(
+          style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.w700,
-            fontSize: 18,
+            fontSize: 18.sp,
           ),
         ),
       ).animate().fadeIn().slideY(),

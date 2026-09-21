@@ -6,10 +6,17 @@ const createAnnonce = async (req, res) => {
     const { nom, description } = req.body;
 
     // Vérifier que les champs sont remplis
-    if (!nom || !description) {
-      return res.status(400).json({
-        error: 'Nom et description sont requis'
-      });
+    if (!nom || !nom.trim()) {
+      return res.status(400).json({ error: 'Le nom de l\'annonce est requis' });
+    }
+    if (!description || !description.trim()) {
+      return res.status(400).json({ error: 'La description est requise' });
+    }
+    if (nom.length > 200) {
+      return res.status(400).json({ error: 'Le nom ne peut pas dépasser 200 caractères' });
+    }
+    if (description.length > 5000) {
+      return res.status(400).json({ error: 'La description ne peut pas dépasser 5000 caractères' });
     }
 
     // Créer l'objet annonce
@@ -75,7 +82,40 @@ const getAllAnnonces = async (req, res) => {
   }
 };
 
+const deleteAllAnnonces = async (req, res) => {
+  try {
+    const snapshot = await db.collection('annonces').get();
+    const batchSize = snapshot.size;
+    if (batchSize === 0) {
+      return res.json({ message: 'Aucune annonce à supprimer', deleted: 0 });
+    }
+    const deletePromises = snapshot.docs.map(doc => doc.ref.delete());
+    await Promise.all(deletePromises);
+    res.json({ message: `${batchSize} annonce(s) supprimée(s)`, deleted: batchSize });
+  } catch (error) {
+    console.error('Erreur suppression toutes les annonces:', error);
+    res.status(500).json({ error: 'Erreur lors de la suppression des annonces' });
+  }
+};
+
+const deleteAnnonce = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const doc = await db.collection('annonces').doc(id).get();
+    if (!doc.exists) {
+      return res.status(404).json({ error: 'Annonce non trouvée' });
+    }
+    await doc.ref.delete();
+    res.json({ id, message: 'Annonce supprimée avec succès' });
+  } catch (error) {
+    console.error('Erreur lors de la suppression:', error);
+    res.status(500).json({ error: 'Erreur lors de la suppression de l\'annonce' });
+  }
+};
+
 module.exports = {
   createAnnonce,
-  getAllAnnonces
+  getAllAnnonces,
+  deleteAnnonce,
+  deleteAllAnnonces
 };

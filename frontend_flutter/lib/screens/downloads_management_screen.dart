@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:MyKOG/services/download_service.dart';
 import 'package:MyKOG/services/file_storage_service.dart';
 import 'package:MyKOG/l10n/app_localizations.dart';
@@ -94,19 +95,19 @@ class _DownloadsManagementScreenState extends State<DownloadsManagementScreen> {
               child: CircularProgressIndicator(color: MyKOGColors.accent),
             )
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(16.w),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Carte de statistiques
                   _buildStatsCard(theme),
                   
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24.h),
                   
                   // Informations
                   _buildInfoSection(theme),
                   
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24.h),
                   
                   // Actions
                   _buildActionsSection(),
@@ -120,7 +121,7 @@ class _DownloadsManagementScreenState extends State<DownloadsManagementScreen> {
     final l10n = AppLocalizations.of(context)!;
     
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(20.w),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -130,7 +131,7 @@ class _DownloadsManagementScreenState extends State<DownloadsManagementScreen> {
             MyKOGColors.accent,
           ],
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(16.r),
         boxShadow: [
           BoxShadow(
             color: MyKOGColors.accent.withOpacity(0.3),
@@ -147,9 +148,9 @@ class _DownloadsManagementScreenState extends State<DownloadsManagementScreen> {
               Icon(
                 Icons.storage,
                 color: Colors.white,
-                size: 32,
+                size: 32.w,
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12.w),
               Text(
                 l10n.storageUsed,
                 style: theme.textTheme.titleLarge?.copyWith(
@@ -159,7 +160,7 @@ class _DownloadsManagementScreenState extends State<DownloadsManagementScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20.h),
           
           // Taille totale
           Text(
@@ -169,7 +170,7 @@ class _DownloadsManagementScreenState extends State<DownloadsManagementScreen> {
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8.h),
           
           // Détails
           Row(
@@ -179,7 +180,7 @@ class _DownloadsManagementScreenState extends State<DownloadsManagementScreen> {
                 label: 'Enseignements',
                 value: '${_stats?['totalTeachings'] ?? 0}',
               ),
-              const SizedBox(width: 24),
+              SizedBox(width: 24.w),
               _buildStatItem(
                 icon: Icons.folder,
                 label: 'Fichiers',
@@ -199,13 +200,13 @@ class _DownloadsManagementScreenState extends State<DownloadsManagementScreen> {
   }) {
     return Row(
       children: [
-        Icon(icon, color: Colors.white.withOpacity(0.9), size: 16),
-        const SizedBox(width: 6),
+        Icon(icon, color: Colors.white.withOpacity(0.9), size: 16.sp),
+        SizedBox(width: 6.w),
         Text(
           '$value $label',
           style: TextStyle(
             color: Colors.white.withOpacity(0.9),
-            fontSize: 14,
+            fontSize: 14.sp,
           ),
         ),
       ],
@@ -223,7 +224,7 @@ class _DownloadsManagementScreenState extends State<DownloadsManagementScreen> {
             fontWeight: FontWeight.bold,
           ),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12.h),
         
         _buildInfoTile(
           icon: Icons.info_outline,
@@ -256,31 +257,31 @@ class _DownloadsManagementScreenState extends State<DownloadsManagementScreen> {
     required ThemeData theme,
   }) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      margin: EdgeInsets.only(bottom: 12.h),
+      padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
         color: MyKOGColors.secondary,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(12.r),
         border: Border.all(
           color: MyKOGColors.accent.withOpacity(0.2),
-          width: 1,
+          width: 1.w,
         ),
       ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: EdgeInsets.all(8.w),
             decoration: BoxDecoration(
               color: MyKOGColors.accent.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(8.r),
             ),
             child: Icon(
               icon,
               color: MyKOGColors.accent,
-              size: 24,
+              size: 24.sp,
             ),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: 16.w),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -291,7 +292,7 @@ class _DownloadsManagementScreenState extends State<DownloadsManagementScreen> {
                     color: MyKOGColors.textSecondary,
                   ),
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: 4.h),
                 Text(
                   value,
                   style: theme.textTheme.titleMedium?.copyWith(
@@ -319,14 +320,14 @@ class _DownloadsManagementScreenState extends State<DownloadsManagementScreen> {
           style: OutlinedButton.styleFrom(
             foregroundColor: MyKOGColors.accent,
             side: BorderSide(color: MyKOGColors.accent),
-            padding: const EdgeInsets.symmetric(vertical: 16),
+            padding: EdgeInsets.symmetric(vertical: 16.h),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(12.r),
             ),
           ),
         ),
         
-        const SizedBox(height: 12),
+        SizedBox(height: 12.h),
         
         // Bouton supprimer tout
         ElevatedButton.icon(
@@ -336,24 +337,24 @@ class _DownloadsManagementScreenState extends State<DownloadsManagementScreen> {
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.red,
             foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 16),
+            padding: EdgeInsets.symmetric(vertical: 16.h),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(12.r),
             ),
           ),
         ),
         
-        const SizedBox(height: 24),
+        SizedBox(height: 24.h),
         
         // Note d'information
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.all(16.w),
           decoration: BoxDecoration(
             color: MyKOGColors.accent.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(12.r),
             border: Border.all(
               color: MyKOGColors.accent.withOpacity(0.3),
-              width: 1,
+              width: 1.w,
             ),
           ),
           child: Row(
@@ -362,16 +363,16 @@ class _DownloadsManagementScreenState extends State<DownloadsManagementScreen> {
               Icon(
                 Icons.lightbulb_outline,
                 color: MyKOGColors.accent,
-                size: 20,
+                size: 20.sp,
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12.w),
               Expanded(
                 child: Text(
                   'Les enseignements téléchargés sont disponibles hors ligne. '
                   'Vous pouvez les écouter sans connexion internet.',
                   style: TextStyle(
                     color: MyKOGColors.textSecondary,
-                    fontSize: 13,
+                    fontSize: 13.sp,
                   ),
                 ),
               ),

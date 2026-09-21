@@ -6,9 +6,12 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'package:MyKOG/providers/audio_player_provider.dart';
 import 'package:MyKOG/providers/user_provider.dart';
-import 'package:MyKOG/services/storage_service.dart';
+import 'package:MyKOG/providers/theme_provider.dart';
+import 'package:MyKOG/providers/language_provider.dart';
+import 'package:MyKOG/providers/teaching_provider.dart';
 import 'package:MyKOG/services/teaching_service.dart';
 import 'package:MyKOG/services/download_service.dart';
+import 'package:MyKOG/services/content_refresher.dart';
 import 'package:MyKOG/l10n/app_localizations.dart';
 
 import 'package:MyKOG/screens/home_screen.dart';
@@ -77,18 +80,35 @@ class _MainAppState extends State<MainApp> with TickerProviderStateMixin {
     final startTime = DateTime.now();
 
     try {
-      // ⚡ Phase 1 : Initialisations CRITIQUES uniquement (rapide)
-      await StorageService.init();
+      // ⚡ Phase 1 : Hive + Storage déjà initialisés dans main() avant runApp.
+      // Recharger quand même les préférences (langue / thème) pour couvrir
+      // le cas d'un hot restart où les providers ont été construits avant l'init.
+      Provider.of<LanguageProvider>(context, listen: false).loadLanguage();
+      Provider.of<ThemeProvider>(context, listen: false).loadTheme();
 
       final userProvider = Provider.of<UserProvider>(context, listen: false);
       final audioProvider =
           Provider.of<AudioPlayerProvider>(context, listen: false);
 
       // ⚡ Paralléliser user + audio + downloads (indépendants)
+      // Timeout global de 15s : quoi qu'il arrive, l'écran de chargement
+      // doit se libérer (les appels réseau peuvent prendre 30s chacun sinon)
       await Future.wait([
-        userProvider.initialize(),
-        audioProvider.initialize(),
-        DownloadService.initialize(),
+        userProvider
+            .initialize()
+            .timeout(const Duration(seconds: 15))
+            .catchError((e) {
+          debugPrint('⚠️ Init userProvider: $e');
+        }),
+        audioProvider
+            .initialize()
+            .timeout(const Duration(seconds: 15))
+            .catchError((e) {
+          debugPrint('⚠️ Init audioProvider: $e');
+        }),
+        DownloadService.initialize().catchError((e) {
+          debugPrint('⚠️ Init DownloadService: $e');
+        }),
       ]);
 
       // ⚡ Temps minimum réduit : 2 secondes au lieu de 12
@@ -110,6 +130,17 @@ class _MainAppState extends State<MainApp> with TickerProviderStateMixin {
 
       // ⚡ Phase 2 : Services NON-CRITIQUES en arrière-plan (après affichage UI)
       _initBackgroundServices();
+
+      // ⚡ Démarrer le rafraîchissement automatique du contenu :
+      // push FCM (nouvel enseignement) → reload immédiat, + polling 3 min,
+      // + re-sync au retour au premier plan. Silencieux, aucune perte d'état.
+      try {
+        ContentRefresher.instance.start(
+          Provider.of<TeachingProvider>(context, listen: false),
+        );
+      } catch (e) {
+        debugPrint('⚠️ Démarrage ContentRefresher: $e');
+      }
     } catch (e) {
       debugPrint("Initialization failed: $e");
 
@@ -193,21 +224,24 @@ class _MainAppState extends State<MainApp> with TickerProviderStateMixin {
     }
     return Scaffold(
       backgroundColor: MyKOGColors.primaryDark,
-      body: FadeTransition(
-        opacity: _fadeAnimation,
-        child: Stack(
-          children: [
-            IndexedStack(
-              index: _currentIndex,
-              children: _screens,
-            ),
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 70.h,
-              child: const MiniPlayerImproved(),
-            ),
-          ],
+      resizeToAvoidBottomInset: false,
+      body: SafeArea(
+        child: FadeTransition(
+          opacity: _fadeAnimation,
+          child: Stack(
+            children: [
+              IndexedStack(
+                index: _currentIndex,
+                children: _screens,
+              ),
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 70.h,
+                child: const MiniPlayerImproved(),
+              ),
+            ],
+          ),
         ),
       ),
       bottomNavigationBar: _buildBottomNavigationBar(),

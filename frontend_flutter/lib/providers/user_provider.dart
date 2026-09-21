@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:MyKOG/models/user.dart';
+import 'package:MyKOG/models/favorite_package.dart';
 import 'package:MyKOG/services/user_service.dart';
 
 class UserProvider extends ChangeNotifier {
@@ -73,6 +74,32 @@ class UserProvider extends ChangeNotifier {
 
   Future<void> addToFavorites(String id) async {
     await UserService.addToFavorites(id);
+    await loadUser();
+  }
+
+  Future<void> addMultipleFavorites(List<String> ids) async {
+    await UserService.addMultipleFavorites(ids);
+    await loadUser();
+  }
+
+  // -----------------------------
+  // FAVORITE PACKAGES
+  // -----------------------------
+  List<FavoritePackage> get favoritePackages =>
+      _currentUser?.favoritePackages ?? [];
+
+  Future<void> createFavoritePackage(String name, List<String> teachingIds) async {
+    await UserService.createFavoritePackage(name, teachingIds);
+    await loadUser();
+  }
+
+  Future<void> removeFavoritePackage(String packageId) async {
+    await UserService.removeFavoritePackage(packageId);
+    await loadUser();
+  }
+
+  Future<void> renameFavoritePackage(String packageId, String newName) async {
+    await UserService.renameFavoritePackage(packageId, newName);
     await loadUser();
   }
 

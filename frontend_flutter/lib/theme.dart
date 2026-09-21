@@ -23,6 +23,9 @@ class MyKOGColors {
   // Glass Effect
   static const glassEffect = Color(0x20FFFFFF);
   
+  // Warning (amber/orange)
+  static const warning = Color(0xFFf59e0b);
+
   // Error
   static const error = Color(0xFFe22134);
 }

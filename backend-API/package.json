@@ -25,6 +25,7 @@
     "firebase-admin": "^13.6.0",
     "livekit-server-sdk": "^2.15.1",
     "multer": "^2.0.2",
+    "node-media-server": "^4.2.8",
     "multer-storage-cloudinary": "^4.0.0",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.0"

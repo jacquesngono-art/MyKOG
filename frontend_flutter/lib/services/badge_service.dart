@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:MyKOG/services/hive_storage_service.dart';
 
 class BadgeService extends ChangeNotifier {
   static final BadgeService _instance = BadgeService._internal();
@@ -20,19 +20,29 @@ class BadgeService extends ChangeNotifier {
   /// Initialiser le service
   Future<void> initialize() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      
-      // Charger les IDs déjà vus
-      final seenTeachings = prefs.getStringList(_keySeenTeachings) ?? [];
-      final seenCalendar = prefs.getStringList(_keySeenCalendarEvents) ?? [];
-      
-      _seenTeachingIds = seenTeachings.toSet();
-      _seenCalendarEventIds = seenCalendar.toSet();
-      
+      // Charger les IDs déjà vus (stockés sous forme de liste JSON en Hive)
+      _seenTeachingIds = _loadIdList(_keySeenTeachings);
+      _seenCalendarEventIds = _loadIdList(_keySeenCalendarEvents);
+
       debugPrint('✅ BadgeService initialisé');
     } catch (e) {
       debugPrint('❌ Erreur initialisation BadgeService: $e');
     }
+  }
+
+  static Set<String> _loadIdList(String key) {
+    final value = HiveStorageService.get(key);
+    if (value is List) {
+      return value.map((e) => e.toString()).toSet();
+    }
+    if (value is String && value.isNotEmpty) {
+      return value.split(',').where((e) => e.isNotEmpty).toSet();
+    }
+    return {};
+  }
+
+  static Future<void> _saveIdList(String key, Set<String> ids) async {
+    await HiveStorageService.storeString(key, ids.join(','));
   }
 
   /// Vérifier s'il y a de nouveaux enseignements (publiés dans les 2 derniers jours)
@@ -109,18 +119,16 @@ class BadgeService extends ChangeNotifier {
   /// Marquer les enseignements comme vus (quand on clique sur l'icône Browse)
   Future<void> markTeachingsAsSeen(List<String> teachingIds) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      
       // Ajouter les IDs aux enseignements vus
       _seenTeachingIds.addAll(teachingIds);
-      
+
       // Sauvegarder
-      await prefs.setStringList(_keySeenTeachings, _seenTeachingIds.toList());
-      
+      await _saveIdList(_keySeenTeachings, _seenTeachingIds);
+
       // Mettre à jour le badge
       _hasNewTeachings = false;
       notifyListeners();
-      
+
       debugPrint('✅ Enseignements marqués comme vus');
     } catch (e) {
       debugPrint('❌ Erreur marquage enseignements: $e');
@@ -130,18 +138,16 @@ class BadgeService extends ChangeNotifier {
   /// Marquer les événements calendrier comme vus (quand on clique sur l'icône Calendar)
   Future<void> markCalendarEventsAsSeen(List<String> eventIds) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      
       // Ajouter les IDs aux événements vus
       _seenCalendarEventIds.addAll(eventIds);
-      
+
       // Sauvegarder
-      await prefs.setStringList(_keySeenCalendarEvents, _seenCalendarEventIds.toList());
-      
+      await _saveIdList(_keySeenCalendarEvents, _seenCalendarEventIds);
+
       // Mettre à jour le badge
       _hasNewCalendarEvents = false;
       notifyListeners();
-      
+
       debugPrint('✅ Événements calendrier marqués comme vus');
     } catch (e) {
       debugPrint('❌ Erreur marquage événements: $e');
@@ -151,15 +157,14 @@ class BadgeService extends ChangeNotifier {
   /// Réinitialiser tous les badges (optionnel, pour tests)
   Future<void> resetAllBadges() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(_keySeenTeachings);
-      await prefs.remove(_keySeenCalendarEvents);
-      
+      await HiveStorageService.delete(_keySeenTeachings);
+      await HiveStorageService.delete(_keySeenCalendarEvents);
+
       _seenTeachingIds.clear();
       _seenCalendarEventIds.clear();
       _hasNewTeachings = false;
       _hasNewCalendarEvents = false;
-      
+
       notifyListeners();
       debugPrint('✅ Tous les badges réinitialisés');
     } catch (e) {

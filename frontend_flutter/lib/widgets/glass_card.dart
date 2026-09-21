@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:MyKOG/theme.dart';
 
 class GlassCard extends StatelessWidget {
@@ -37,7 +38,7 @@ class GlassCard extends StatelessWidget {
               color: isDark
                   ? MyKOGColors.accent.withValues(alpha: 0.2)
                   : Colors.grey.withValues(alpha: 0.3),
-              width: 0.5,
+              width: 0.5.w,
             ),
       ),
       child: ClipRRect(

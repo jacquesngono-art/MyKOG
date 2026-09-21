@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/foundation.dart';
+import 'package:MyKOG/services/hive_storage_service.dart';
 
 class ThemeProvider with ChangeNotifier {
   ThemeMode _themeMode = ThemeMode.dark;
@@ -9,13 +10,17 @@ class ThemeProvider with ChangeNotifier {
     _loadThemeMode();
   }
 
+  /// Recharger le thème depuis Hive (appelé après l'init de Hive)
+  Future<void> loadTheme() async {
+    await _loadThemeMode();
+  }
+
   ThemeMode get themeMode => _themeMode;
   bool get isDarkMode => _themeMode == ThemeMode.dark;
 
   Future<void> _loadThemeMode() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final savedMode = prefs.getString(_themeModeKey);
+      final savedMode = HiveStorageService.getString(_themeModeKey);
       if (savedMode != null) {
         _themeMode = savedMode == 'dark' ? ThemeMode.dark : ThemeMode.light;
         notifyListeners();
@@ -28,10 +33,12 @@ class ThemeProvider with ChangeNotifier {
   Future<void> toggleTheme(bool isDark) async {
     _themeMode = isDark ? ThemeMode.dark : ThemeMode.light;
     notifyListeners();
-    
+
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_themeModeKey, isDark ? 'dark' : 'light');
+      await HiveStorageService.storeString(
+        _themeModeKey,
+        isDark ? 'dark' : 'light',
+      );
     } catch (e) {
       debugPrint('Error saving theme mode: $e');
     }

@@ -10,7 +10,7 @@ import 'package:MyKOG/theme.dart';
 import 'package:MyKOG/widgets/glass_card.dart';
 import 'package:MyKOG/screens/language_selection_screen.dart';
 import 'package:MyKOG/screens/downloads_management_screen.dart';
-import 'package:MyKOG/widgets/connection_mode_selector.dart';
+import 'package:MyKOG/services/download_service.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -45,11 +45,6 @@ class ProfileScreen extends StatelessWidget {
 
                 // Settings section
                 _buildSettingsSection(context, theme, userProvider),
-
-                SizedBox(height: 24.h),
-
-                // Network configuration
-                const ConnectionModeSelector(),
 
                 SizedBox(height: 100.h), // Bottom padding for mini player
               ],
@@ -209,7 +204,7 @@ class ProfileScreen extends StatelessWidget {
               context,
               theme,
               'Downloaded',
-              user.downloadedTeachingIds.length.toString(),
+              DownloadService.getDownloadedTeachingIds().length.toString(),
               Icons.download,
               MyKOGColors.success,
             ).animate(delay: 600.ms).fadeIn().slideX(),
@@ -627,7 +622,7 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16.h),
           TextField(
             controller: _emailController,
             style: TextStyle(color: theme.colorScheme.onSurface),

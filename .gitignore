@@ -1,0 +1,40 @@
+# Secrets - ne jamais commiter
+.env
+.env.local
+.env.*.local
+.env.production
+backend-API/.env.render
+
+# Dépendances
+node_modules/
+
+# HLS / médias générés
+hls_output/
+backend-API/hls_output/
+*.m3u8
+*.ts
+
+# Logs
+*.log
+npm-debug.log*
+
+# Build
+dist/
+build/
+.next/
+
+# OS / éditeur
+.DS_Store
+Thumbs.db
+*.swp
+
+# Dart / Flutter
+.dart_tool/
+.packages
+build/ios/
+build/android/
+*.iml
+
+# LiveKit
+livekit.log
+backend-API/livekit.log

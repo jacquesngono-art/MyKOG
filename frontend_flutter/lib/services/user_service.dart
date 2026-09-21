@@ -1,16 +1,89 @@
+import 'dart:convert';
 import 'package:MyKOG/models/user.dart';
+import 'package:MyKOG/models/favorite_package.dart';
 import 'package:MyKOG/api/user_api_service.dart';
+import 'package:MyKOG/services/hive_storage_service.dart';
 import 'package:flutter/foundation.dart';
 
 class UserService {
-  // Simule une base de données locale pour l'exemple
   static User? _fakeUser;
   static final UserApiService _apiService = UserApiService();
 
+  // Clé Hive (HiveStorageService) pour la persistance locale
+  static const String _localUserKey = 'local_user_data';
+
+  // File d'attente FIFO pour sérialiser les sync backend (éviter les lost updates)
+  static Future<void> _syncQueue = Future.value();
+
   // ---------------------------------------
-  // RÉCUPÉRER L’UTILISATEUR COURANT
+  // PERSISTANCE LOCALE (Spotify-like)
+  // ---------------------------------------
+  static Future<void> _saveLocal() async {
+    if (_fakeUser == null) return;
+    try {
+      final json = jsonEncode(_fakeUser!.toJson());
+      await HiveStorageService.storeString(_localUserKey, json);
+    } catch (e) {
+      debugPrint('⚠️ Erreur sauvegarde locale user: $e');
+    }
+  }
+
+  static Future<User?> _loadLocal() async {
+    try {
+      final json = HiveStorageService.getString(_localUserKey);
+      if (json != null && json.isNotEmpty) {
+        final map = jsonDecode(json) as Map<String, dynamic>;
+        return User.fromJson(map);
+      }
+    } catch (e) {
+      debugPrint('⚠️ Erreur chargement local user: $e');
+    }
+    return null;
+  }
+
+  /// Sync backend en arrière-plan (non-bloquant), sérialisée en FIFO
+  static Future<void> _syncToBackend() {
+    if (_fakeUser == null) return Future.value();
+    final currentUser = _fakeUser!;
+    _syncQueue = _syncQueue.then((_) => _performSync(currentUser)).catchError((e) {
+      debugPrint('⚠️ Erreur sync backend: $e');
+    });
+    return _syncQueue;
+  }
+
+  static Future<void> _performSync(User snapshot) async {
+    try {
+      final savedUser = await _apiService.createOrUpdateUser(snapshot);
+      // Ne pas écraser les données locales (favoris packages déjà inclus dans snapshot)
+      _fakeUser = savedUser.copyWith(
+        favoritePackages: snapshot.favoritePackages,
+        downloadedTeachingIds: snapshot.downloadedTeachingIds,
+        recentlyPlayedIds: snapshot.recentlyPlayedIds,
+        favoriteTeachingIds: snapshot.favoriteTeachingIds,
+      );
+      await _saveLocal();
+    } catch (e) {
+      debugPrint('⚠️ Erreur sync backend: $e');
+    }
+  }
+
+  /// Synchroniser la liste des téléchargements locaux vers le user
+  static Future<void> syncDownloadedTeachingIds(List<String> ids) async {
+    if (_fakeUser == null) return;
+    _fakeUser = _fakeUser!.copyWith(
+      downloadedTeachingIds: List.from(ids),
+      updatedAt: DateTime.now(),
+    );
+    await _saveLocal();
+    _syncToBackend();
+  }
+
+  // ---------------------------------------
+  // RÉCUPÉRER L'UTILISATEUR COURANT
   // ---------------------------------------
   static Future<User?> getCurrentUser() async {
+    // Charger depuis le local d'abord (offline-first)
+    _fakeUser ??= await _loadLocal();
     return _fakeUser;
   }
 
@@ -18,6 +91,15 @@ class UserService {
   // INITIALISER UN USER PAR DÉFAUT
   // ---------------------------------------
   static Future<void> initializeDefaultUser() async {
+    // Essayer de charger depuis le local d'abord
+    final localUser = await _loadLocal();
+    if (localUser != null) {
+      _fakeUser = localUser;
+      debugPrint('✅ Utilisateur restauré depuis le stockage local');
+      return;
+    }
+
+    // Sinon créer un user par défaut et le persister
     _fakeUser = User(
       id: "default-user",
       name: "Invité",
@@ -30,6 +112,7 @@ class UserService {
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
     );
+    await _saveLocal();
   }
 
   // ---------------------------------------
@@ -37,16 +120,9 @@ class UserService {
   // ---------------------------------------
   static Future<void> updateUser(User user) async {
     _fakeUser = user.copyWith(updatedAt: DateTime.now());
-    
-    // Envoyer les données au backend
-    try {
-      final updatedUser = await _apiService.createOrUpdateUser(_fakeUser!);
-      _fakeUser = updatedUser;
-      debugPrint('✅ Utilisateur synchronisé avec le backend');
-    } catch (e) {
-      debugPrint('⚠️ Erreur synchronisation utilisateur: $e');
-      // Continuer même en cas d'erreur (mode offline)
-    }
+    await _saveLocal();
+    // Sync backend en arrière-plan
+    _syncToBackend();
   }
 
   // ----------------------------------------------------------
@@ -66,13 +142,82 @@ class UserService {
       favoriteTeachingIds: list,
       updatedAt: DateTime.now(),
     );
-    
-    // Synchroniser avec le backend
-    try {
-      await _apiService.createOrUpdateUser(_fakeUser!);
-    } catch (e) {
-      debugPrint('⚠️ Erreur synchronisation favoris: $e');
+    await _saveLocal();
+    _syncToBackend();
+  }
+
+  static Future<void> addMultipleFavorites(List<String> ids) async {
+    if (_fakeUser == null) return;
+
+    final list = List<String>.from(_fakeUser!.favoriteTeachingIds);
+    for (final id in ids) {
+      if (!list.contains(id)) list.add(id);
     }
+
+    _fakeUser = _fakeUser!.copyWith(
+      favoriteTeachingIds: list,
+      updatedAt: DateTime.now(),
+    );
+    await _saveLocal();
+    _syncToBackend();
+  }
+
+  // ----------------------------------------------------------
+  // FAVORITE PACKAGES
+  // ----------------------------------------------------------
+  static Future<void> createFavoritePackage(String name, List<String> teachingIds) async {
+    if (_fakeUser == null) return;
+
+    final package = FavoritePackage(
+      id: 'pkg-${DateTime.now().millisecondsSinceEpoch}',
+      name: name,
+      teachingIds: teachingIds,
+      createdAt: DateTime.now(),
+    );
+
+    final packages = List<FavoritePackage>.from(_fakeUser!.favoritePackages)
+      ..add(package);
+
+    _fakeUser = _fakeUser!.copyWith(
+      favoritePackages: packages,
+      updatedAt: DateTime.now(),
+    );
+    await _saveLocal();
+    _syncToBackend();
+  }
+
+  static Future<void> removeFavoritePackage(String packageId) async {
+    if (_fakeUser == null) return;
+
+    final packages = List<FavoritePackage>.from(_fakeUser!.favoritePackages)
+      ..removeWhere((p) => p.id == packageId);
+
+    _fakeUser = _fakeUser!.copyWith(
+      favoritePackages: packages,
+      updatedAt: DateTime.now(),
+    );
+    await _saveLocal();
+    _syncToBackend();
+  }
+
+  static Future<void> renameFavoritePackage(String packageId, String newName) async {
+    if (_fakeUser == null) return;
+
+    final packages = _fakeUser!.favoritePackages.map((p) {
+      if (p.id == packageId) return p.copyWith(name: newName);
+      return p;
+    }).toList();
+
+    _fakeUser = _fakeUser!.copyWith(
+      favoritePackages: packages,
+      updatedAt: DateTime.now(),
+    );
+    await _saveLocal();
+    _syncToBackend();
+  }
+
+  static List<FavoritePackage> getFavoritePackages() {
+    return _fakeUser?.favoritePackages ?? [];
   }
 
   static Future<void> removeFromFavorites(String id) async {
@@ -85,6 +230,8 @@ class UserService {
       favoriteTeachingIds: list,
       updatedAt: DateTime.now(),
     );
+    await _saveLocal();
+    _syncToBackend();
   }
 
   // ----------------------------------------------------------
@@ -99,16 +246,14 @@ class UserService {
     list.remove(id);
     list.insert(0, id);
 
-    // Optionnel : garder seulement 20 derniers
+    // Garder seulement 20 derniers
     if (list.length > 20) list.removeLast();
 
     _fakeUser = _fakeUser!.copyWith(
       recentlyPlayedIds: list,
       updatedAt: DateTime.now(),
     );
-    
-    // Synchroniser avec le backend (moins fréquent pour les recently played)
-    // On peut faire une synchronisation périodique au lieu de chaque fois
+    await _saveLocal();
   }
 
   // ----------------------------------------------------------
@@ -121,6 +266,8 @@ class UserService {
       name: name,
       updatedAt: DateTime.now(),
     );
+    await _saveLocal();
+    _syncToBackend();
   }
 
   static Future<void> updateUserEmail(String email) async {
@@ -130,6 +277,8 @@ class UserService {
       email: email,
       updatedAt: DateTime.now(),
     );
+    await _saveLocal();
+    _syncToBackend();
   }
 
   static Future<void> updateProfileImage(String url) async {
@@ -139,6 +288,8 @@ class UserService {
       profileImageUrl: url,
       updatedAt: DateTime.now(),
     );
+    await _saveLocal();
+    _syncToBackend();
   }
 
   // ----------------------------------------------------------
@@ -151,6 +302,7 @@ class UserService {
       notificationsEnabled: enabled,
       updatedAt: DateTime.now(),
     );
+    await _saveLocal();
   }
 
   // ----------------------------------------------------------
@@ -158,6 +310,7 @@ class UserService {
   // ----------------------------------------------------------
   static Future<void> clearUserData() async {
     _fakeUser = null;
+    await HiveStorageService.delete(_localUserKey);
   }
 
   // ----------------------------------------------------------
@@ -167,24 +320,16 @@ class UserService {
     try {
       // Si l'utilisateur existe localement, le synchroniser avec le backend
       if (_fakeUser != null && _fakeUser!.email == email) {
-        // Synchroniser avec le backend
-        try {
-          final savedUser = await _apiService.createOrUpdateUser(_fakeUser!);
-          _fakeUser = savedUser;
-          debugPrint('✅ Utilisateur synchronisé lors de la connexion');
-        } catch (e) {
-          debugPrint('⚠️ Erreur synchronisation lors de la connexion: $e');
-          // Continuer même en cas d'erreur
-        }
+        await _saveLocal();
+        _syncToBackend();
         return _fakeUser;
       }
       
       // Si l'utilisateur n'existe pas localement, créer un nouveau
-      // (dans un vrai système, on vérifierait d'abord dans le backend)
       final userId = 'user-${DateTime.now().millisecondsSinceEpoch}';
       _fakeUser = User(
         id: userId,
-        name: email.split('@')[0], // Utiliser le nom avant @ comme nom par défaut
+        name: email.split('@')[0],
         email: email,
         profileImageUrl: null,
         favoriteTeachingIds: [],
@@ -194,15 +339,8 @@ class UserService {
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
-
-      // Envoyer les données au backend
-      try {
-        final savedUser = await _apiService.createOrUpdateUser(_fakeUser!);
-        _fakeUser = savedUser;
-        debugPrint('✅ Nouvel utilisateur créé et enregistré');
-      } catch (e) {
-        debugPrint('⚠️ Erreur création utilisateur: $e');
-      }
+      await _saveLocal();
+      _syncToBackend();
 
       return _fakeUser;
     } catch (e) {
@@ -231,16 +369,8 @@ class UserService {
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
-
-      // Envoyer les données au backend
-      try {
-        final savedUser = await _apiService.createOrUpdateUser(_fakeUser!);
-        _fakeUser = savedUser;
-        debugPrint('✅ Utilisateur enregistré dans Firebase');
-      } catch (e) {
-        debugPrint('⚠️ Erreur enregistrement utilisateur: $e');
-        // Continuer même en cas d'erreur (mode offline)
-      }
+      await _saveLocal();
+      _syncToBackend();
 
       return _fakeUser;
     } catch (e) {

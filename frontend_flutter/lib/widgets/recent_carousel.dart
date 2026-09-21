@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import 'package:MyKOG/models/teaching.dart';
 import 'package:MyKOG/l10n/app_localizations.dart';
 import 'package:MyKOG/theme.dart';
-import 'package:MyKOG/widgets/teaching_tile.dart';
 import 'package:MyKOG/providers/audio_player_provider.dart';
 import 'package:MyKOG/providers/user_provider.dart';
-import 'package:MyKOG/providers/teaching_provider.dart';
+import 'package:MyKOG/widgets/resolved_artwork_image.dart';
 
 class RecentCarousel extends StatelessWidget {
   final List<Teaching> recentTeachings;
@@ -28,16 +28,16 @@ class RecentCarousel extends StatelessWidget {
     if (recentTeachings.isEmpty) {
       // Afficher un placeholder avec un message d'invitation
       return Container(
-        height: 240,
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        height: 240.h,
+        margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
         decoration: BoxDecoration(
           color: Theme.of(context).brightness == Brightness.dark
               ? MyKOGColors.secondary
               : Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(16.r),
           border: Border.all(
             color: MyKOGColors.accent.withValues(alpha: 0.2),
-            width: 1,
+            width: 1.w,
           ),
         ),
         child: Column(
@@ -45,15 +45,15 @@ class RecentCarousel extends StatelessWidget {
           children: [
             // Header
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
               child: Row(
                 children: [
                   Icon(
                     Icons.history,
                     color: MyKOGColors.accent,
-                    size: 20,
+                    size: 20.sp,
                   ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8.w),
                     Text(
                       l10n.recentlyPlayed,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -74,9 +74,9 @@ class RecentCarousel extends StatelessWidget {
                     Icon(
                       Icons.headphones,
                       color: MyKOGColors.accent,
-                      size: 48,
+                      size: 48.w,
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16.h),
                     Text(
                       l10n.startListening,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -84,7 +84,7 @@ class RecentCarousel extends StatelessWidget {
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8.h),
                     Text(
                       l10n.recentTeachingsAppearHere,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -101,22 +101,22 @@ class RecentCarousel extends StatelessWidget {
     }
 
     return Container(
-      height: 240, // Hauteur fixe pour le caroucelle
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      height: 240.h, // Hauteur fixe pour le caroucelle
+      margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
+            padding: EdgeInsets.symmetric(horizontal: 4.w),
             child: Row(
               children: [
                 Icon(
                   Icons.history,
                   color: MyKOGColors.accent,
-                  size: 20,
+                  size: 20.sp,
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 8.w),
                 Text(
                   l10n.recentlyPlayed,
                   style: theme.textTheme.titleLarge?.copyWith(
@@ -127,19 +127,19 @@ class RecentCarousel extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12.h),
 
           // Caroucelle horizontale
           Expanded(
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 4),
+              padding: EdgeInsets.symmetric(horizontal: 4.w),
               itemCount: recentTeachings.length,
               itemBuilder: (context, index) {
                 final teaching = recentTeachings[index];
                 return Container(
-                  width: 160, // Largeur fixe pour chaque item
-                  margin: const EdgeInsets.only(right: 12),
+                  width: 160.w, // Largeur fixe pour chaque item
+                  margin: EdgeInsets.only(right: 12.w),
                   child: _buildRecentCard(context, teaching, index),
                 );
               },
@@ -162,7 +162,7 @@ class RecentCarousel extends StatelessWidget {
 
         return InkWell(
           onTap: () => _handleCardTap(context, teaching, audioProvider, userProvider),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(16.r),
           child: Container(
             decoration: BoxDecoration(
               color: isCurrentlyPlaying
@@ -170,11 +170,11 @@ class RecentCarousel extends StatelessWidget {
                       ? MyKOGColors.secondary
                       : Colors.grey.shade100)
                   : Colors.transparent,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(16.r),
               border: isCurrentlyPlaying
                   ? Border.all(
                       color: MyKOGColors.accent.withValues(alpha: 0.3),
-                      width: 1.5,
+                      width: 1.5.w,
                     )
                   : null,
               boxShadow: [
@@ -190,10 +190,10 @@ class RecentCarousel extends StatelessWidget {
               children: [
                 // Artwork
                 Container(
-                  height: 120,
+                  height: 120.h,
                   decoration: BoxDecoration(
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(16),
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(16.r),
                     ),
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
@@ -208,18 +208,20 @@ class RecentCarousel extends StatelessWidget {
                     children: [
                       // Image de l'enseignement
                       ClipRRect(
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(16),
+                        borderRadius: BorderRadius.vertical(
+                          top: Radius.circular(16.r),
                         ),
-                        child: FadeInImage.assetNetwork(
-                          placeholder: 'assets/images/kog.png',
-                          image: teaching.artworkUrl,
+                        child: ResolvedArtworkImage(
+                          url: teaching.artworkUrl,
                           width: double.infinity,
-                          height: 120,
+                          height: 120.h,
                           fit: BoxFit.cover,
-                          imageErrorBuilder: (context, error, stackTrace) {
-                            return _buildPlaceholderArtwork(context);
-                          },
+                          placeholder: Image.asset(
+                            'assets/images/kog.png',
+                            width: double.infinity,
+                            height: 120.h,
+                            fit: BoxFit.cover,
+                          ),
                         ),
                       ),
 
@@ -227,11 +229,11 @@ class RecentCarousel extends StatelessWidget {
                       if (isPlaying)
                         Container(
                           color: Colors.black.withValues(alpha: 0.4),
-                          child: const Center(
+                          child: Center(
                             child: Icon(
                               Icons.play_arrow,
                               color: MyKOGColors.accent,
-                              size: 32,
+                              size: 32.sp,
                             ),
                           ),
                         ),
@@ -242,21 +244,21 @@ class RecentCarousel extends StatelessWidget {
                           top: 8,
                           right: 8,
                           child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: MyKOGColors.success,
-                              borderRadius: BorderRadius.circular(12),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 6.w,
+                                vertical: 2.h,
+                              ),
+                              decoration: BoxDecoration(
+                                color: MyKOGColors.success,
+                                borderRadius: BorderRadius.circular(12.r),
                             ),
                             child: Text(
                               'NEW',
                               style: theme.textTheme.labelSmall?.copyWith(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w600,
-                                fontSize: 10,
-                              ),
+                                  fontSize: 10.sp,
+                                ),
                             ),
                           ),
                         ),
@@ -269,7 +271,7 @@ class RecentCarousel extends StatelessWidget {
                           child: Icon(
                             Icons.star,
                             color: MyKOGColors.accent,
-                            size: 16,
+                            size: 16.sp,
                           ),
                         ),
                     ],
@@ -279,7 +281,7 @@ class RecentCarousel extends StatelessWidget {
                 // Informations
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.all(8),
+                      padding: EdgeInsets.all(8.w),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -296,12 +298,12 @@ class RecentCarousel extends StatelessWidget {
                               fontWeight: isCurrentlyPlaying
                                   ? FontWeight.w600
                                   : FontWeight.w500,
-                              fontSize: 12,
+                              fontSize: 12.sp,
                             ),
                           ),
                         ),
 
-                        const SizedBox(height: 4),
+                        SizedBox(height: 4.h),
 
                         // Orateur
                         Text(
@@ -310,30 +312,30 @@ class RecentCarousel extends StatelessWidget {
                             color: isDark
                                 ? MyKOGColors.textSecondary
                                 : Colors.grey.shade600,
-                            fontSize: 11,
+                            fontSize: 11.sp,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
 
-                        const SizedBox(height: 4),
+                        SizedBox(height: 4.h),
 
                         // Type de culte
                         if (teaching.typeCulte != null && teaching.typeCulte!.isNotEmpty)
                           Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: MyKOGColors.primary.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(8),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 6.w,
+                                vertical: 2.h,
+                              ),
+                              decoration: BoxDecoration(
+                                color: MyKOGColors.primary.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(8.r),
                             ),
                             child: Text(
                               teaching.typeCulte!,
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: MyKOGColors.primary,
-                                fontSize: 10,
+                                  fontSize: 10.sp,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -372,18 +374,5 @@ class RecentCarousel extends StatelessWidget {
 
     // Optionnel: naviguer vers l'écran de lecture détaillée
     // Navigator.push(context, MaterialPageRoute(builder: (context) => AudioPlayerScreen(teaching: teaching)));
-  }
-
-  Widget _buildPlaceholderArtwork(BuildContext context) {
-    return Container(
-      color: MyKOGColors.secondary,
-      child: Center(
-        child: Icon(
-          Icons.music_note,
-          color: MyKOGColors.accent,
-          size: 48,
-        ),
-      ),
-    );
   }
 }

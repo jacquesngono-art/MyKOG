@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:MyKOG/models/live_stream.dart';
 import 'package:MyKOG/api/live_api_service.dart';
-import 'package:MyKOG/services/storage_service.dart';
+import 'package:MyKOG/services/hive_storage_service.dart';
 
 class LiveStreamService {
   static final LiveApiService _apiService = LiveApiService();
@@ -19,6 +19,8 @@ class LiveStreamService {
         pastor: 'Prophete Xavier',
         thumbnailUrl: 'assets/images/kog.png',
         streamUrl: 'https://example.com/stream/live1',
+        roomName: 'live1',
+        livekitUrl: 'wss://vps123057.serveur-vps.net',
         status: LiveStreamStatus.live,
         startedAt: now.subtract(const Duration(minutes: 30)),
         viewerCount: 342,
@@ -34,6 +36,8 @@ class LiveStreamService {
         pastor: 'Rev. Pasteur Grace',
         thumbnailUrl: 'assets/images/kog.png',
         streamUrl: 'https://example.com/stream/live2',
+        roomName: 'live2',
+        livekitUrl: 'wss://vps123057.serveur-vps.net',
         status: LiveStreamStatus.scheduled,
         scheduledAt: now.add(const Duration(days: 2, hours: 19)),
         viewerCount: 0,
@@ -49,6 +53,8 @@ class LiveStreamService {
         pastor: 'Pastor Michael',
         thumbnailUrl: 'assets/images/kog.png',
         streamUrl: 'https://example.com/stream/live3',
+        roomName: 'live3',
+        livekitUrl: 'wss://vps123057.serveur-vps.net',
         status: LiveStreamStatus.scheduled,
         scheduledAt: now.add(const Duration(days: 5, hours: 18)),
         viewerCount: 0,
@@ -67,7 +73,7 @@ class LiveStreamService {
       
       // Sauvegarder dans le cache local
       final liveStreamsJson = liveStreams.map((ls) => ls.toJson()).toList();
-      await StorageService.storeJsonList('cached_live_streams', liveStreamsJson);
+      await HiveStorageService.storeJsonList('cached_live_streams', liveStreamsJson);
       
       return liveStreams;
     } catch (e) {
@@ -75,7 +81,7 @@ class LiveStreamService {
       
       // Fallback vers le cache local
       try {
-        final cachedJson = StorageService.getJsonList('cached_live_streams');
+        final cachedJson = HiveStorageService.getJsonList('cached_live_streams');
         if (cachedJson.isNotEmpty) {
           return cachedJson.map((json) => LiveStream.fromJson(json)).toList();
         }
@@ -185,7 +191,7 @@ class LiveStreamService {
 
   /// Vider le cache
   static void clearCache() {
-    StorageService.remove('cached_live_streams');
+    HiveStorageService.delete('cached_live_streams');
     debugPrint('Cache LiveStreamService vidé');
   }
 }

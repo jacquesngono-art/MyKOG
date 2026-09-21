@@ -12,13 +12,7 @@ const {
   decrementViewerCount,
   getViewerCount,
   deleteLiveStream,
-  createLiveKitRoom,
-  getLiveKitToken,
-  listLiveKitRooms,
-  deleteLiveKitRoom,
-  startLiveKitRecording,
-  stopLiveKitRecording,
-  getLiveKitObsConfig,
+  deleteAllLiveStreams,
 } = require('../controllers/liveController');
 
 /**
@@ -251,158 +245,16 @@ router.post('/:id/leave', decrementViewerCount);
  */
 router.delete('/:id', deleteLiveStream);
 
-// ===== ROUTES LIVEKIT =====
-
 /**
  * @openapi
- * /api/lives/livekit/room:
- *   post:
- *     summary: Créer une room LiveKit
- *     tags: [Lives, LiveKit]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - roomName
- *             properties:
- *               roomName:
- *                 type: string
- *               maxParticipants:
- *                 type: number
- *                 default: 1000
- *     responses:
- *       201:
- *         description: Room créée
- */
-router.post('/livekit/room', createLiveKitRoom);
-
-/**
- * @openapi
- * /api/lives/livekit/token:
- *   post:
- *     summary: Générer un token LiveKit
- *     tags: [Lives, LiveKit]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - roomName
- *               - participantName
- *             properties:
- *               roomName:
- *                 type: string
- *               participantName:
- *                 type: string
- *               isHost:
- *                 type: boolean
- *                 default: false
- *     responses:
- *       200:
- *         description: Token généré
- */
-router.post('/livekit/token', getLiveKitToken);
-
-/**
- * @openapi
- * /api/lives/livekit/rooms:
- *   get:
- *     summary: Lister toutes les rooms LiveKit actives
- *     tags: [Lives, LiveKit]
- *     responses:
- *       200:
- *         description: Liste des rooms
- */
-router.get('/livekit/rooms', listLiveKitRooms);
-
-/**
- * @openapi
- * /api/lives/livekit/room/{roomName}:
+ * /api/lives:
  *   delete:
- *     summary: Supprimer une room LiveKit
- *     tags: [Lives, LiveKit]
- *     parameters:
- *       - in: path
- *         name: roomName
- *         required: true
- *         schema:
- *           type: string
+ *     summary: Supprimer tous les lives
+ *     tags: [Lives]
  *     responses:
  *       200:
- *         description: Room supprimée
+ *         description: Tous les lives supprimés
  */
-router.delete('/livekit/room/:roomName', deleteLiveKitRoom);
-
-/**
- * @openapi
- * /api/lives/livekit/recording:
- *   post:
- *     summary: Démarrer un enregistrement LiveKit
- *     tags: [Lives, LiveKit]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - roomName
- *             properties:
- *               roomName:
- *                 type: string
- *               outputUrl:
- *                 type: string
- *     responses:
- *       201:
- *         description: Enregistrement démarré
- */
-router.post('/livekit/recording', startLiveKitRecording);
-
-/**
- * @openapi
- * /api/lives/livekit/recording/{egressId}:
- *   delete:
- *     summary: Arrêter un enregistrement LiveKit
- *     tags: [Lives, LiveKit]
- *     parameters:
- *       - in: path
- *         name: egressId
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Enregistrement arrêté
- */
-router.delete('/livekit/recording/:egressId', stopLiveKitRecording);
-
-/**
- * @openapi
- * /api/lives/livekit/obs-config:
- *   post:
- *     summary: Obtenir la configuration complète OBS + Flutter pour LiveKit
- *     tags: [Lives, LiveKit]
- *     requestBody:
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               roomName:
- *                 type: string
- *                 default: mykog-live
- *               hostName:
- *                 type: string
- *                 default: obs-broadcaster
- *     responses:
- *       200:
- *         description: Config OBS et Flutter générée
- */
-router.post('/livekit/obs-config', getLiveKitObsConfig);
+router.delete('/', deleteAllLiveStreams);
 
 module.exports = router;

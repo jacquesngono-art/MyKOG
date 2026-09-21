@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:MyKOG/services/hive_storage_service.dart';
 
 class StorageService {
   static const String _userKey = 'user';
@@ -99,9 +100,11 @@ class StorageService {
     print('Toutes les données d\'enseignements ont été effacées');
   }
 
-  // Méthode pour réinitialiser complémentent le stockage
+  // Méthode pour réinitialiser la base locale (prefs + Hive)
+  // Les fichiers téléchargés sur le disque sont conservés
   static Future<void> resetAllStorage() async {
     await clear();
+    await HiveStorageService.clear();
     print('Toutes les données de stockage ont été effacées');
   }
 }

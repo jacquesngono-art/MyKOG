@@ -1,6 +1,6 @@
 import 'package:MyKOG/models/calendar_event.dart';
 import 'package:MyKOG/api/calendar_api_service.dart';
-import 'package:MyKOG/services/storage_service.dart';
+import 'package:MyKOG/services/hive_storage_service.dart';
 import 'package:MyKOG/services/alarm_service.dart';
 
 class CalendarService {
@@ -133,13 +133,13 @@ class CalendarService {
   // Sauvegarder les événements en cache
   static Future<void> _saveEventsToCache(List<CalendarEvent> events) async {
     final eventsJson = events.map((e) => e.toJson()).toList();
-    await StorageService.storeJsonList(_eventsKey, eventsJson);
+    await HiveStorageService.storeJsonList(_eventsKey, eventsJson);
   }
 
   // Charger les événements depuis le cache
   static Future<List<CalendarEvent>> _loadEventsFromCache() async {
     try {
-      final eventsJson = StorageService.getJsonList(_eventsKey);
+      final eventsJson = HiveStorageService.getJsonList(_eventsKey);
       return eventsJson
           .map((json) => CalendarEvent.fromJson(json))
           .toList();

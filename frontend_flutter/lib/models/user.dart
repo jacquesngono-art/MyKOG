@@ -1,3 +1,5 @@
+import 'package:MyKOG/models/favorite_package.dart';
+
 class User {
   final String id;
   final String name;
@@ -6,6 +8,7 @@ class User {
 
   // 🎯 Métadonnées utilisateur
   final List<String> favoriteTeachingIds; // IDs des enseignements favoris
+  final List<FavoritePackage> favoritePackages; // Packages de favoris
   final List<String> downloadedTeachingIds; // IDs des téléchargements
   final List<String> recentlyPlayedIds; // IDs récemment lus
 
@@ -20,6 +23,7 @@ class User {
     required this.email,
     this.profileImageUrl,
     required this.favoriteTeachingIds,
+    this.favoritePackages = const [],
     required this.downloadedTeachingIds,
     required this.recentlyPlayedIds,
     required this.notificationsEnabled,
@@ -35,6 +39,7 @@ class User {
       'email': email,
       'profileImageUrl': profileImageUrl,
       'favoriteTeachingIds': favoriteTeachingIds,
+      'favoritePackages': favoritePackages.map((p) => p.toJson()).toList(),
       'downloadedTeachingIds': downloadedTeachingIds,
       'recentlyPlayedIds': recentlyPlayedIds,
       'notificationsEnabled': notificationsEnabled,
@@ -46,17 +51,25 @@ class User {
   // ➡️ Création depuis un Map
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
-      id: json['id'],
-      name: json['name'],
-      email: json['email'],
-      profileImageUrl: json['profileImageUrl'],
+      id: json['id'] as String? ?? '',
+      name: json['name'] as String? ?? '',
+      email: json['email'] as String? ?? '',
+      profileImageUrl: json['profileImageUrl'] as String?,
       favoriteTeachingIds: List<String>.from(json['favoriteTeachingIds'] ?? []),
+      favoritePackages: (json['favoritePackages'] as List<dynamic>?)
+              ?.map((p) => FavoritePackage.fromJson(p as Map<String, dynamic>))
+              .toList() ??
+          [],
       downloadedTeachingIds:
           List<String>.from(json['downloadedTeachingIds'] ?? []),
       recentlyPlayedIds: List<String>.from(json['recentlyPlayedIds'] ?? []),
       notificationsEnabled: json['notificationsEnabled'] ?? true,
-      createdAt: DateTime.parse(json['createdAt']),
-      updatedAt: DateTime.parse(json['updatedAt']),
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'])
+          : DateTime.now(),
+      updatedAt: json['updatedAt'] != null
+          ? DateTime.parse(json['updatedAt'])
+          : DateTime.now(),
     );
   }
 
@@ -67,6 +80,7 @@ class User {
     String? email,
     String? profileImageUrl,
     List<String>? favoriteTeachingIds,
+    List<FavoritePackage>? favoritePackages,
     List<String>? downloadedTeachingIds,
     List<String>? recentlyPlayedIds,
     bool? notificationsEnabled,
@@ -79,6 +93,7 @@ class User {
       email: email ?? this.email,
       profileImageUrl: profileImageUrl ?? this.profileImageUrl,
       favoriteTeachingIds: favoriteTeachingIds ?? this.favoriteTeachingIds,
+      favoritePackages: favoritePackages ?? this.favoritePackages,
       downloadedTeachingIds:
           downloadedTeachingIds ?? this.downloadedTeachingIds,
       recentlyPlayedIds: recentlyPlayedIds ?? this.recentlyPlayedIds,

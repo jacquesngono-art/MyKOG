@@ -2,10 +2,11 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/foundation.dart';
 
-/// Service pour gérer le stockage des fichiers locaux (audio, images)
+/// Service pour gérer le stockage des fichiers locaux (audio, images, pdfs)
 class FileStorageService {
   static const String _audioFolder = 'audio_cache';
   static const String _imageFolder = 'image_cache';
+  static const String _pdfFolder = 'pdf_cache';
 
   /// Obtenir le répertoire de l'application
   static Future<Directory> getAppDirectory() async {
@@ -36,6 +37,18 @@ class FileStorageService {
     return imageDir;
   }
 
+  /// Obtenir le répertoire pour les PDFs
+  static Future<Directory> getPdfDirectory() async {
+    final appDir = await getAppDirectory();
+    final pdfDir = Directory('${appDir.path}/$_pdfFolder');
+    
+    if (!await pdfDir.exists()) {
+      await pdfDir.create(recursive: true);
+    }
+    
+    return pdfDir;
+  }
+
   /// Générer un nom de fichier safe à partir d'une URL
   static String sanitizeFileName(String url) {
     // Extraire le nom du fichier de l'URL ou créer un hash
@@ -64,6 +77,13 @@ class FileStorageService {
     final imageDir = await getImageDirectory();
     final fileName = '${teachingId}_${sanitizeFileName(imageUrl)}';
     return '${imageDir.path}/$fileName';
+  }
+
+  /// Obtenir le chemin complet pour un PDF
+  static Future<String> getPdfFilePath(String textResumeId, String pdfUrl) async {
+    final pdfDir = await getPdfDirectory();
+    final fileName = '${textResumeId}_${sanitizeFileName(pdfUrl)}';
+    return '${pdfDir.path}/$fileName';
   }
 
   /// Vérifier si un fichier existe
@@ -110,7 +130,7 @@ class FileStorageService {
   static Future<int> getTotalCacheSize() async {
     try {
       int totalSize = 0;
-      
+
       // Taille des audios
       final audioDir = await getAudioDirectory();
       if (await audioDir.exists()) {
@@ -120,7 +140,7 @@ class FileStorageService {
           }
         }
       }
-      
+
       // Taille des images
       final imageDir = await getImageDirectory();
       if (await imageDir.exists()) {
@@ -130,10 +150,60 @@ class FileStorageService {
           }
         }
       }
-      
+
+      // Taille des PDFs
+      final pdfDir = await getPdfDirectory();
+      if (await pdfDir.exists()) {
+        await for (var entity in pdfDir.list()) {
+          if (entity is File) {
+            totalSize += await entity.length();
+          }
+        }
+      }
+
       return totalSize;
     } catch (e) {
       debugPrint('Erreur calcul taille cache: $e');
+      return 0;
+    }
+  }
+
+  /// Taille des téléchargements (audio + images) hors PDF
+  static Future<int> getDownloadsSize() async {
+    try {
+      int totalSize = 0;
+      final audioDir = await getAudioDirectory();
+      if (await audioDir.exists()) {
+        await for (var entity in audioDir.list()) {
+          if (entity is File) totalSize += await entity.length();
+        }
+      }
+      final imageDir = await getImageDirectory();
+      if (await imageDir.exists()) {
+        await for (var entity in imageDir.list()) {
+          if (entity is File) totalSize += await entity.length();
+        }
+      }
+      return totalSize;
+    } catch (e) {
+      debugPrint('Erreur calcul taille downloads: $e');
+      return 0;
+    }
+  }
+
+  /// Taille du cache PDF uniquement
+  static Future<int> getPdfCacheSize() async {
+    try {
+      int totalSize = 0;
+      final pdfDir = await getPdfDirectory();
+      if (await pdfDir.exists()) {
+        await for (var entity in pdfDir.list()) {
+          if (entity is File) totalSize += await entity.length();
+        }
+      }
+      return totalSize;
+    } catch (e) {
+      debugPrint('Erreur calcul taille PDF: $e');
       return 0;
     }
   }
@@ -151,6 +221,27 @@ class FileStorageService {
     }
   }
 
+  /// Nettoyer les fichiers de téléchargement (audio + image) uniquement
+  /// Le cache PDF (textes-résumés) n'est PAS supprimé
+  static Future<bool> clearDownloadsOnly() async {
+    try {
+      final audioDir = await getAudioDirectory();
+      if (await audioDir.exists()) {
+        await audioDir.delete(recursive: true);
+      }
+
+      final imageDir = await getImageDirectory();
+      if (await imageDir.exists()) {
+        await imageDir.delete(recursive: true);
+      }
+
+      return true;
+    } catch (e) {
+      debugPrint('Erreur nettoyage downloads: $e');
+      return false;
+    }
+  }
+
   /// Nettoyer tous les fichiers du cache
   static Future<bool> clearAllCache() async {
     try {
@@ -164,6 +255,12 @@ class FileStorageService {
       final imageDir = await getImageDirectory();
       if (await imageDir.exists()) {
         await imageDir.delete(recursive: true);
+      }
+      
+      // Supprimer le dossier PDFs
+      final pdfDir = await getPdfDirectory();
+      if (await pdfDir.exists()) {
+        await pdfDir.delete(recursive: true);
       }
       
       return true;
@@ -190,6 +287,15 @@ class FileStorageService {
       final imageDir = await getImageDirectory();
       if (await imageDir.exists()) {
         await for (var entity in imageDir.list()) {
+          if (entity is File) {
+            files.add(entity.path);
+          }
+        }
+      }
+      
+      final pdfDir = await getPdfDirectory();
+      if (await pdfDir.exists()) {
+        await for (var entity in pdfDir.list()) {
           if (entity is File) {
             files.add(entity.path);
           }

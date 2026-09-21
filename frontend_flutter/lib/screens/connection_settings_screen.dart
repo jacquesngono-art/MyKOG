@@ -129,27 +129,26 @@ class _ConnectionSettingsScreenState extends State<ConnectionSettingsScreen> {
     }
   }
 
-  Future<void> _wakeUpRender() async {
+  Future<void> _pingBackend() async {
     setState(() => _isLoading = true);
 
     try {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('☁️ Réveil du backend Render...'),
+          content: Text('☁️ Ping du backend VPS...'),
           duration: Duration(seconds: 2),
         ),
       );
 
-      await ApiConfig.forceRenderMode();
-      await ApiConfig.testRenderConnection();
+      await ApiConfig.testConnection();
       await _loadConnectionInfo();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(_isConnected
-                ? '✅ Backend réveillé!'
-                : '⚠️ Backend peut être en veille, réessayez dans 30s'),
+                ? '✅ Backend VPS connecté!'
+                : '⚠️ Backend VPS non disponible'),
             backgroundColor:
                 _isConnected ? MyKOGColors.success : MyKOGColors.accent,
           ),
@@ -173,6 +172,7 @@ class _ConnectionSettingsScreenState extends State<ConnectionSettingsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: MyKOGColors.primaryDark,
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         title: const Text('Paramètres de Connexion'),
         backgroundColor: MyKOGColors.primaryDark,
@@ -283,36 +283,14 @@ class _ConnectionSettingsScreenState extends State<ConnectionSettingsScreen> {
         ),
         SizedBox(height: 16.h),
 
-        // Mode Render (priorité)
+        // Mode VPS (unique)
         _buildModeOption(
-          title: 'Backend Render (Recommandé)',
-          subtitle: 'https://mykog-backend-api.onrender.com',
+          title: 'Backend VPS',
+          subtitle: 'http://185.98.128.123:3001/mykog-api',
           icon: Icons.cloud_rounded,
           color: MyKOGColors.accent,
-          mode: ApiConfig.modeRender,
+          mode: ApiConfig.modeVps,
           isRecommended: true,
-        ),
-
-        SizedBox(height: 12.h),
-
-        // Mode USB
-        _buildModeOption(
-          title: 'Connexion USB',
-          subtitle: 'Câble USB avec adb reverse',
-          icon: Icons.usb_rounded,
-          color: Colors.blue,
-          mode: ApiConfig.modeUsb,
-        ),
-
-        SizedBox(height: 12.h),
-
-        // Mode WiFi
-        _buildModeOption(
-          title: 'Connexion WiFi',
-          subtitle: 'Même réseau WiFi que le serveur',
-          icon: Icons.wifi_rounded,
-          color: Colors.green,
-          mode: ApiConfig.modeWifi,
         ),
       ],
     );
@@ -429,14 +407,13 @@ class _ConnectionSettingsScreenState extends State<ConnectionSettingsScreen> {
         ),
         SizedBox(height: 16.h),
 
-        // Bouton réveiller Render
-        if (_currentMode == ApiConfig.modeRender)
-          Container(
+        // Bouton ping VPS
+        Container(
             margin: EdgeInsets.only(bottom: 12.h),
             child: ElevatedButton.icon(
-              onPressed: _wakeUpRender,
-              icon: const Icon(Icons.wb_sunny_rounded),
-              label: const Text('☁️ Réveiller le backend Render'),
+              onPressed: _pingBackend,
+              icon: const Icon(Icons.cloud_sync_rounded),
+              label: const Text('☁️ Ping backend VPS'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.orange,
                 foregroundColor: Colors.white,

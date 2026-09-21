@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
 import 'package:MyKOG/providers/audio_player_provider.dart';
 import 'package:MyKOG/l10n/app_localizations.dart';
 import 'package:MyKOG/theme.dart';
 import 'package:MyKOG/screens/audio_player_screen.dart';
+import 'package:MyKOG/widgets/teaching_artwork.dart';
 
 /// Mini Player Amélioré avec boutons reculer/avancer et fermer
 class MiniPlayerImproved extends StatelessWidget {
@@ -41,7 +41,7 @@ class MiniPlayerImproved extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12.r),
                   border: Border.all(
                     color: MyKOGColors.accent.withValues(alpha: 0.3),
-                    width: 1,
+                    width: 1.w,
                   ),
                   boxShadow: [
                     BoxShadow(
@@ -87,8 +87,10 @@ class MiniPlayerImproved extends StatelessWidget {
                                           color: MyKOGColors.textPrimary,
                                           fontWeight: FontWeight.w600,
                                         ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                  const SizedBox(height: 2),
+                                  SizedBox(height: 2.h),
                                   Text(
                                     teaching.speaker,
                                     style: Theme.of(context)
@@ -125,11 +127,11 @@ class MiniPlayerImproved extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
                 child: IconButton(
-                  iconSize: 18,
-                  padding: EdgeInsets.all(4),
+                  iconSize: 18.sp,
+                  padding: EdgeInsets.all(4.w),
                   constraints: BoxConstraints(
-                    minWidth: 28,
-                    minHeight: 28,
+                    minWidth: 28.w,
+                    minHeight: 28.h,
                   ),
                   icon: Icon(
                     Icons.close,
@@ -147,37 +149,11 @@ class MiniPlayerImproved extends StatelessWidget {
   }
 
   Widget _buildArtwork(teaching) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(6.r),
-      child: teaching.artworkUrl.startsWith('assets/')
-          ? Image.asset(
-              teaching.artworkUrl,
-              width: 48.w,
-              height: 48.h,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
-            )
-          : CachedNetworkImage(
-              imageUrl: teaching.artworkUrl,
-              width: 48.w,
-              height: 48.h,
-              fit: BoxFit.cover,
-              placeholder: (context, url) => _buildPlaceholder(),
-              errorWidget: (context, url, error) => _buildPlaceholder(),
-            ),
-    );
-  }
-
-  Widget _buildPlaceholder() {
-    return Container(
+    return TeachingArtwork(
+      teaching: teaching,
       width: 48.w,
       height: 48.h,
-      color: MyKOGColors.surface,
-      child: Icon(
-        Icons.music_note,
-        color: MyKOGColors.accent,
-        size: 24.sp,
-      ),
+      borderRadius: 6.r,
     );
   }
 
@@ -191,11 +167,11 @@ class MiniPlayerImproved extends StatelessWidget {
           icon: Icon(
             Icons.replay_10,
             color: MyKOGColors.textPrimary,
-            size: 24,
+            size: 24.sp,
           ),
-          constraints: const BoxConstraints(
-            minWidth: 32,
-            minHeight: 32,
+          constraints: BoxConstraints(
+            minWidth: 32.w,
+            minHeight: 32.h,
           ),
           padding: EdgeInsets.zero,
           tooltip: '-15s',
@@ -203,8 +179,8 @@ class MiniPlayerImproved extends StatelessWidget {
         
         // Play/Pause
         Container(
-          width: 40,
-          height: 40,
+          width: 40.w,
+          height: 40.h,
           decoration: BoxDecoration(
             color: MyKOGColors.accent,
             shape: BoxShape.circle,
@@ -220,12 +196,12 @@ class MiniPlayerImproved extends StatelessWidget {
                       ? Icons.pause
                       : Icons.play_arrow,
               color: Colors.black,
-              size: 20,
+              size: 20.sp,
             ),
             padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(
-              minWidth: 40,
-              minHeight: 40,
+            constraints: BoxConstraints(
+              minWidth: 40.w,
+              minHeight: 40.h,
             ),
           ),
         ),
@@ -236,11 +212,11 @@ class MiniPlayerImproved extends StatelessWidget {
           icon: Icon(
             Icons.forward_10,
             color: MyKOGColors.textPrimary,
-            size: 24,
+            size: 24.sp,
           ),
-          constraints: const BoxConstraints(
-            minWidth: 32,
-            minHeight: 32,
+          constraints: BoxConstraints(
+            minWidth: 32.w,
+            minHeight: 32.h,
           ),
           padding: EdgeInsets.zero,
           tooltip: '+15s',

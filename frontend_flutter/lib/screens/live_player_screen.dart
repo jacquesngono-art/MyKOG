@@ -1,14 +1,13 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter/services.dart';
-import 'package:video_player/video_player.dart';
-import 'package:chewie/chewie.dart';
-import 'package:flutter_vlc_player/flutter_vlc_player.dart';
+import 'package:livekit_client/livekit_client.dart';
 import 'package:MyKOG/models/live_stream.dart';
 import 'package:MyKOG/api/live_api_service.dart';
 import 'package:MyKOG/theme.dart';
 
-/// Écran de lecture de live stream
+/// Écran de lecture de live stream via LiveKit (WebRTC)
 class LivePlayerScreen extends StatefulWidget {
   final LiveStream liveStream;
 
@@ -22,22 +21,23 @@ class LivePlayerScreen extends StatefulWidget {
 }
 
 class _LivePlayerScreenState extends State<LivePlayerScreen> {
-  VideoPlayerController? _videoPlayerController;
-  ChewieController? _chewieController;
-  VlcPlayerController? _vlcPlayerController;
+  Room? _room;
+  RemoteParticipant? _participant;
+  VideoTrack? _videoTrack;
+  EventsListener<RoomEvent>? _listener;
   final LiveApiService _apiService = LiveApiService();
-  
+
   int _viewerCount = 0;
   Timer? _viewerCountTimer;
   bool _isLoading = true;
   bool _hasError = false;
   String? _errorMessage;
-  bool _useVlcPlayer = false; // Désactiver VLC temporairement (problème d'initialisation PlatformException)
+  bool _isConnected = false;
 
   @override
   void initState() {
     super.initState();
-    _initializePlayer();
+    _connectToLive();
     _joinLive();
     _startViewerCountPolling();
   }
@@ -46,149 +46,141 @@ class _LivePlayerScreenState extends State<LivePlayerScreen> {
   void dispose() {
     _leaveLive();
     _viewerCountTimer?.cancel();
-    _videoPlayerController?.dispose();
-    _chewieController?.dispose();
-    _vlcPlayerController?.dispose();
+    _disconnectFromLive();
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     super.dispose();
   }
 
-  /// Initialiser le lecteur vidéo
-  Future<void> _initializePlayer() async {
+  /// Se connecter au live via LiveKit
+  Future<void> _connectToLive() async {
+    setState(() {
+      _isLoading = true;
+      _hasError = false;
+    });
+
     try {
-      setState(() {
-        _isLoading = true;
-        _hasError = false;
-      });
-
-      // Vérifier si l'URL est valide
-      final streamUrl = widget.liveStream.streamUrl;
-      if (streamUrl.isEmpty) {
-        throw Exception('URL de stream vide');
+      // 1. Obtenir le token via API
+      final tokenData = await _apiService.getViewerToken(widget.liveStream.id);
+      if (tokenData == null) {
+        throw Exception('Impossible d\'obtenir le token LiveKit');
       }
 
-      // Vérifier que c'est une URL HTTP valide
-      if (!streamUrl.startsWith('http://') && !streamUrl.startsWith('https://')) {
-        throw Exception('URL de stream invalide (doit commencer par http:// ou https://): $streamUrl');
+      final token = tokenData['token']?.toString() ?? '';
+      final url = tokenData['url']?.toString() ?? widget.liveStream.livekitUrl;
+
+      if (token.isEmpty || url.isEmpty) {
+        throw Exception('Token ou URL LiveKit manquant');
       }
 
-      // Vérifier que c'est une URL HLS (.m3u8)
-      if (!streamUrl.contains('.m3u8')) {
-        debugPrint('⚠️ URL ne semble pas être une URL HLS: $streamUrl');
-      }
+      debugPrint('🎥 Connexion à LiveKit: $url, room: ${tokenData['roomName']}');
 
-      debugPrint('🎥 Initialisation du lecteur avec URL: $streamUrl');
+      // 2. Connecter la room LiveKit
+      _room = Room();
+      await _room!.connect(url, token);
 
-      // Utiliser directement video_player pour HLS (VLC désactivé temporairement à cause de PlatformException)
-      // video_player supporte nativement HLS et fonctionne bien avec les fichiers générés par FFmpeg
-      debugPrint('🎬 Initialisation video_player (HLS compatible)...');
-      
-      _useVlcPlayer = false;
-      
-      _videoPlayerController = VideoPlayerController.networkUrl(
-        Uri.parse(streamUrl),
-        httpHeaders: {
-          'User-Agent': 'MyKOG-Flutter',
-        },
-        videoPlayerOptions: VideoPlayerOptions(
-          mixWithOthers: true,
-          allowBackgroundPlayback: false,
-        ),
-      );
+      // 3. Écouter les événements de la room
+      _setupRoomListeners();
 
-      // Initialiser le lecteur avec un timeout plus long pour HLS (15 secondes)
-      await _videoPlayerController!.initialize().timeout(
-        const Duration(seconds: 15),
-        onTimeout: () {
-          throw Exception('Timeout lors de l\'initialisation du lecteur vidéo.\n\nLe stream peut ne pas être encore prêt. Attendez 10-15 secondes après le démarrage du stream OBS.');
-        },
-      );
-      
-      _chewieController = ChewieController(
-        videoPlayerController: _videoPlayerController!,
-        autoPlay: true,
-        looping: false,
-        allowFullScreen: true,
-        allowMuting: true,
-        showControls: true,
-        materialProgressColors: ChewieProgressColors(
-          playedColor: MyKOGColors.accent,
-          handleColor: MyKOGColors.accent,
-          backgroundColor: MyKOGColors.textSecondary,
-          bufferedColor: MyKOGColors.textSecondary.withOpacity(0.5),
-        ),
-        placeholder: Container(
-          color: MyKOGColors.primaryDark,
-          child: const Center(
-            child: CircularProgressIndicator(color: MyKOGColors.accent),
-          ),
-        ),
-        errorBuilder: (context, errorMessage) {
-          return Container(
-            color: MyKOGColors.primaryDark,
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    Icons.error_outline,
-                    color: Colors.red,
-                    size: 48,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Erreur de lecture',
-                    style: TextStyle(color: MyKOGColors.textPrimary),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    errorMessage,
-                    style: TextStyle(color: MyKOGColors.textSecondary),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton.icon(
-                    onPressed: _initializePlayer,
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('Réessayer'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: MyKOGColors.accent,
-                      foregroundColor: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      );
+      // 4. Vérifier les participants déjà connectés
+      _tryAttachVideoTrack();
 
-      debugPrint('✅ video_player initialisé avec succès');
-      
       setState(() {
         _isLoading = false;
+        _isConnected = true;
       });
     } catch (e, stackTrace) {
-      debugPrint('❌ Erreur initialisation player: $e');
+      debugPrint('❌ Erreur connexion LiveKit: $e');
       debugPrint('📚 Stack trace: $stackTrace');
-      
-      // Message d'erreur plus clair selon le type d'erreur
-      String errorMsg = 'Erreur lors du chargement du stream';
-      if (e.toString().contains('MediaCodec') || e.toString().contains('ExoPlaybackException')) {
-        errorMsg = 'Le stream n\'est pas encore disponible.\n\nVérifiez que:\n• OBS stream est actif\n• Les fichiers HLS sont créés\n• Attendez 10-15 secondes après le démarrage du stream';
-      } else if (e.toString().contains('Timeout')) {
-        errorMsg = 'Timeout: Le stream ne répond pas.\n\nVérifiez que:\n• Le stream est actif dans OBS\n• L\'URL est correcte: ${widget.liveStream.streamUrl}';
-      } else if (e.toString().contains('404') || e.toString().contains('Not Found')) {
-        errorMsg = 'Stream introuvable (404).\n\nLe stream n\'est peut-être pas encore disponible.\nAttendez que OBS crée les fichiers HLS.';
-      } else {
-        errorMsg = 'Erreur: ${e.toString()}\n\nURL: ${widget.liveStream.streamUrl}';
+
+      String errorMsg = 'Erreur lors de la connexion au live';
+      if (e.toString().contains('timeout') ||
+          e.toString().contains('Timeout')) {
+        errorMsg =
+            'Timeout: Le serveur LiveKit ne répond pas.\n\nVérifiez que:\n• Le live est actif\n• Le diffuseur est connecté';
+      } else if (e.toString().contains('token') ||
+          e.toString().contains('Token')) {
+        errorMsg =
+            'Erreur d\'authentification LiveKit.\n\nImpossible d\'obtenir un token valide.';
       }
-      
+
       setState(() {
         _isLoading = false;
         _hasError = true;
         _errorMessage = errorMsg;
       });
+    }
+  }
+
+  /// Configurer les listeners d'événements de la room
+  void _setupRoomListeners() {
+    _listener = _room!.createListener();
+    _listener!
+      ..on<ParticipantConnectedEvent>((_) {
+        _tryAttachVideoTrack();
+      })
+      ..on<TrackSubscribedEvent>((_) {
+        _tryAttachVideoTrack();
+      })
+      ..on<TrackUnsubscribedEvent>((_) {
+        _tryAttachVideoTrack();
+      })
+      ..on<ParticipantDisconnectedEvent>((_) {
+        _tryAttachVideoTrack();
+      })
+      ..on<RoomDisconnectedEvent>((_) {
+        debugPrint('🔌 Room déconnectée');
+        if (mounted) {
+          setState(() {
+            _isConnected = false;
+            _videoTrack = null;
+            _participant = null;
+          });
+        }
+      });
+  }
+
+  /// Tenter d'attacher la piste vidéo du participant distant (le diffuseur)
+  void _tryAttachVideoTrack() {
+    if (_room == null || !mounted) return;
+
+    // Parcourir tous les participants distants
+    for (final participant in _room!.remoteParticipants.values) {
+      // Parcourir les pistes vidéo publiées
+      for (final publication in participant.videoTrackPublications) {
+        final track = publication.track;
+        if (track != null && track is VideoTrack) {
+          if (mounted) {
+            setState(() {
+              _participant = participant;
+              _videoTrack = track;
+            });
+          }
+          debugPrint('📹 Piste vidéo attachée: ${publication.sid}');
+          return;
+        }
+      }
+    }
+
+    // Aucune piste vidéo trouvée
+    if (mounted && _videoTrack != null) {
+      setState(() {
+        _videoTrack = null;
+        _participant = null;
+      });
+    }
+  }
+
+  /// Déconnecter proprement de la room LiveKit
+  Future<void> _disconnectFromLive() async {
+    try {
+      _listener?.dispose();
+      _listener = null;
+      if (_room != null) {
+        await _room!.disconnect();
+        _room = null;
+      }
+    } catch (e) {
+      debugPrint('Erreur déconnexion LiveKit: $e');
     }
   }
 
@@ -241,10 +233,11 @@ class _LivePlayerScreenState extends State<LivePlayerScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
+      resizeToAvoidBottomInset: false,
       body: SafeArea(
         child: Stack(
           children: [
-            // Lecteur vidéo
+            // Lecteur vidéo LiveKit
             _buildVideoPlayer(),
 
             // Header avec informations
@@ -290,35 +283,38 @@ class _LivePlayerScreenState extends State<LivePlayerScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
+              Icon(
                 Icons.error_outline,
                 color: Colors.red,
-                size: 64,
+                size: 64.sp,
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16.h),
               Text(
                 'Erreur de chargement du stream',
                 style: TextStyle(
                   color: MyKOGColors.textPrimary,
-                  fontSize: 18,
+                  fontSize: 18.sp,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8.h),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 32),
+                padding: EdgeInsets.symmetric(horizontal: 32.w),
                 child: Text(
                   _errorMessage ?? 'Impossible de charger le live',
                   style: TextStyle(
                     color: MyKOGColors.textSecondary,
-                    fontSize: 14,
+                    fontSize: 14.sp,
                   ),
                   textAlign: TextAlign.center,
                 ),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: 24.h),
               ElevatedButton.icon(
-                onPressed: _initializePlayer,
+                onPressed: () {
+                  _disconnectFromLive();
+                  _connectToLive();
+                },
                 icon: const Icon(Icons.refresh),
                 label: const Text('Réessayer'),
                 style: ElevatedButton.styleFrom(
@@ -332,32 +328,83 @@ class _LivePlayerScreenState extends State<LivePlayerScreen> {
       );
     }
 
-    // Utiliser VLC Player si disponible (pour MediaTek), sinon Chewie
-    if (_useVlcPlayer && _vlcPlayerController != null) {
-      return Center(
-        child: AspectRatio(
-          aspectRatio: 16 / 9,
-          child: VlcPlayer(
-            controller: _vlcPlayerController!,
-            aspectRatio: 16 / 9,
-            placeholder: const Center(
-              child: CircularProgressIndicator(color: MyKOGColors.accent),
-            ),
+    // Connecté mais aucune piste vidéo disponible (diffuseur pas encore prêt)
+    if (_videoTrack == null) {
+      return Container(
+        color: MyKOGColors.primaryDark,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const CircularProgressIndicator(color: MyKOGColors.accent),
+              SizedBox(height: 16.h),
+              Text(
+                'En attente du diffuseur...',
+                style: TextStyle(
+                  color: MyKOGColors.textPrimary,
+                  fontSize: 16.sp,
+                ),
+              ),
+              SizedBox(height: 8.h),
+              Text(
+                'Le live va démarrer automatiquement',
+                style: TextStyle(
+                  color: MyKOGColors.textSecondary,
+                  fontSize: 13.sp,
+                ),
+              ),
+            ],
           ),
         ),
       );
     }
 
-    if (_chewieController == null) {
-      return const Center(
-        child: CircularProgressIndicator(color: MyKOGColors.accent),
+    // Déconnecté
+    if (!_isConnected) {
+      return Container(
+        color: MyKOGColors.primaryDark,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.wifi_off,
+                color: MyKOGColors.textSecondary,
+                size: 64.sp,
+              ),
+              SizedBox(height: 16.h),
+              Text(
+                'Déconnecté du live',
+                style: TextStyle(
+                  color: MyKOGColors.textPrimary,
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 24.h),
+              ElevatedButton.icon(
+                onPressed: () {
+                  _disconnectFromLive();
+                  _connectToLive();
+                },
+                icon: const Icon(Icons.refresh),
+                label: const Text('Reconnecter'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: MyKOGColors.accent,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ),
       );
     }
 
+    // Afficher la vidéo LiveKit
     return Center(
-      child: AspectRatio(
-        aspectRatio: 16 / 9,
-        child: Chewie(controller: _chewieController!),
+      child: VideoTrackRenderer(
+        _videoTrack!,
+        fit: VideoViewFit.cover,
       ),
     );
   }
@@ -378,44 +425,44 @@ class _LivePlayerScreenState extends State<LivePlayerScreen> {
             ],
           ),
         ),
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(16.w),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               widget.liveStream.title,
-              style: const TextStyle(
+              style: TextStyle(
                 color: Colors.white,
-                fontSize: 18,
+                fontSize: 18.sp,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 4),
+            SizedBox(height: 4.h),
             Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.person,
                   color: Colors.white70,
-                  size: 16,
+                  size: 16.sp,
                 ),
-                const SizedBox(width: 4),
+                SizedBox(width: 4.w),
                 Text(
                   widget.liveStream.pastor,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Colors.white70,
-                    fontSize: 14,
+                    fontSize: 14.sp,
                   ),
                 ),
               ],
             ),
             if (widget.liveStream.description.isNotEmpty) ...[
-              const SizedBox(height: 8),
+              SizedBox(height: 8.h),
               Text(
                 widget.liveStream.description,
-                style: const TextStyle(
+                style: TextStyle(
                   color: Colors.white60,
-                  fontSize: 13,
+                  fontSize: 13.sp,
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -442,29 +489,29 @@ class _LivePlayerScreenState extends State<LivePlayerScreen> {
 
   Widget _buildViewerCounter() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
       decoration: BoxDecoration(
         color: Colors.black.withOpacity(0.7),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(20.r),
         border: Border.all(
           color: MyKOGColors.accent.withOpacity(0.3),
-          width: 1,
+          width: 1.w,
         ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
+          Icon(
             Icons.remove_red_eye,
             color: Colors.white,
-            size: 16,
+            size: 16.sp,
           ),
-          const SizedBox(width: 6),
+          SizedBox(width: 6.w),
           Text(
             _formatViewerCount(_viewerCount),
-            style: const TextStyle(
+            style: TextStyle(
               color: Colors.white,
-              fontSize: 14,
+              fontSize: 14.sp,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -475,10 +522,10 @@ class _LivePlayerScreenState extends State<LivePlayerScreen> {
 
   Widget _buildLiveBadge() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
       decoration: BoxDecoration(
         color: Colors.red,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(20.r),
         boxShadow: [
           BoxShadow(
             color: Colors.red.withOpacity(0.5),
@@ -491,20 +538,20 @@ class _LivePlayerScreenState extends State<LivePlayerScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 8,
-            height: 8,
-            decoration: const BoxDecoration(
+            width: 8.w,
+            height: 8.h,
+            decoration: BoxDecoration(
               color: Colors.white,
               shape: BoxShape.circle,
             ),
           ),
-          const SizedBox(width: 6),
-          const Text(
+          SizedBox(width: 6.w),
+          Text(
             'LIVE',
             style: TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.bold,
-              fontSize: 12,
+              fontSize: 12.sp,
               letterSpacing: 1.2,
             ),
           ),
@@ -524,4 +571,3 @@ class _LivePlayerScreenState extends State<LivePlayerScreen> {
     }
   }
 }
-

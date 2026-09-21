@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -10,6 +9,7 @@ import 'package:MyKOG/providers/user_provider.dart';
 import 'package:MyKOG/services/download_service.dart';
 import 'package:MyKOG/services/badge_service.dart';
 import 'package:MyKOG/l10n/app_localizations.dart';
+import 'package:MyKOG/widgets/teaching_artwork.dart';
 
 class ModernTeachingTile extends StatelessWidget {
   final Teaching teaching;
@@ -111,80 +111,17 @@ class ModernTeachingTile extends StatelessWidget {
   }
 
   Widget _buildModernArtwork(BuildContext context, bool isPlaying) {
-    return Container(
+    return SizedBox(
       width: 64.w,
       height: 64.w,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12.r),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            MyKOGColors.accent.withValues(alpha: 0.3),
-            MyKOGColors.primaryDark,
-          ],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12.r),
-        child: Stack(
-          children: [
-            teaching.artworkUrl.startsWith('assets/')
-                ? Image.asset(
-                    teaching.artworkUrl,
-                    width: 64.w,
-                    height: 64.w,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) =>
-                        _buildPlaceholder(),
-                  )
-                : CachedNetworkImage(
-                    imageUrl: teaching.artworkUrl,
-                    width: 64.w,
-                    height: 64.w,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) => _buildPlaceholder(),
-                    errorWidget: (context, url, error) => _buildPlaceholder(),
-                  ),
-
-            // Overlay de lecture
-            if (isPlaying)
-              Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12.r),
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.black.withValues(alpha: 0.6),
-                      Colors.black.withValues(alpha: 0.3),
-                    ],
-                  ),
-                ),
-                child: Center(
-                  child: Container(
-                    padding: EdgeInsets.all(8.w),
-                    decoration: BoxDecoration(
-                      color: MyKOGColors.accent.withValues(alpha: 0.9),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.graphic_eq,
-                      color: Colors.white,
-                      size: 20.w,
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
+      child: TeachingArtwork(
+        teaching: teaching,
+        width: 64.w,
+        height: 64.w,
+        borderRadius: 12.r,
+        showPlayingOverlay: true,
+        isPlaying: isPlaying,
+        iconSize: 20.w,
       ),
     );
   }
@@ -440,7 +377,7 @@ class ModernTeachingTile extends StatelessWidget {
                         ? Colors.red
                         : MyKOGColors.textSecondary,
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12.w),
                   Text(DownloadService.isDownloaded(teaching.id)
                       ? 'Supprimer'
                       : 'Télécharger'),
@@ -453,7 +390,7 @@ class ModernTeachingTile extends StatelessWidget {
                 children: [
                   Icon(Icons.queue_music_rounded,
                       color: MyKOGColors.textSecondary),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12.w),
                   Text('Ajouter à la file'),
                 ],
               ),
@@ -475,7 +412,7 @@ class ModernTeachingTile extends StatelessWidget {
                       );
                     },
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12.w),
                   FutureBuilder<bool>(
                     future: userProvider.isFavorite(teaching.id),
                     builder: (context, snapshot) {
@@ -493,7 +430,7 @@ class ModernTeachingTile extends StatelessWidget {
               child: Row(
                 children: [
                   Icon(Icons.share_rounded, color: MyKOGColors.textSecondary),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12.w),
                   Text('Partager'),
                 ],
               ),
@@ -545,59 +482,14 @@ class ModernTeachingTile extends StatelessWidget {
           ),
         ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12.r),
-        child: Stack(
-          children: [
-            teaching.artworkUrl.startsWith('assets/')
-                ? Image.asset(
-                    teaching.artworkUrl,
-                    width: 80.w,
-                    height: 80.w,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) =>
-                        _buildLibraryPlaceholder(),
-                  )
-                : CachedNetworkImage(
-                    imageUrl: teaching.artworkUrl,
-                    width: 80.w,
-                    height: 80.w,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) => _buildLibraryPlaceholder(),
-                    errorWidget: (context, url, error) =>
-                        _buildLibraryPlaceholder(),
-                  ),
-
-            // Overlay de lecture
-            if (isPlaying)
-              Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.black.withValues(alpha: 0.5),
-                      Colors.black.withValues(alpha: 0.2),
-                    ],
-                  ),
-                ),
-                child: Center(
-                  child: Container(
-                    padding: EdgeInsets.all(10.w),
-                    decoration: BoxDecoration(
-                      color: MyKOGColors.accent,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.graphic_eq,
-                      color: Colors.black,
-                      size: 22.w,
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
+      child: TeachingArtwork(
+        teaching: teaching,
+        width: 80.w,
+        height: 80.w,
+        borderRadius: 12.r,
+        showPlayingOverlay: true,
+        isPlaying: isPlaying,
+        iconSize: 22.w,
       ),
     );
   }
@@ -647,7 +539,7 @@ class ModernTeachingTile extends StatelessWidget {
                     ? Colors.red
                     : MyKOGColors.textSecondary,
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12.w),
               Text(DownloadService.isDownloaded(teaching.id)
                   ? 'Supprimer'
                   : 'Télécharger'),
@@ -660,7 +552,7 @@ class ModernTeachingTile extends StatelessWidget {
             children: [
               Icon(Icons.queue_music_rounded,
                   color: MyKOGColors.textSecondary),
-              const SizedBox(width: 12),
+              SizedBox(width: 12.w),
               Text('Ajouter à la file'),
             ],
           ),
@@ -681,7 +573,7 @@ class ModernTeachingTile extends StatelessWidget {
                   );
                 },
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12.w),
               FutureBuilder<bool>(
                 future: userProvider.isFavorite(teaching.id),
                 builder: (context, snapshot) {
@@ -699,7 +591,7 @@ class ModernTeachingTile extends StatelessWidget {
           child: Row(
             children: [
               Icon(Icons.share_rounded, color: MyKOGColors.textSecondary),
-              const SizedBox(width: 12),
+              SizedBox(width: 12.w),
               Text('Partager'),
             ],
           ),

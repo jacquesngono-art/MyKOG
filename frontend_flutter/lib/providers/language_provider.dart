@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'package:MyKOG/services/storage_service.dart';
+import 'package:MyKOG/services/hive_storage_service.dart';
 
 /// Provider pour gérer le changement de langue
 class LanguageProvider extends ChangeNotifier {
@@ -43,22 +43,27 @@ class LanguageProvider extends ChangeNotifier {
   };
 
   LanguageProvider() {
-    // Ne pas charger ici, attendre l'initialisation de StorageService
+    // Ne pas charger ici, attendre l'initialisation de Hive
     _loadSavedLanguageSafely();
+  }
+
+  /// Recharger la langue depuis Hive (appelé après l'init de Hive)
+  Future<void> loadLanguage() async {
+    await _loadSavedLanguageSafely();
   }
 
   /// Charger la langue sauvegardée de manière sécurisée
   Future<void> _loadSavedLanguageSafely() async {
     try {
-      final savedLanguage = StorageService.getString(_languageKey);
+      final savedLanguage = HiveStorageService.getString(_languageKey);
       if (savedLanguage != null && availableLanguages.containsKey(savedLanguage)) {
         final langData = availableLanguages[savedLanguage]!;
         _locale = Locale(langData['code']!, langData['countryCode']!);
         notifyListeners();
       }
     } catch (e) {
-      // StorageService pas encore initialisé, utiliser la langue par défaut
-      debugPrint('LanguageProvider: Utilisation langue par défaut (StorageService non init)');
+      // Hive pas encore initialisé, utiliser la langue par défaut
+      debugPrint('LanguageProvider: Utilisation langue par défaut (Hive non init)');
     }
   }
 
@@ -69,7 +74,7 @@ class LanguageProvider extends ChangeNotifier {
       _locale = Locale(langData['code']!, langData['countryCode']!);
       
       // Sauvegarder la préférence
-      await StorageService.storeString(_languageKey, languageCode);
+      await HiveStorageService.storeString(_languageKey, languageCode);
       
       notifyListeners();
     }

@@ -1,0 +1,350 @@
+{
+  "enseignements": [
+    {
+      "id": "9f8SPWbXAVbWtfA6YsgW",
+      "title": "L'Amour qui Transforme",
+      "speaker": "Pasteur Sarah",
+      "description": "La grâce suffisante pour chaque saison de votre vie.",
+      "category": "Foi",
+      "duration": 4087,
+      "audioUrl": "https://s3.us-east-005.backblazeb2.com/kog-blackblaze/enseignements/audios/1786245630885-247298109.aac?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=005a16e23abfebc0000000002%2F20260809%2Fus-east-005%2Fs3%2Faws4_request&X-Amz-Date=20260809T032038Z&X-Amz-Expires=3600&X-Amz-Signature=585f5f3ca8036f252ac8acc54a1d3754d03239303bd6530e3b59e4fb87c1b90b&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject",
+      "artworkUrl": "https://s3.us-east-005.backblazeb2.com/kog-blackblaze/enseignements/images/1786245630286-205640864.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=005a16e23abfebc0000000002%2F20260809%2Fus-east-005%2Fs3%2Faws4_request&X-Amz-Date=20260809T032038Z&X-Amz-Expires=3600&X-Amz-Signature=746e6cbd13c7f9090acbc4ff2959d875dd9da9a29c9999dbcc4594e3a3a3956b&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject",
+      "tags": [
+        "enseignement",
+        "biblique"
+      ],
+      "playCount": 0,
+      "rating": 0,
+      "isNew": true,
+      "isFeatured": false,
+      "publishedAt": {
+        "_seconds": 1786245637,
+        "_nanoseconds": 924000000
+      },
+      "createdAt": {
+        "_seconds": 1786245637,
+        "_nanoseconds": 924000000
+      },
+      "updatedAt": {
+        "_seconds": 1786245637,
+        "_nanoseconds": 924000000
+      },
+      "mois": "Novembre",
+      "annee": "2023",
+      "typeCulte": "Culte Prophétique",
+      "imageKey": "enseignements/images/1786245630286-205640864.png",
+      "audioKey": "enseignements/audios/1786245630885-247298109.aac"
+    },
+    {
+      "id": "BM5sTAPIaDvS5icMSE11",
+      "title": "La Paix au Milieu de la Tempête",
+      "speaker": "Pasteure Ruth",
+      "description": "Un enseignement puissant pour fortifier votre foi au quotidien.",
+      "category": "Adoration",
+      "duration": 4594,
+      "audioUrl": "https://s3.us-east-005.backblazeb2.com/kog-blackblaze/enseignements/audios/1786245870313-37562892.aac?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=005a16e23abfebc0000000002%2F20260809%2Fus-east-005%2Fs3%2Faws4_request&X-Amz-Date=20260809T032437Z&X-Amz-Expires=3600&X-Amz-Signature=5967853c849c7dceb478d19332ab09f4bcad16afa4a6e2ab52ef358b990784df&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject",
+      "artworkUrl": "https://s3.us-east-005.backblazeb2.com/kog-blackblaze/enseignements/images/1786245869706-826749395.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=005a16e23abfebc0000000002%2F20260809%2Fus-east-005%2Fs3%2Faws4_request&X-Amz-Date=20260809T032437Z&X-Amz-Expires=3600&X-Amz-Signature=b8ab197542df9ea2b504e841afd7758a3b26ed651997ffccff66d5bba734c14e&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject",
+      "tags": [
+        "louange",
+        "adoration"
+      ],
+      "playCount": 0,
+      "rating": 0,
+      "isNew": true,
+      "isFeatured": false,
+      "publishedAt": {
+        "_seconds": 1786245877,
+        "_nanoseconds": 59000000
+      },
+      "createdAt": {
+        "_seconds": 1786245877,
+        "_nanoseconds": 59000000
+      },
+      "updatedAt": {
+        "_seconds": 1786245877,
+        "_nanoseconds": 59000000
+      },
+      "mois": "Juin",
+      "annee": "2023",
+      "typeCulte": "Séminaire",
+      "imageKey": "enseignements/images/1786245869706-826749395.png",
+      "audioKey": "enseignements/audios/1786245870313-37562892.aac"
+    },
+    {
+      "id": "I8K94Zz8gAlpg7uaEq6Q",
+      "title": "Vaincre par la Louange",
+      "speaker": "Pasteur Cyrille",
+      "description": "Un enseignement puissant pour fortifier votre foi au quotidien.",
+      "category": "Prophétique",
+      "duration": 5853,
+      "audioUrl": "https://s3.us-east-005.backblazeb2.com/kog-blackblaze/enseignements/audios/1786245802744-202803288.aac?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=005a16e23abfebc0000000002%2F20260809%2Fus-east-005%2Fs3%2Faws4_request&X-Amz-Date=20260809T032331Z&X-Amz-Expires=3600&X-Amz-Signature=c9a37ccdbe2aec422bc0a7f2409ddb087f79da8f7bdb0ed555bea635be2246aa&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject",
+      "artworkUrl": "https://s3.us-east-005.backblazeb2.com/kog-blackblaze/enseignements/images/1786245802134-496841825.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=005a16e23abfebc0000000002%2F20260809%2Fus-east-005%2Fs3%2Faws4_request&X-Amz-Date=20260809T032331Z&X-Amz-Expires=3600&X-Amz-Signature=848ad72ef084c2134c88a896a8973749dbba4ef4626ac1084b697994aee47229&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject",
+      "tags": [
+        "victoire",
+        "courage"
+      ],
+      "playCount": 0,
+      "rating": 0,
+      "isNew": true,
+      "isFeatured": false,
+      "publishedAt": {
+        "_seconds": 1786245810,
+        "_nanoseconds": 775000000
+      },
+      "createdAt": {
+        "_seconds": 1786245810,
+        "_nanoseconds": 775000000
+      },
+      "updatedAt": {
+        "_seconds": 1786245810,
+        "_nanoseconds": 775000000
+      },
+      "mois": "Décembre",
+      "annee": "2026",
+      "typeCulte": "Culte d'Impact",
+      "imageKey": "enseignements/images/1786245802134-496841825.jpg",
+      "audioKey": "enseignements/audios/1786245802744-202803288.aac"
+    },
+    {
+      "id": "X9Br1nwBHmCNBEwF8BjL",
+      "title": "Les Fondations Spirituelles",
+      "speaker": "Évangéliste Marc",
+      "description": "Un enseignement puissant pour fortifier votre foi au quotidien.",
+      "category": "Prophétique",
+      "duration": 2794,
+      "audioUrl": "https://s3.us-east-005.backblazeb2.com/kog-blackblaze/enseignements/audios/1786245755727-6929422.aac?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=005a16e23abfebc0000000002%2F20260809%2Fus-east-005%2Fs3%2Faws4_request&X-Amz-Date=20260809T032243Z&X-Amz-Expires=3600&X-Amz-Signature=fc2f271e9c68541f327a53db457fef5e1b80cb9037db9ddddc99236b4eefde74&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject",
+      "artworkUrl": "https://s3.us-east-005.backblazeb2.com/kog-blackblaze/enseignements/images/1786245755078-475071896.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=005a16e23abfebc0000000002%2F20260809%2Fus-east-005%2Fs3%2Faws4_request&X-Amz-Date=20260809T032243Z&X-Amz-Expires=3600&X-Amz-Signature=2f15b0cb96f917ecf9b74d6ddc1bf36ac4f7f67e77c13b1627b2233b67309809&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject",
+      "tags": [
+        "prière",
+        "spirituel"
+      ],
+      "playCount": 0,
+      "rating": 0,
+      "isNew": true,
+      "isFeatured": false,
+      "publishedAt": {
+        "_seconds": 1786245763,
+        "_nanoseconds": 271000000
+      },
+      "createdAt": {
+        "_seconds": 1786245763,
+        "_nanoseconds": 271000000
+      },
+      "updatedAt": {
+        "_seconds": 1786245763,
+        "_nanoseconds": 271000000
+      },
+      "mois": "Avril",
+      "annee": "2023",
+      "typeCulte": "Culte d'Impact",
+      "imageKey": "enseignements/images/1786245755078-475071896.jpg",
+      "audioKey": "enseignements/audios/1786245755727-6929422.aac"
+    },
+    {
+      "id": "ZgTphxYLfjaad4Z7hRM0",
+      "title": "Marcher dans la Foi",
+      "speaker": "Évangéliste Marc",
+      "description": "Un enseignement puissant pour fortifier votre foi au quotidien.",
+      "category": "Prière",
+      "duration": 1104,
+      "audioUrl": "https://s3.us-east-005.backblazeb2.com/kog-blackblaze/enseignements/audios/1786245581474-694576145.aac?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=005a16e23abfebc0000000002%2F20260809%2Fus-east-005%2Fs3%2Faws4_request&X-Amz-Date=20260809T031951Z&X-Amz-Expires=3600&X-Amz-Signature=1547f3d83c1672a637cbc503b68902eace6bc2e02dfa142258acbb513dfc2323&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject",
+      "artworkUrl": "https://s3.us-east-005.backblazeb2.com/kog-blackblaze/enseignements/images/1786245580770-584490564.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=005a16e23abfebc0000000002%2F20260809%2Fus-east-005%2Fs3%2Faws4_request&X-Amz-Date=20260809T031951Z&X-Amz-Expires=3600&X-Amz-Signature=3fcf47f73ec530a26d9a552ee57839e214a6cb8548c0dcc59401cb8713e79dc0&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject",
+      "tags": [
+        "louange",
+        "adoration"
+      ],
+      "playCount": 0,
+      "rating": 0,
+      "isNew": true,
+      "isFeatured": false,
+      "publishedAt": {
+        "_seconds": 1786245591,
+        "_nanoseconds": 518000000
+      },
+      "createdAt": {
+        "_seconds": 1786245591,
+        "_nanoseconds": 518000000
+      },
+      "updatedAt": {
+        "_seconds": 1786245591,
+        "_nanoseconds": 518000000
+      },
+      "mois": "Mai",
+      "annee": "2026",
+      "typeCulte": "Conférence",
+      "imageKey": "enseignements/images/1786245580770-584490564.jpg",
+      "audioKey": "enseignements/audios/1786245581474-694576145.aac"
+    },
+    {
+      "id": "alSCL7q1kgQ79jzZxtQP",
+      "title": "Test fallback",
+      "speaker": "X",
+      "description": "",
+      "category": "Y",
+      "duration": 0,
+      "audioUrl": "https://s3.us-east-005.backblazeb2.com/kog-blackblaze/enseignements/audios/1786237726479-875468713.mp3?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=005a16e23abfebc0000000002%2F20260809%2Fus-east-005%2Fs3%2Faws4_request&X-Amz-Date=20260809T010847Z&X-Amz-Expires=3600&X-Amz-Signature=68d59a6a2bfaa60db565cfad275613fc9f547454143cbbbb9abaa8d58282b02a&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject",
+      "artworkUrl": "https://s3.us-east-005.backblazeb2.com/kog-blackblaze/enseignements/images/1786237725898-841831849.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=005a16e23abfebc0000000002%2F20260809%2Fus-east-005%2Fs3%2Faws4_request&X-Amz-Date=20260809T010847Z&X-Amz-Expires=3600&X-Amz-Signature=2a4bc1bdbbd9c8b237f46ef9d2fa19f14e4b030a4f6542d42ce869f861bcdc53&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject",
+      "tags": [],
+      "playCount": 0,
+      "rating": 0,
+      "isNew": true,
+      "isFeatured": false,
+      "publishedAt": {
+        "_seconds": 1786237726,
+        "_nanoseconds": 994000000
+      },
+      "createdAt": {
+        "_seconds": 1786237726,
+        "_nanoseconds": 994000000
+      },
+      "updatedAt": {
+        "_seconds": 1786237726,
+        "_nanoseconds": 994000000
+      },
+      "mois": "8",
+      "annee": "2026",
+      "typeCulte": "Conférence",
+      "imageKey": "enseignements/images/1786237725898-841831849.png",
+      "audioKey": "enseignements/audios/1786237726479-875468713.mp3"
+    },
+    {
+      "id": "cNRPHo5DqdHItfatULxA",
+      "title": "La Grâce qui Suffit",
+      "speaker": "Pasteur Cyrille",
+      "description": "Un enseignement puissant pour fortifier votre foi au quotidien.",
+      "category": "Louange",
+      "duration": 3584,
+      "audioUrl": "https://s3.us-east-005.backblazeb2.com/kog-blackblaze/enseignements/audios/1786245686637-291445151.aac?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=005a16e23abfebc0000000002%2F20260809%2Fus-east-005%2Fs3%2Faws4_request&X-Amz-Date=20260809T032133Z&X-Amz-Expires=3600&X-Amz-Signature=e35ba49f83b62643c7c8c2e081bc67d43771001aeb61ad142823c4655c334436&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject",
+      "artworkUrl": "https://s3.us-east-005.backblazeb2.com/kog-blackblaze/enseignements/images/1786245685902-223910859.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=005a16e23abfebc0000000002%2F20260809%2Fus-east-005%2Fs3%2Faws4_request&X-Amz-Date=20260809T032133Z&X-Amz-Expires=3600&X-Amz-Signature=a862d1ebc104fa74b513c1ef3df8c64352663766debbc975b72fac5f3e64a3eb&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject",
+      "tags": [
+        "prière",
+        "spirituel"
+      ],
+      "playCount": 0,
+      "rating": 0,
+      "isNew": true,
+      "isFeatured": false,
+      "publishedAt": {
+        "_seconds": 1786245693,
+        "_nanoseconds": 360000000
+      },
+      "createdAt": {
+        "_seconds": 1786245693,
+        "_nanoseconds": 360000000
+      },
+      "updatedAt": {
+        "_seconds": 1786245693,
+        "_nanoseconds": 360000000
+      },
+      "mois": "Novembre",
+      "annee": "2024",
+      "typeCulte": "Culte d'Impact",
+      "imageKey": "enseignements/images/1786245685902-223910859.png",
+      "audioKey": "enseignements/audios/1786245686637-291445151.aac"
+    },
+    {
+      "id": "k42FDluy67ZgfKPd3g28",
+      "title": "La Puissance de la Prière",
+      "speaker": "Pasteur Jean",
+      "description": "La grâce suffisante pour chaque saison de votre vie.",
+      "category": "Prière",
+      "duration": 5133,
+      "audioUrl": "https://s3.us-east-005.backblazeb2.com/kog-blackblaze/enseignements/audios/1786245521662-50766832.aac?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=005a16e23abfebc0000000002%2F20260809%2Fus-east-005%2Fs3%2Faws4_request&X-Amz-Date=20260809T031851Z&X-Amz-Expires=3600&X-Amz-Signature=e7b32e58dcae1fe851b906224bb0d6b7c40ceae6280e48db40da55e8b9e3a78a&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject",
+      "artworkUrl": "https://s3.us-east-005.backblazeb2.com/kog-blackblaze/enseignements/images/1786245520850-426318933.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=005a16e23abfebc0000000002%2F20260809%2Fus-east-005%2Fs3%2Faws4_request&X-Amz-Date=20260809T031851Z&X-Amz-Expires=3600&X-Amz-Signature=fd4ec44083cfb17ba85089e72a537ae30df47dd4e30bd21c798e1048cf20db8f&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject",
+      "tags": [
+        "foi",
+        "pouvoir",
+        "gloire"
+      ],
+      "playCount": 0,
+      "rating": 0,
+      "isNew": true,
+      "isFeatured": false,
+      "publishedAt": {
+        "_seconds": 1786245531,
+        "_nanoseconds": 335000000
+      },
+      "createdAt": {
+        "_seconds": 1786245531,
+        "_nanoseconds": 335000000
+      },
+      "updatedAt": {
+        "_seconds": 1786245531,
+        "_nanoseconds": 335000000
+      },
+      "mois": "Février",
+      "annee": "2025",
+      "typeCulte": "Culte Prophétique",
+      "imageKey": "enseignements/images/1786245520850-426318933.png",
+      "audioKey": "enseignements/audios/1786245521662-50766832.aac"
+    }
+  ],
+  "textes_resumes": [
+    {
+      "id": "NncDVGyDr6XQwhivFWw4",
+      "title": "Enseignement de Février",
+      "speaker": "Pasteur Grâce",
+      "description": "Texte résumé de l'enseignement du mois de Février",
+      "category": "Culte d'Enseignement",
+      "pdfUrl": null,
+      "coverImageUrl": "",
+      "tags": [],
+      "viewCount": 0,
+      "rating": 0,
+      "isNew": true,
+      "isFeatured": false,
+      "publishedAt": {
+        "_seconds": 1786285499,
+        "_nanoseconds": 871000000
+      },
+      "createdAt": {
+        "_seconds": 1786285499,
+        "_nanoseconds": 871000000
+      },
+      "updatedAt": {
+        "_seconds": 1786285499,
+        "_nanoseconds": 871000000
+      },
+      "mois": "02",
+      "annee": "2026",
+      "typeCulte": "Conférence",
+      "pdfKey": "textes_resumes/pdfs/1786285499591-522587260.pdf",
+      "coverImageKey": "",
+      "fileSize": 416741,
+      "pageCount": 0
+    },
+    {
+      "id": "ejjqwVEg3vbe9dTZLMX9",
+      "title": "Enseignement de Janvier",
+      "speaker": "Prophète Xavier",
+      "description": "Texte résumé de l'enseignement du mois de Janvier",
+      "category": "Culte d'Enseignement",
+      "pdfUrl": null,
+      "coverImageUrl": "",
+      "tags": [],
+      "viewCount": 0,
+      "rating": 0,
+      "isNew": true,
+      "isFeatured": false,
+      "publishedAt": {
+        "_seconds": 1786285499,
+        "_nanoseconds": 773000000
+      },
+      "createdAt": {
+        "_seconds": 1786285499,
+        "_nanoseconds": 773000000
+      },
+      "updatedAt": {
+        "_seconds": 1786285499,
+        "_nanoseconds": 773000000
+      },
+      "mois": "01",
+      "annee": "2026",
+      "typeCulte": "Conférence",
+      "pdfKey": "textes_resumes/pdfs/1786285499480-913840884.pdf",
+      "coverImageKey": "",
+      "fileSize": 758807,
+      "pageCount": 0
+    }
+  ]
+}

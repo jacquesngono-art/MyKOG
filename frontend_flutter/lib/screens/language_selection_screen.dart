@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import 'package:MyKOG/providers/language_provider.dart';
@@ -34,17 +35,17 @@ class LanguageSelectionScreen extends StatelessWidget {
           ),
         ),
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.all(16.w),
           children: [
             // En-tête
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.all(20.w),
               decoration: BoxDecoration(
                 color: MyKOGColors.secondary.withOpacity(0.5),
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(16.r),
                 border: Border.all(
                   color: MyKOGColors.accent.withOpacity(0.2),
-                  width: 1,
+                  width: 1.w,
                 ),
               ),
               child: Column(
@@ -52,9 +53,9 @@ class LanguageSelectionScreen extends StatelessWidget {
                   Icon(
                     Icons.language,
                     color: MyKOGColors.accent,
-                    size: 48,
+                    size: 48.w,
                   ),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12.h),
                   Text(
                     l10n.language,
                     style: theme.textTheme.headlineSmall?.copyWith(
@@ -62,7 +63,7 @@ class LanguageSelectionScreen extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8.h),
                   Text(
                     'Select your preferred language',
                     style: theme.textTheme.bodyMedium?.copyWith(
@@ -74,7 +75,7 @@ class LanguageSelectionScreen extends StatelessWidget {
               ),
             ).animate().fadeIn().slideY(),
 
-            const SizedBox(height: 24),
+            SizedBox(height: 24.h),
 
             // Liste des langues
             ...LanguageProvider.availableLanguages.values.map((lang) {
@@ -94,17 +95,17 @@ class LanguageSelectionScreen extends StatelessWidget {
               ).fadeIn().slideX();
             }).toList(),
 
-            const SizedBox(height: 24),
+            SizedBox(height: 24.h),
 
             // Note d'information
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(16.w),
               decoration: BoxDecoration(
                 color: MyKOGColors.accent.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(12.r),
                 border: Border.all(
                   color: MyKOGColors.accent.withOpacity(0.3),
-                  width: 1,
+                  width: 1.w,
                 ),
               ),
               child: Row(
@@ -113,15 +114,15 @@ class LanguageSelectionScreen extends StatelessWidget {
                   Icon(
                     Icons.info_outline,
                     color: MyKOGColors.accent,
-                    size: 20,
+                    size: 20.sp,
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12.w),
                   Expanded(
                     child: Text(
                       'The app will restart with the selected language. Your settings and downloads will be preserved.',
                       style: TextStyle(
                         color: MyKOGColors.textSecondary,
-                        fontSize: 13,
+                        fontSize: 13.sp,
                       ),
                     ),
                   ),
@@ -146,17 +147,17 @@ class LanguageSelectionScreen extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: EdgeInsets.only(bottom: 12.h),
       decoration: BoxDecoration(
         color: isSelected 
             ? MyKOGColors.accent.withOpacity(0.15)
             : MyKOGColors.secondary,
-        borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(16.r),
         border: Border.all(
           color: isSelected 
               ? MyKOGColors.accent
               : MyKOGColors.accent.withOpacity(0.2),
-          width: isSelected ? 2 : 1,
+          width: isSelected ? 2.w : 1.w,
         ),
         boxShadow: isSelected
             ? [
@@ -170,10 +171,10 @@ class LanguageSelectionScreen extends StatelessWidget {
       ),
       child: ListTile(
         onTap: onTap,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        contentPadding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
         leading: Container(
-          width: 56,
-          height: 56,
+          width: 56.w,
+          height: 56.h,
           decoration: BoxDecoration(
             color: isSelected 
                 ? MyKOGColors.accent.withOpacity(0.2)
@@ -183,7 +184,7 @@ class LanguageSelectionScreen extends StatelessWidget {
           child: Center(
             child: Text(
               flag,
-              style: const TextStyle(fontSize: 28),
+              style: TextStyle(fontSize: 28.sp),
             ),
           ),
         ),
@@ -202,7 +203,7 @@ class LanguageSelectionScreen extends StatelessWidget {
         ),
         trailing: isSelected
             ? Container(
-                padding: const EdgeInsets.all(8),
+                padding: EdgeInsets.all(8.w),
                 decoration: BoxDecoration(
                   color: MyKOGColors.accent,
                   shape: BoxShape.circle,
@@ -210,13 +211,13 @@ class LanguageSelectionScreen extends StatelessWidget {
                 child: Icon(
                   Icons.check,
                   color: Colors.white,
-                  size: 20,
+                  size: 20.sp,
                 ),
               )
             : Icon(
                 Icons.arrow_forward_ios,
                 color: MyKOGColors.textSecondary,
-                size: 16,
+                size: 16.sp,
               ),
       ),
     );
@@ -233,16 +234,16 @@ class LanguageSelectionScreen extends StatelessWidget {
         barrierDismissible: false,
         builder: (context) => Center(
           child: Container(
-            padding: const EdgeInsets.all(24),
+            padding: EdgeInsets.all(24.w),
             decoration: BoxDecoration(
               color: MyKOGColors.secondary,
-              borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(16.r),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 CircularProgressIndicator(color: MyKOGColors.accent),
-                const SizedBox(height: 16),
+                SizedBox(height: 16.h),
                 Text(
                   'Changing language...',
                   style: TextStyle(color: MyKOGColors.textPrimary),

@@ -212,6 +212,22 @@ const deleteUser = async (req, res) => {
   }
 };
 
+const deleteAllUsers = async (req, res) => {
+  try {
+    const snapshot = await db.collection('users').get();
+    const batchSize = snapshot.size;
+    if (batchSize === 0) {
+      return res.json({ message: 'Aucun utilisateur à supprimer', deleted: 0 });
+    }
+    const deletePromises = snapshot.docs.map(doc => doc.ref.delete());
+    await Promise.all(deletePromises);
+    res.json({ message: `${batchSize} utilisateur(s) supprimé(s)`, deleted: batchSize });
+  } catch (error) {
+    console.error('Erreur suppression tous les utilisateurs:', error);
+    res.status(500).json({ error: 'Erreur lors de la suppression des utilisateurs' });
+  }
+};
+
 // Obtenir les statistiques des utilisateurs
 const getUserStats = async (req, res) => {
   try {
@@ -244,5 +260,6 @@ module.exports = {
   getUserById,
   updateUser,
   deleteUser,
+  deleteAllUsers,
   getUserStats,
 };

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
 import 'package:MyKOG/models/teaching.dart';
 import 'package:MyKOG/services/teaching_service.dart';
@@ -10,6 +9,7 @@ import 'package:MyKOG/providers/audio_player_provider.dart';
 import 'package:MyKOG/l10n/app_localizations.dart';
 import 'package:MyKOG/theme.dart';
 import 'package:MyKOG/widgets/glass_card.dart';
+import 'package:MyKOG/widgets/expandable_teaching_card.dart';
 import 'package:MyKOG/widgets/image_carousel.dart';
 import 'package:MyKOG/screens/teachings_screen.dart';
 import 'package:MyKOG/services/connectivity_service.dart';
@@ -257,133 +257,9 @@ class _BrowseScreenState extends State<BrowseScreen> {
   }
 
   Widget _buildTeachingCard(Teaching teaching, int index) {
-    return GestureDetector(
-      onTap: () => _playTeaching(context, teaching),
-      child: Container(
-        width: 140.w,
-        margin: EdgeInsets.only(right: 12.w),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12.r),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12.r),
-                  child: Stack(
-                    children: [
-                      teaching.artworkUrl.startsWith('assets/')
-                          ? Image.asset(
-                              teaching.artworkUrl,
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                              height: double.infinity,
-                              errorBuilder: (context, error, stackTrace) => Container(
-                                color: MyKOGColors.secondary,
-                                child: Center(
-                                  child: Icon(
-                                    Icons.music_note,
-                                    color: MyKOGColors.accent,
-                                    size: 32.w,
-                                  ),
-                                ),
-                              ),
-                            )
-                          : CachedNetworkImage(
-                              imageUrl: teaching.artworkUrl,
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                              height: double.infinity,
-                              placeholder: (context, url) => Container(
-                                color: MyKOGColors.secondary,
-                                child: Center(
-                                  child: Icon(
-                                    Icons.music_note,
-                                    color: MyKOGColors.accent,
-                                    size: 32.w,
-                                  ),
-                                ),
-                              ),
-                              errorWidget: (context, url, error) => Container(
-                                color: MyKOGColors.secondary,
-                                child: Center(
-                                  child: Icon(
-                                    Icons.music_note,
-                                    color: MyKOGColors.accent,
-                                    size: 32.w,
-                                  ),
-                                ),
-                              ),
-                            ),
-                      // Gradient overlay
-                      Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.transparent,
-                              Colors.black.withValues(alpha: 0.6),
-                            ],
-                          ),
-                        ),
-                      ),
-                      // Play count
-                      Positioned(
-                        top: 8,
-                        right: 8,
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 6.w, vertical: 2.h),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.6),
-                            borderRadius: BorderRadius.circular(8.r),
-                          ),
-                          child: Text(
-                            '${teaching.playCount}',
-                            style:
-                                Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: Colors.white,
-                                      fontSize: 10.sp,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            SizedBox(height: 8.h),
-            Text(
-              teaching.title,
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: MyKOGColors.textPrimary,
-                    fontWeight: FontWeight.w600,
-                  ),
-            ),
-            SizedBox(height: 2.h),
-            Text(
-              teaching.speaker,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: MyKOGColors.textSecondary,
-                  ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
-      ),
+    return ExpandableTeachingCard(
+      teaching: teaching,
+      onPlay: (t) => _playTeaching(context, t),
     )
         .animate(delay: (index * 100).ms)
         .fadeIn()
@@ -404,7 +280,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
           crossAxisCount: 2,
           crossAxisSpacing: 12.w,
           mainAxisSpacing: 12.h,
-          childAspectRatio: 2.5,
+          childAspectRatio: 2.0,
         ),
         itemCount: _categories.length,
         itemBuilder: (context, index) {
@@ -429,7 +305,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
     return GestureDetector(
       onTap: () => _navigateToTeachings(context, category: category),
       child: GlassCard(
-        padding: EdgeInsets.all(16.w),
+        padding: EdgeInsets.all(14.w),
         border: Border.all(
           color: color.withValues(alpha: 0.3),
           width: 1.w,

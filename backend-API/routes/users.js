@@ -6,6 +6,7 @@ const {
   getUserById,
   updateUser,
   deleteUser,
+  deleteAllUsers,
   getUserStats,
 } = require('../controllers/userController');
 
@@ -23,6 +24,9 @@ router.get('/:id', getUserById);
 
 // Route pour mettre à jour un utilisateur
 router.put('/:id', updateUser);
+
+// Route pour supprimer tous les utilisateurs (admin uniquement)
+router.delete('/all', deleteAllUsers);
 
 // Route pour supprimer un utilisateur (admin uniquement)
 router.delete('/:id', deleteUser);

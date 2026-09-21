@@ -17,6 +17,21 @@ async function sendNotificationToAllUsers({
   type = 'general',
 }) {
   try {
+    // Écrire dans notifications_outbox pour le client desktop (Electron)
+    try {
+      await db.collection('notifications_outbox').add({
+        title,
+        body,
+        data: data || {},
+        imageUrl: imageUrl || null,
+        type: type || 'general',
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        readBy: [],
+      });
+    } catch (err) {
+      console.warn('⚠️ Impossible d\'écrire dans notifications_outbox:', err.message);
+    }
+
     // Vérifier la connectivité réseau avant d'essayer d'envoyer
     // Si pas de connexion, on retourne silencieusement sans bloquer
     if (!admin.messaging) {

@@ -68,19 +68,22 @@ class _BooksScreenState extends State<BooksScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: MyKOGColors.primaryDark,
-      body: Column(
-        children: [
-          _buildHeader(),
-          Expanded(
-            child: _isLoading
-                ? _buildLoading()
-                : _filteredBooks.isEmpty
-                    ? _buildEmpty()
-                    : _isGridView
-                        ? _buildGridView()
-                        : _buildListView(),
-          ),
-        ],
+      resizeToAvoidBottomInset: false,
+      body: SafeArea(
+        child: Column(
+          children: [
+            _buildHeader(),
+            Expanded(
+              child: _isLoading
+                  ? _buildLoading()
+                  : _filteredBooks.isEmpty
+                      ? _buildEmpty()
+                      : _isGridView
+                          ? _buildGridView()
+                          : _buildListView(),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -108,7 +111,7 @@ class _BooksScreenState extends State<BooksScreen> {
                     color: MyKOGColors.textPrimary),
                 onPressed: () => Navigator.pop(context),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8.w),
               Text(
                 'Books',
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(

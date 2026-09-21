@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:MyKOG/models/teaching.dart';
 import 'package:MyKOG/services/teaching_service.dart';
 import 'package:MyKOG/services/download_service.dart';
+import 'package:MyKOG/services/hive_storage_service.dart';
 import 'package:MyKOG/services/storage_service.dart';
 import 'package:MyKOG/services/connectivity_service.dart';
 import 'package:MyKOG/l10n/app_localizations.dart';
@@ -91,30 +92,20 @@ class _TeachingsScreenState extends State<TeachingsScreen>
       List<Teaching> teachings;
       List<String> categories;
 
-      if (_isOffline) {
-        // En mode offline, charger uniquement les contenus téléchargés
-        final downloadedIds = DownloadService.getDownloadedTeachingIds();
-        teachings = [];
-        for (String id in downloadedIds) {
-          final teaching = await TeachingService.getTeachingById(id);
-          if (teaching != null) {
-            teachings.add(teaching);
-          }
-        }
-        categories = ['All'];
-      } else {
-        teachings = await TeachingService.getAllTeachings();
-        categories = await TeachingService.getCategories();
-      }
+      // Charger tous les enseignements (getAllTeachings gère le cache offline)
+      teachings = await TeachingService.getAllTeachings();
+      categories = await TeachingService.getCategories();
 
-      // Load downloaded teachings
-      final downloadedIds = DownloadService.getDownloadedTeachingIds();
-      List<Teaching> downloaded = [];
-      for (String id in downloadedIds) {
-        final teaching = await TeachingService.getTeachingById(id);
-        if (teaching != null) {
-          downloaded.add(teaching);
-        }
+      // Filtrer les téléchargés depuis la liste complète (évite O(n) appels API)
+      final downloadedIds = DownloadService.getDownloadedTeachingIds().toSet();
+      final downloaded = teachings
+          .where((t) => downloadedIds.contains(t.id))
+          .toList();
+
+      if (_isOffline) {
+        // En mode offline, on ne montre que les téléchargés
+        teachings = downloaded;
+        categories = ['All'];
       }
 
       // Extraire les années et mois disponibles
@@ -174,8 +165,15 @@ class _TeachingsScreenState extends State<TeachingsScreen>
 
       if (shouldReset != true) return;
 
-      // Effacer les données
-      await StorageService.clearAllTeachingsData();
+      // Effacer les données (Hive + prefs legacy)
+      await HiveStorageService.delete('teachings');
+      await HiveStorageService.delete('cached_teachings');
+      await HiveStorageService.delete('recently_played');
+      await HiveStorageService.delete('favorites');
+      await StorageService.remove('teachings');
+      await StorageService.remove('cached_teachings');
+      await StorageService.remove('recently_played');
+      await StorageService.remove('favorites');
 
       // Effacer le cache TeachingService
       TeachingService.clearCache();
@@ -277,8 +275,10 @@ class _TeachingsScreenState extends State<TeachingsScreen>
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      body: Column(
-        children: [
+      resizeToAvoidBottomInset: false,
+      body: SafeArea(
+        child: Column(
+          children: [
           // Header with search
           Container(
             padding: EdgeInsets.fromLTRB(16.w, 60.h, 16.w, 16.h),
@@ -327,6 +327,38 @@ class _TeachingsScreenState extends State<TeachingsScreen>
                     ),
                   ],
                 ).animate().fadeIn().slideY(),
+
+                // Offline banner
+                if (_isOffline)
+                  Container(
+                    margin: EdgeInsets.only(bottom: 12.h),
+                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                    decoration: BoxDecoration(
+                      color: MyKOGColors.warning.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8.r),
+                      border: Border.all(
+                        color: MyKOGColors.warning.withValues(alpha: 0.4),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.cloud_off_rounded,
+                            color: MyKOGColors.warning, size: 16.w),
+                        SizedBox(width: 8.w),
+                        Expanded(
+                          child: Text(
+                            'Mode hors ligne — seuls les téléchargements sont disponibles',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: MyKOGColors.warning,
+                              fontSize: 12.sp,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ).animate().fadeIn().slideY(),
+
                 SizedBox(height: 16.h),
 
                 // Tabs
@@ -565,6 +597,7 @@ class _TeachingsScreenState extends State<TeachingsScreen>
             ),
           ),
         ],
+        ),
       ),
     );
   }
@@ -578,7 +611,7 @@ class _TeachingsScreenState extends State<TeachingsScreen>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const CircularProgressIndicator(color: MyKOGColors.accent),
-            const SizedBox(height: 16),
+            SizedBox(height: 16.h),
             Text(
               l10n.loading,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -629,8 +662,8 @@ class _TeachingsScreenState extends State<TeachingsScreen>
         itemCount: _filteredTeachings.length + 1, // +1 for bottom padding
         itemBuilder: (context, index) {
           if (index == _filteredTeachings.length) {
-            return const SizedBox(
-                height: 100); // Bottom padding for mini player
+            return SizedBox(
+                height: 100.h); // Bottom padding for mini player
           }
 
           final teaching = _filteredTeachings[index];
@@ -655,7 +688,7 @@ class _TeachingsScreenState extends State<TeachingsScreen>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const CircularProgressIndicator(color: MyKOGColors.accent),
-            const SizedBox(height: 16),
+            SizedBox(height: 16.h),
             Text(
               l10n.loading,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -690,17 +723,17 @@ class _TeachingsScreenState extends State<TeachingsScreen>
           children: [
             Icon(
               Icons.church,
-              size: 64,
+              size: 64.w,
               color: MyKOGColors.textSecondary,
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16.h),
             Text(
               l10n.noTeachingsFound,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: MyKOGColors.textSecondary,
                   ),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8.h),
             Text(
               '${l10n.noDataAvailable} - $typeCulte',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -721,7 +754,7 @@ class _TeachingsScreenState extends State<TeachingsScreen>
         itemCount: teachingsByType.length + 1,
         itemBuilder: (context, index) {
           if (index == teachingsByType.length) {
-            return const SizedBox(height: 100);
+            return SizedBox(height: 100.h);
           }
 
           final teaching = teachingsByType[index];
@@ -746,7 +779,7 @@ class _TeachingsScreenState extends State<TeachingsScreen>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const CircularProgressIndicator(color: MyKOGColors.accent),
-            const SizedBox(height: 16),
+            SizedBox(height: 16.h),
             Text(
               l10n.loading,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -765,17 +798,17 @@ class _TeachingsScreenState extends State<TeachingsScreen>
           children: [
             Icon(
               Icons.download,
-              size: 64,
+              size: 64.w,
               color: MyKOGColors.textSecondary,
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16.h),
             Text(
               l10n.noDownloadsYet,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: MyKOGColors.textSecondary,
                   ),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8.h),
             Text(
               l10n.downloadToListenOffline,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -795,7 +828,7 @@ class _TeachingsScreenState extends State<TeachingsScreen>
         itemCount: _downloadedTeachings.length + 1,
         itemBuilder: (context, index) {
           if (index == _downloadedTeachings.length) {
-            return const SizedBox(height: 100);
+            return SizedBox(height: 100.h);
           }
 
           final teaching = _downloadedTeachings[index];

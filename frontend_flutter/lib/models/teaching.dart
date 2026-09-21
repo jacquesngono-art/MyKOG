@@ -19,6 +19,7 @@ class Teaching {
   final String? annee;
   final String? typeCulte;
 
+
   // Méthode pour créer un enseignement vide (pour le fallback)
   static Teaching empty() {
     return Teaching(

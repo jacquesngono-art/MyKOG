@@ -1,10 +1,10 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:MyKOG/theme.dart';
 import 'package:MyKOG/services/teaching_service.dart';
 import 'package:MyKOG/models/teaching.dart';
+import 'package:MyKOG/widgets/resolved_artwork_image.dart';
 
 class ImageCarousel extends StatefulWidget {
   const ImageCarousel({super.key});
@@ -174,30 +174,12 @@ class _ImageCarouselState extends State<ImageCarousel> {
           children: [
             // Image de fond
             Positioned.fill(
-              child: CachedNetworkImage(
-                imageUrl: teaching.artworkUrl,
+              child: ResolvedArtworkImage(
+                url: teaching.artworkUrl,
                 fit: BoxFit.cover,
                 width: double.infinity,
                 height: double.infinity,
-                placeholder: (context, url) => Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        MyKOGColors.primaryDark,
-                        MyKOGColors.secondary,
-                      ],
-                    ),
-                  ),
-                  child: Center(
-                    child: CircularProgressIndicator(
-                      color: MyKOGColors.accent,
-                      strokeWidth: 2.w,
-                    ),
-                  ),
-                ),
-                errorWidget: (context, url, error) => Container(
+                placeholder: Container(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,

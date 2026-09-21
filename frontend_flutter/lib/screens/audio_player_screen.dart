@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
 import 'package:MyKOG/providers/audio_player_provider.dart';
 import 'package:MyKOG/providers/user_provider.dart';
 import 'package:MyKOG/theme.dart';
 import 'package:MyKOG/services/audio_service.dart';
+import 'package:MyKOG/widgets/teaching_artwork.dart';
 
 class AudioPlayerScreen extends StatefulWidget {
   const AudioPlayerScreen({super.key});
@@ -24,7 +24,9 @@ class _AudioPlayerScreenState extends State<AudioPlayerScreen> {
 
     return Scaffold(
       backgroundColor: MyKOGColors.primaryDark,
-      body: Consumer2<AudioPlayerProvider, UserProvider>(
+      resizeToAvoidBottomInset: false,
+      body: SafeArea(
+        child: Consumer2<AudioPlayerProvider, UserProvider>(
         builder: (context, audioProvider, userProvider, child) {
           final teaching = audioProvider.currentTeaching;
 
@@ -69,6 +71,7 @@ class _AudioPlayerScreenState extends State<AudioPlayerScreen> {
             ),
           );
         },
+      ),
       ),
     );
   }
@@ -131,43 +134,11 @@ class _AudioPlayerScreenState extends State<AudioPlayerScreen> {
           ],
         ),
         child: ClipOval(
-          child: teaching.artworkUrl.startsWith('assets/')
-              ? Image.asset(
-                  teaching.artworkUrl,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    color: MyKOGColors.secondary,
-                    child: Icon(
-                      Icons.music_note,
-                      color: MyKOGColors.accent,
-                      size: 48.w,
-                    ),
-                  ),
-                )
-              : CachedNetworkImage(
-                  imageUrl: teaching.artworkUrl,
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) => Container(
-                    color: MyKOGColors.secondary,
-                    child: const Center(
-                      child: Icon(
-                        Icons.music_note,
-                        color: MyKOGColors.accent,
-                        size: 64,
-                      ),
-                    ),
-                  ),
-                  errorWidget: (context, url, error) => Container(
-                    color: MyKOGColors.secondary,
-                    child: const Center(
-                      child: Icon(
-                        Icons.music_note,
-                        color: MyKOGColors.accent,
-                        size: 64,
-                      ),
-                    ),
-                  ),
-                ),
+          child: TeachingArtwork(
+            teaching: teaching,
+            width: artSize,
+            height: artSize,
+          ),
         ),
       ),
     );
@@ -280,7 +251,7 @@ class _AudioPlayerScreenState extends State<AudioPlayerScreen> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
+            padding: EdgeInsets.symmetric(horizontal: 8.w),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -487,7 +458,7 @@ class QueueBottomSheet extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16.h),
               // Queue list
               Expanded(
                 child: queue.isEmpty
@@ -509,47 +480,21 @@ class QueueBottomSheet extends StatelessWidget {
 
                           return ListTile(
                             leading: Container(
-                              width: 48,
-                              height: 48,
+                              width: 48.w,
+                              height: 48.h,
                               decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(6),
+                                borderRadius: BorderRadius.circular(6.r),
                                 color: MyKOGColors.surface,
                               ),
-                              child: teaching.artworkUrl.startsWith('assets/')
-                                  ? ClipRRect(
-                                      borderRadius: BorderRadius.circular(6),
-                                      child: Image.asset(
-                                        teaching.artworkUrl,
-                                        fit: BoxFit.cover,
-                                        errorBuilder:
-                                            (context, error, stackTrace) =>
-                                                Container(
-                                          color: MyKOGColors.secondary,
-                                          child: const Icon(
-                                            Icons.music_note,
-                                            color: MyKOGColors.accent,
-                                            size: 24,
-                                          ),
-                                        ),
-                                      ),
-                                    )
-                                  : ClipRRect(
-                                      borderRadius: BorderRadius.circular(6),
-                                      child: CachedNetworkImage(
-                                        imageUrl: teaching.artworkUrl,
-                                        fit: BoxFit.cover,
-                                        placeholder: (context, url) =>
-                                            const Icon(
-                                          Icons.music_note,
-                                          color: MyKOGColors.accent,
-                                        ),
-                                        errorWidget: (context, url, error) =>
-                                            const Icon(
-                                          Icons.music_note,
-                                          color: MyKOGColors.accent,
-                                        ),
-                                      ),
-                                    ),
+                              child: ClipRRect(
+                            borderRadius: BorderRadius.circular(6.r),
+                            child: TeachingArtwork(
+                              teaching: teaching,
+                              width: 48.w,
+                              height: 48.h,
+                              borderRadius: 6.r,
+                            ),
+                          ),
                             ),
                             title: Text(
                               teaching.title,
@@ -582,7 +527,7 @@ class QueueBottomSheet extends StatelessWidget {
                                 ? Icon(
                                     Icons.graphic_eq,
                                     color: MyKOGColors.accent,
-                                    size: 20,
+                                    size: 20.sp,
                                   )
                                 : IconButton(
                                     onPressed: () {
@@ -591,7 +536,7 @@ class QueueBottomSheet extends StatelessWidget {
                                     icon: Icon(
                                       Icons.close,
                                       color: MyKOGColors.textTertiary,
-                                      size: 20,
+                                      size: 20.sp,
                                     ),
                                   ),
                             onTap: () {

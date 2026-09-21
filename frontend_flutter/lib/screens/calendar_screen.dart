@@ -7,6 +7,7 @@ import 'package:MyKOG/models/calendar_event.dart';
 import 'package:MyKOG/services/calendar_service.dart';
 import 'package:MyKOG/services/badge_service.dart';
 import 'package:MyKOG/services/alarm_service.dart';
+import 'package:MyKOG/services/content_refresher.dart';
 import 'package:MyKOG/theme.dart';
 import 'package:MyKOG/widgets/glass_card.dart';
 
@@ -24,6 +25,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
   bool _isLoading = true;
   String? _error;
 
+  int _lastContentVersion = ContentRefresher.instance.version;
+
   // Pour l'admin (à déterminer selon votre système d'auth)
   bool _isAdmin = false; // TODO: Récupérer depuis UserProvider ou auth
 
@@ -31,13 +34,33 @@ class _CalendarScreenState extends State<CalendarScreen> {
   void initState() {
     super.initState();
     _loadEvents();
+    // Recharger silencieusement quand le contenu change (push FCM / polling)
+    ContentRefresher.instance.addListener(_onContentRefreshed);
   }
 
-  Future<void> _loadEvents() async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
+  @override
+  void dispose() {
+    ContentRefresher.instance.removeListener(_onContentRefreshed);
+    super.dispose();
+  }
+
+  /// Nouveau contenu disponible (enseignements/événements publiés) → recharger
+  void _onContentRefreshed() {
+    if (!mounted) return;
+    final currentVersion = ContentRefresher.instance.version;
+    if (currentVersion == _lastContentVersion) return;
+    _lastContentVersion = currentVersion;
+    debugPrint('📅 Nouveau contenu détecté → rechargement calendrier');
+    _loadEvents(silent: true);
+  }
+
+  Future<void> _loadEvents({bool silent = false}) async {
+    if (!silent) {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+    }
 
     try {
       final events = await CalendarService.getAllEvents();
@@ -114,6 +137,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
     return Scaffold(
       backgroundColor: MyKOGColors.primaryDark,
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         backgroundColor: MyKOGColors.primaryDark,
         elevation: 0,
@@ -202,13 +226,18 @@ class _CalendarScreenState extends State<CalendarScreen> {
             icon: const Icon(Icons.chevron_left, color: MyKOGColors.accent),
             onPressed: _previousMonth,
           ),
-          Text(
-            monthName,
-            style: theme.textTheme.headlineSmall?.copyWith(
-              color: MyKOGColors.textPrimary,
-              fontWeight: FontWeight.bold,
-            ),
-          ).animate().fadeIn().slideX(),
+          Expanded(
+            child: Text(
+              monthName,
+              style: theme.textTheme.headlineSmall?.copyWith(
+                color: MyKOGColors.textPrimary,
+                fontWeight: FontWeight.bold,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+            ).animate().fadeIn().slideX(),
+          ),
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -402,9 +431,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
               child: Center(
                 child: Column(
                   children: [
-                    Icon(Icons.event_busy,
-                        size: 48, color: MyKOGColors.textSecondary),
-                    const SizedBox(height: 12),
+                      Icon(Icons.event_busy,
+                          size: 48.w, color: MyKOGColors.textSecondary),
+                    SizedBox(height: 12.h),
                     Text(
                       'Aucun événement ce mois-ci',
                       style: theme.textTheme.bodyMedium?.copyWith(
@@ -431,29 +460,29 @@ class _CalendarScreenState extends State<CalendarScreen> {
     final dateFormat = DateFormat('d MMMM yyyy', 'fr_FR');
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
       child: GlassCard(
         child: InkWell(
           onTap: () => _showEventDetails(context, event),
           onLongPress: _isAdmin
               ? () => _showEventActions(context, event)
               : null,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(16.r),
           child: Row(
             children: [
               // Indicateur de couleur
               Container(
-                width: 4,
-                height: 60,
+                width: 4.w,
+                height: 60.h,
                 decoration: BoxDecoration(
                   color: eventColor,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(16),
-                    bottomLeft: Radius.circular(16),
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(16.r),
+                    bottomLeft: Radius.circular(16.r),
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12.w),
               // Contenu
               Expanded(
                 child: Column(
@@ -467,7 +496,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       ),
                     ),
                     if (event.description != null) ...[
-                      const SizedBox(height: 4),
+                      SizedBox(height: 4.h),
                       Text(
                         event.description!,
                         style: theme.textTheme.bodySmall?.copyWith(
@@ -477,12 +506,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ],
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8.h),
                     Row(
                       children: [
                         Icon(Icons.access_time,
-                            size: 14, color: MyKOGColors.textSecondary),
-                        const SizedBox(width: 4),
+                            size: 14.sp, color: MyKOGColors.textSecondary),
+                        SizedBox(width: 4.w),
                         Text(
                           '${dateFormat.format(event.startDate)} ${event.isAllDay ? '' : 'à ${timeFormat.format(event.startDate)}'}',
                           style: theme.textTheme.bodySmall?.copyWith(
@@ -492,12 +521,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       ],
                     ),
                     if (event.location != null) ...[
-                      const SizedBox(height: 4),
+                      SizedBox(height: 4.h),
                       Row(
                         children: [
                           Icon(Icons.location_on,
-                              size: 14, color: MyKOGColors.textSecondary),
-                          const SizedBox(width: 4),
+                              size: 14.sp, color: MyKOGColors.textSecondary),
+                          SizedBox(width: 4.w),
                           Expanded(
                             child: Text(
                               event.location!,
@@ -531,11 +560,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: MyKOGColors.secondary,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
       ),
       builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
+        padding: EdgeInsets.all(24.w),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -548,7 +577,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   ),
             ),
             if (event.description != null) ...[
-              const SizedBox(height: 12),
+              SizedBox(height: 12.h),
               Text(
                 event.description!,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -556,14 +585,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     ),
               ),
             ],
-            const SizedBox(height: 16),
+            SizedBox(height: 16.h),
             _buildDetailRow(Icons.access_time, DateFormat('EEEE d MMMM yyyy à HH:mm', 'fr_FR')
                 .format(event.startDate)),
             if (event.location != null)
               _buildDetailRow(Icons.location_on, event.location!),
             if (event.category != null)
               _buildDetailRow(Icons.category, event.category!),
-            const SizedBox(height: 24),
+            SizedBox(height: 24.h),
           ],
         ),
       ),
@@ -572,11 +601,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   Widget _buildDetailRow(IconData icon, String text) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.only(bottom: 12.h),
       child: Row(
         children: [
-          Icon(icon, size: 20, color: MyKOGColors.accent),
-          const SizedBox(width: 12),
+          Icon(icon, size: 20.sp, color: MyKOGColors.accent),
+          SizedBox(width: 12.w),
           Expanded(
             child: Text(
               text,
@@ -594,11 +623,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: MyKOGColors.secondary,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
       ),
       builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
+        padding: EdgeInsets.all(24.w),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [

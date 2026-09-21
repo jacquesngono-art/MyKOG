@@ -1,17 +1,29 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:flutter/foundation.dart';
-import 'dart:async';
 
-/// Handler audio pour gérer les commandes de la notification
-class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
-  final AudioPlayer player = AudioPlayer();
-  
-  MyAudioHandler() {
+/// Handler audio UNIQUE, branché sur le player réel d'AudioService.
+/// Les commandes de la notification (play/pause/seek/...) agissent
+/// directement sur le player utilisé par l'UI : un seul lecteur, un seul
+/// état, un seul son.
+class MyAudioHandler extends BaseAudioHandler with SeekHandler {
+  final AudioPlayer player;
+
+  MyAudioHandler(this.player) {
     _init();
   }
 
   void _init() {
+    // Métadonnées : suivre la source chargée (tags MediaItem des sources)
+    player.currentIndexStream.listen((index) {
+      if (index == null || index < 0) return;
+      final state = player.sequenceState;
+      final item = state.currentSource?.tag as MediaItem?;
+      if (item != null) {
+        mediaItem.add(item);
+      }
+    });
+
     // Écouter les changements de position
     player.positionStream.listen((position) {
       playbackState.add(playbackState.value.copyWith(
@@ -82,6 +94,7 @@ class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
   Future<void> stop() async {
     debugPrint('⏹️ Notification: Stop');
     await player.stop();
+    mediaItem.add(null);
     await super.stop();
   }
 
@@ -94,13 +107,13 @@ class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
   @override
   Future<void> skipToNext() async {
     debugPrint('⏭️ Notification: Skip to next');
-    // Cette action sera propagée via un stream
+    // Géré côté UI (les contrôles propagent via le provider)
   }
 
   @override
   Future<void> skipToPrevious() async {
     debugPrint('⏮️ Notification: Skip to previous');
-    // Cette action sera propagée via un stream
+    // Géré côté UI (les contrôles propagent via le provider)
   }
 
   @override
@@ -115,20 +128,6 @@ class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
     debugPrint('⏪⏪ Notification: Rewind');
     final newPosition = player.position - const Duration(seconds: 15);
     await player.seek(newPosition > Duration.zero ? newPosition : Duration.zero);
-  }
-
-  /// Charger et jouer une URL
-  Future<void> loadAndPlay(String url, MediaItem item) async {
-    mediaItem.add(item);
-    await player.setUrl(url);
-    await player.play();
-  }
-
-  /// Charger et jouer un fichier local
-  Future<void> loadAndPlayFile(String filePath, MediaItem item) async {
-    mediaItem.add(item);
-    await player.setFilePath(filePath);
-    await player.play();
   }
 
   /// Libérer les ressources

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart'; // ignore: unused_import
 import 'package:provider/provider.dart';
-import 'package:just_audio_background/just_audio_background.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 import 'package:MyKOG/theme.dart';
 import 'package:MyKOG/providers/audio_player_provider.dart';
@@ -17,6 +17,8 @@ import 'package:MyKOG/widgets/responsive_wrapper.dart';
 import 'package:MyKOG/services/notification_service.dart';
 import 'package:MyKOG/services/navigation_service.dart';
 import 'package:MyKOG/services/alarm_service.dart';
+import 'package:MyKOG/services/hive_storage_service.dart';
+import 'package:MyKOG/services/storage_service.dart';
 
 import 'package:MyKOG/main_app.dart';
 import 'package:MyKOG/screens/onboarding_screen.dart';
@@ -30,18 +32,20 @@ Future<void> main() async {
   // 🌐 FORCER Render uniquement (pas de détection locale)
   await ApiConfig.initializeRenderOnly();
 
-  // ⚡ Initialiser Firebase et Audio en parallèle (les 2 critiques)
+  // ⚡ Initialiser le stockage AVANT runApp : le sélecteur de route initiale
+  // (FirstLaunchService) et les providers Langue/Thème en dépendent.
+  // Sans cela → LateInitializationError sur HiveStorageService._box
+  // → l'écran de chargement reste bloqué indéfiniment.
+  await Hive.initFlutter();
+  await HiveStorageService.init();
+  await StorageService.init();
+
+  // ⚡ Initialiser Firebase (Audio est initialisé par AudioPlayerProvider
+  // dans main_app.dart, branché sur sa propre session audio_service)
   await Future.wait<void>([
     Firebase.initializeApp().then((_) {}).catchError((e) {
       debugPrint('⚠️ Erreur initialisation Firebase: $e');
     }),
-    JustAudioBackground.init(
-      androidNotificationChannelId: 'com.mykog.audio.channel',
-      androidNotificationChannelName: 'MyKOG Audio Playback',
-      androidNotificationChannelDescription: 'Lecture audio en arrière-plan',
-      androidNotificationOngoing: true,
-      androidShowNotificationBadge: true,
-    ),
   ]);
 
   // ⚡ Lancer l'app IMMÉDIATEMENT, les services non-critiques s'initialisent après

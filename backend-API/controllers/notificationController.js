@@ -102,6 +102,22 @@ const sendNotificationToAll = async (req, res) => {
       });
     }
 
+    // Sauvegarder dans Firestore pour les clients desktop/autres
+    let notificationDoc;
+    try {
+      notificationDoc = await db.collection('notifications_outbox').add({
+        title,
+        body,
+        data: data || {},
+        imageUrl: imageUrl || null,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        readBy: [],
+      });
+      console.log(`📝 Notification sauvegardée dans Firestore: ${notificationDoc.id}`);
+    } catch (err) {
+      console.warn('⚠️ Impossible de sauvegarder la notification dans Firestore:', err.message);
+    }
+
     // Récupérer tous les tokens FCM
     const tokensSnapshot = await db.collection('fcm_tokens').get();
     const tokens = tokensSnapshot.docs.map((doc) => doc.data().fcmToken);
@@ -110,6 +126,7 @@ const sendNotificationToAll = async (req, res) => {
       return res.status(200).json({
         message: 'Aucun token enregistré',
         sent: 0,
+        firestoreId: notificationDoc?.id || null,
       });
     }
 
@@ -176,6 +193,7 @@ const sendNotificationToAll = async (req, res) => {
       sent: successCount,
       failed: failureCount,
       total: tokens.length,
+      firestoreId: notificationDoc?.id || null,
     });
   } catch (error) {
     console.error('Erreur lors de l\'envoi des notifications:', error);

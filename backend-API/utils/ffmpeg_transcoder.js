@@ -2,6 +2,16 @@ const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
+// Dossier de sortie HLS : backend-API/hls_output/<streamKey>/index.m3u8
+const HLS_OUTPUT_DIR = path.join(__dirname, '..', 'hls_output');
+
+// Binaire FFmpeg (peut être surchargé via FFMPEG_PATH dans .env)
+const FFMPEG_BIN = process.env.FFMPEG_PATH || 'ffmpeg';
+
+// Nombre max de tentatives de redémarrage en cas d'erreur
+const MAX_RETRIES = 10;
+const RETRY_DELAY_MS = 3000;
+
 /**
  * Service de transcodage FFmpeg pour compatibilité universelle
  * Convertit automatiquement le stream RTMP en HLS avec les paramètres optimaux
@@ -10,65 +20,50 @@ class FFmpegTranscoder {
   constructor(streamKey = 'mykog_live') {
     this.streamKey = streamKey;
     this.rtmpUrl = `rtmp://localhost:1935/live/${streamKey}`;
-    this.hlsPath = `/var/www/html/hls/${streamKey}`;
+    this.hlsPath = path.join(HLS_OUTPUT_DIR, streamKey);
     this.process = null;
-    this.isRunning = false;
+    this._isRunning = false;
+    this._stopping = false;
+    this.retryCount = 0;
+    this.retryTimer = null;
   }
 
   /**
    * Démarrer le transcodage
    */
   start() {
-    if (this.isRunning) {
+    if (this._isRunning) {
       console.log(`⚠️ Transcoder déjà en cours pour ${this.streamKey}`);
       return;
     }
 
-    // Créer le dossier HLS si nécessaire avec les bonnes permissions
-    // Utiliser sudo pour créer le dossier avec les bonnes permissions dès le départ
+    this._stopping = false;
+
+    // Créer le dossier HLS si nécessaire
     try {
-      const { execSync } = require('child_process');
-      
-      // Créer le dossier parent si nécessaire
-      const parentDir = '/var/www/html/hls';
-      if (!fs.existsSync(parentDir)) {
-        execSync(`sudo mkdir -p ${parentDir}`, { stdio: 'ignore' });
-        execSync(`sudo chown -R www-data:www-data ${parentDir}`, { stdio: 'ignore' });
-        execSync(`sudo chmod -R 755 ${parentDir}`, { stdio: 'ignore' });
-      }
-      
-      // Créer le dossier du stream avec sudo
       if (!fs.existsSync(this.hlsPath)) {
-        execSync(`sudo mkdir -p ${this.hlsPath}`, { stdio: 'ignore' });
-        execSync(`sudo chown -R www-data:www-data ${this.hlsPath}`, { stdio: 'ignore' });
-        execSync(`sudo chmod -R 755 ${this.hlsPath}`, { stdio: 'ignore' });
-        console.log(`✅ Dossier HLS créé avec les bonnes permissions: ${this.hlsPath}`);
-      } else {
-        // S'assurer que les permissions sont correctes même si le dossier existe
-        execSync(`sudo chown -R www-data:www-data ${this.hlsPath}`, { stdio: 'ignore' });
-        execSync(`sudo chmod -R 755 ${this.hlsPath}`, { stdio: 'ignore' });
+        fs.mkdirSync(this.hlsPath, { recursive: true });
+        console.log(`✅ Dossier HLS créé: ${this.hlsPath}`);
       }
-    } catch (error) {
-      console.error(`❌ Erreur création dossier HLS: ${error.message}`);
-      console.error(`   → Le transcodage peut échouer sans les bonnes permissions`);
-      // Essayer quand même de créer le dossier sans sudo (peut échouer)
-      try {
-        if (!fs.existsSync(this.hlsPath)) {
-          fs.mkdirSync(this.hlsPath, { recursive: true });
-        }
-      } catch (err) {
-        console.error(`❌ Impossible de créer le dossier: ${err.message}`);
-        throw new Error(`Impossible de créer le dossier HLS: ${err.message}`);
-      }
+    } catch (err) {
+      console.error(`❌ Impossible de créer le dossier HLS: ${err.message}`);
+      throw new Error(`Impossible de créer le dossier HLS: ${err.message}`);
     }
 
     console.log(`🎬 Démarrage du transcodage FFmpeg pour: ${this.streamKey}`);
     console.log(`📡 Source RTMP: ${this.rtmpUrl}`);
     console.log(`📺 Destination HLS: ${this.hlsPath}`);
 
+    this._spawn();
+  }
+
+  /**
+   * Lancer le process FFmpeg
+   * @private
+   */
+  _spawn() {
     // Paramètres FFmpeg pour compatibilité MAXIMALE (MediaTek et appareils bas de gamme)
     // Résolution ULTRA-BASSE (360x202) pour forcer la compatibilité MediaTek
-    // Cette résolution est la plus basse possible tout en gardant un aspect ratio 16:9
     const ffmpegArgs = [
       '-i', this.rtmpUrl,
       // Vidéo - Paramètres ULTRA-compatibles pour MediaTek
@@ -99,23 +94,27 @@ class FFmpegTranscoder {
       '-aac_coder', 'fast',            // Encodeur AAC rapide
       // HLS
       '-f', 'hls',
-      '-hls_time', '2',                // Durée des segments
-      '-hls_list_size', '5',           // Nombre de segments dans la playlist
+      '-hls_time', '2',                // Durée des segments (2s)
+      '-hls_list_size', '10',          // 10 segments dans la playlist
       '-hls_flags', 'delete_segments+independent_segments', // Supprimer les anciens segments + segments indépendants
-      '-hls_segment_type', 'mpegts',    // Type de segment explicite
-      '-hls_segment_filename', `${this.hlsPath}/segment_%03d.ts`,
-      `${this.hlsPath}/index.m3u8`
+      '-hls_segment_type', 'mpegts',   // Type de segment explicite
+      '-hls_segment_filename', path.join(this.hlsPath, 'segment_%03d.ts'),
+      path.join(this.hlsPath, 'index.m3u8')
     ];
 
-    // Démarrer FFmpeg avec sudo -u www-data pour créer les fichiers avec les bonnes permissions
-    // Cela garantit que les fichiers sont créés avec le propriétaire www-data
-    this.process = spawn('sudo', ['-u', 'www-data', 'ffmpeg', ...ffmpegArgs], {
-      stdio: ['ignore', 'pipe', 'pipe']
-    });
+    try {
+      this.process = spawn(FFMPEG_BIN, ffmpegArgs, {
+        stdio: ['ignore', 'pipe', 'pipe']
+      });
+    } catch (error) {
+      console.error(`❌ Erreur spawn FFmpeg: ${error.message}`);
+      this._scheduleRetry();
+      return;
+    }
 
-    this.isRunning = true;
+    this._isRunning = true;
 
-    // Logger les sorties
+    // Logger stdout
     this.process.stdout.on('data', (data) => {
       const output = data.toString();
       if (output.includes('error') || output.includes('Error')) {
@@ -123,9 +122,9 @@ class FFmpegTranscoder {
       }
     });
 
+    // Logger stderr (FFmpeg écrit sur stderr par défaut)
     this.process.stderr.on('data', (data) => {
       const output = data.toString();
-      // FFmpeg écrit sur stderr par défaut, filtrer les messages d'info
       if (output.includes('error') || output.includes('Error') || output.includes('Failed')) {
         console.error(`❌ FFmpeg stderr: ${output}`);
       } else if (output.includes('frame=')) {
@@ -134,24 +133,21 @@ class FFmpegTranscoder {
         if (frameMatch && parseInt(frameMatch[1]) % 100 === 0) {
           console.log(`📹 FFmpeg transcoding: ${frameMatch[1]} frames`);
         }
-        
-        // Corriger les permissions périodiquement (toutes les 50 frames) pour s'assurer qu'elles restent correctes
-        if (frameMatch && parseInt(frameMatch[1]) % 50 === 0) {
-          try {
-            const { execSync } = require('child_process');
-            execSync(`sudo chown -R www-data:www-data ${this.hlsPath} 2>/dev/null`, { stdio: 'ignore' });
-            execSync(`sudo chmod -R 755 ${this.hlsPath} 2>/dev/null`, { stdio: 'ignore' });
-          } catch (error) {
-            // Ignorer les erreurs silencieusement
-          }
-        }
       }
     });
 
     this.process.on('close', (code) => {
-      this.isRunning = false;
+      this._isRunning = false;
+      this.process = null;
+
+      if (this._stopping) {
+        console.log(`✅ FFmpeg arrêté proprement pour ${this.streamKey}`);
+        return;
+      }
+
       if (code !== 0 && code !== null) {
         console.error(`❌ FFmpeg s'est arrêté avec le code: ${code}`);
+        this._scheduleRetry();
       } else {
         console.log(`✅ FFmpeg transcodage terminé pour ${this.streamKey}`);
       }
@@ -159,37 +155,85 @@ class FFmpegTranscoder {
 
     this.process.on('error', (error) => {
       console.error(`❌ Erreur FFmpeg: ${error.message}`);
-      this.isRunning = false;
+      this._isRunning = false;
+      this.process = null;
+      if (!this._stopping) {
+        this._scheduleRetry();
+      }
     });
 
     console.log(`✅ Transcoder démarré pour ${this.streamKey}`);
   }
 
   /**
+   * Planifier une nouvelle tentative de démarrage (max MAX_RETRIES)
+   * @private
+   */
+  _scheduleRetry() {
+    if (this._stopping) {
+      return;
+    }
+
+    if (this.retryCount >= MAX_RETRIES) {
+      console.error(`❌ Nombre maximum de tentatives atteint (${MAX_RETRIES}) pour ${this.streamKey}. Abandon.`);
+      return;
+    }
+
+    this.retryCount++;
+    console.log(`🔁 Nouvelle tentative FFmpeg (${this.retryCount}/${MAX_RETRIES}) pour ${this.streamKey} dans ${RETRY_DELAY_MS / 1000}s...`);
+
+    this.retryTimer = setTimeout(() => {
+      if (!this._stopping) {
+        this._spawn();
+      }
+    }, RETRY_DELAY_MS);
+  }
+
+  /**
    * Arrêter le transcodage
    */
   stop() {
-    if (this.process && this.isRunning) {
+    this._stopping = true;
+
+    // Annuler une éventuelle tentative de retry en attente
+    if (this.retryTimer) {
+      clearTimeout(this.retryTimer);
+      this.retryTimer = null;
+    }
+
+    if (this.process && this._isRunning) {
       console.log(`🛑 Arrêt du transcodage pour ${this.streamKey}`);
       this.process.kill('SIGTERM');
-      this.isRunning = false;
-      
+      this._isRunning = false;
+
       // Attendre un peu puis forcer l'arrêt si nécessaire
+      const proc = this.process;
       setTimeout(() => {
-        if (this.process && !this.process.killed) {
-          this.process.kill('SIGKILL');
+        if (proc && !proc.killed) {
+          proc.kill('SIGKILL');
         }
       }, 5000);
     }
+
+    this.process = null;
+    this.retryCount = 0;
   }
 
   /**
    * Vérifier si le transcodage est en cours
+   * @returns {boolean}
+   */
+  isRunning() {
+    return this._isRunning && this.process !== null && !this.process.killed;
+  }
+
+  /**
+   * Alias de compatibilité (ancienne API)
+   * @returns {boolean}
    */
   isActive() {
-    return this.isRunning && this.process && !this.process.killed;
+    return this.isRunning();
   }
 }
 
 module.exports = FFmpegTranscoder;
-

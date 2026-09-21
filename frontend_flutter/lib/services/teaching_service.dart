@@ -1,6 +1,7 @@
 import 'package:MyKOG/models/teaching.dart';
 import 'package:MyKOG/api/teaching_api_service.dart';
-import 'package:MyKOG/services/storage_service.dart';
+import 'package:MyKOG/services/hive_storage_service.dart';
+import 'package:MyKOG/services/download_service.dart';
 
 class TeachingService {
   static final TeachingApiService _apiService = TeachingApiService();
@@ -18,7 +19,7 @@ class TeachingService {
   // Méthode pour stocker des données minimales en cas d'absence totale
   static Future<void> _storeSampleTeachings() async {
     final teachingsJson = _getMinimalSampleData().map((t) => t.toJson()).toList();
-    await StorageService.storeJsonList(StorageService.teachingsKey, teachingsJson);
+    await HiveStorageService.storeJsonList('teachings', teachingsJson);
   }
 
   // Données minimales de démarrage (pour le premier démarrage)
@@ -48,14 +49,50 @@ class TeachingService {
     ];
   }
 
+  // Récupérer les IDs des enseignements téléchargés localement
+  static List<String> _getDownloadedIds() {
+    try {
+      return DownloadService.getDownloadedTeachingIds();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  // Récupérer les enseignements téléchargés qui ne sont plus sur le serveur
+  static List<Teaching> _getOrphanedDownloadedTeachings(List<Teaching> serverTeachings) {
+    try {
+      final downloadedIds = _getDownloadedIds();
+      if (downloadedIds.isEmpty) return [];
+
+      final serverIds = serverTeachings.map((t) => t.id).toSet();
+      final orphanedIds = downloadedIds.where((id) => !serverIds.contains(id)).toList();
+      if (orphanedIds.isEmpty) return [];
+
+      final cachedJson = HiveStorageService.getJsonList('teachings');
+      final cachedTeachings = cachedJson.map((json) => Teaching.fromJson(json)).toList();
+
+      return cachedTeachings.where((t) => orphanedIds.contains(t.id)).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
   // Récupérer tous les enseignements (avec cache et fallback)
   static Future<List<Teaching>> getAllTeachings() async {
     try {
       // Essayer d'abord l'API
       if (_cachedTeachings == null) {
         final teachings = await _apiService.getAllTeachings();
-        _cachedTeachings = teachings;
-        return teachings;
+
+        // Préserver les enseignements téléchargés qui ont été supprimés du serveur
+        final orphaned = _getOrphanedDownloadedTeachings(teachings);
+        final merged = [...teachings, ...orphaned];
+
+        _cachedTeachings = merged;
+        // Persister dans Hive pour le mode offline
+        final teachingsJson = merged.map((t) => t.toJson()).toList();
+        await HiveStorageService.storeJsonList('teachings', teachingsJson);
+        return merged;
       }
       return _cachedTeachings!;
     } catch (e) {
@@ -64,7 +101,7 @@ class TeachingService {
       // En cas d'erreur API, essayer le stockage local
       try {
         final teachingsJson =
-            StorageService.getJsonList(StorageService.teachingsKey);
+            HiveStorageService.getJsonList('teachings');
         if (teachingsJson.isNotEmpty) {
           _cachedTeachings = teachingsJson.map((json) => Teaching.fromJson(json)).toList();
           return _cachedTeachings!;
@@ -132,16 +169,21 @@ class TeachingService {
     }
   }
 
-  // Récupérer les enseignements par type de culte
+  // Récupérer les enseignements par type de culte (serveur + fallback local)
   static Future<List<Teaching>> getTeachingsByTypeCulte(String typeCulte) async {
     try {
-      final teachings = await getAllTeachings();
-      return teachings
-          .where((t) => (t.typeCulte?.toLowerCase() ?? '').contains(typeCulte.toLowerCase()))
-          .toList();
+      return await _apiService.getTeachingsByTypeCulte(typeCulte);
     } catch (e) {
-      print('Erreur getTeachingsByTypeCulte: $e');
-      return [];
+      print('Erreur API getTeachingsByTypeCulte, fallback local: $e');
+      try {
+        final teachings = await getAllTeachings();
+        return teachings
+            .where((t) => (t.typeCulte?.toLowerCase() ?? '').contains(typeCulte.toLowerCase()))
+            .toList();
+      } catch (e2) {
+        print('Erreur getTeachingsByTypeCulte: $e2');
+        return [];
+      }
     }
   }
 
@@ -227,16 +269,21 @@ class TeachingService {
     }
   }
 
-  // Récupérer enseignements par mois/année
+  // Récupérer enseignements par mois/année (serveur + fallback local)
   static Future<List<Teaching>> getTeachingsByMonthYear(int mois, int annee) async {
     try {
-      final teachings = await getAllTeachings();
-      return teachings
-          .where((t) => t.moisSafe == mois.toString() && t.anneeSafe == annee.toString())
-          .toList();
+      return await _apiService.getTeachingsByMonthYear(mois, annee);
     } catch (e) {
-      print('Erreur getTeachingsByMonthYear: $e');
-      return [];
+      print('Erreur API getTeachingsByMonthYear, fallback local: $e');
+      try {
+        final teachings = await getAllTeachings();
+        return teachings
+            .where((t) => t.moisSafe == mois.toString() && t.anneeSafe == annee.toString())
+            .toList();
+      } catch (e2) {
+        print('Erreur getTeachingsByMonthYear: $e2');
+        return [];
+      }
     }
   }
 
@@ -268,7 +315,7 @@ class TeachingService {
       teachings.add(teaching);
 
       final teachingsJson = teachings.map((t) => t.toJson()).toList();
-      await StorageService.storeJsonList(StorageService.teachingsKey, teachingsJson);
+      await HiveStorageService.storeJsonList('teachings', teachingsJson);
 
       // Mettre à jour le cache
       _cachedTeachings = teachings;
@@ -287,7 +334,7 @@ class TeachingService {
         teachings[index] = teaching.copyWith(updatedAt: DateTime.now());
 
         final teachingsJson = teachings.map((t) => t.toJson()).toList();
-        await StorageService.storeJsonList(StorageService.teachingsKey, teachingsJson);
+        await HiveStorageService.storeJsonList('teachings', teachingsJson);
 
         // Mettre à jour le cache
         _cachedTeachings = teachings;
@@ -313,7 +360,7 @@ class TeachingService {
         final teachings = await getAllTeachings();
         teachings.removeWhere((t) => t.id == teachingId);
         final teachingsJson = teachings.map((t) => t.toJson()).toList();
-        await StorageService.storeJsonList(StorageService.teachingsKey, teachingsJson);
+        await HiveStorageService.storeJsonList('teachings', teachingsJson);
 
         return true;
       }
@@ -329,9 +376,14 @@ class TeachingService {
   }
 
   // Vider le cache (utile pour rafraîchir)
-  static void clearCache() {
+static void clearCache() {
     _cachedTeachings = null;
-    print('Cache TeachingService vidé');
+  }
+
+  /// Retourner la liste actuellement en cache (sans aucun appel réseau).
+  /// Vide si le cache n'a pas encore été rempli.
+  static List<Teaching> getAllCachedTeachings() {
+    return _cachedTeachings ?? [];
   }
 
   // Méthode pour obtenir des stats sur le cache

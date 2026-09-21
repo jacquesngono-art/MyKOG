@@ -1,160 +1,163 @@
 const { db } = require('../config/firebase');
 const cloudinary = require('../config/cloudinary');
+const storage = require('../services/storageService');
 const { sendNotificationToAllUsers } = require('../utils/notificationHelper');
+
+const isKeyProvider = (p) => p === 'b2' || p === 's3';
+
+async function resolveImageUrl(docData) {
+  if (docData.imageKey) {
+    const url = await storage.getDownloadUrl(docData.imageKey);
+    if (url) return url;
+  }
+  return docData.artworkUrl || '';
+}
+
+async function resolveAudioUrl(docData) {
+  if (docData.audioKey) {
+    const url = await storage.getDownloadUrl(docData.audioKey);
+    if (url) return url;
+  }
+  return docData.audioUrl || '';
+}
 
 const createEnseignement = async (req, res) => {
   try {
     const { title, speaker, description, category, tags } = req.body;
 
-    // Vérifier que les fichiers ont été uploadés
     if (!req.files || !req.files.image || !req.files.audio) {
-      return res.status(400).json({
-        error: 'Image et audio sont requis'
-      });
+      return res.status(400).json({ error: 'Image et audio sont requis' });
     }
 
-    const imageFile = req.files.image[0];
-    const audioFile = req.files.audio[0];
-
-    // Vérifier les champs requis
     if (!title || !speaker || !category) {
-      return res.status(400).json({
-        error: 'Title, speaker et category sont requis'
-      });
+      return res.status(400).json({ error: 'Title, speaker et category sont requis' });
     }
 
-    // Uploader l'image vers Cloudinary
-    const imageResult = await new Promise((resolve, reject) => {
-      const uploadStream = cloudinary.uploader.upload_stream(
-        { folder: 'enseignements/images' }, // Cloudinary détecte automatiquement le format
-        (error, result) => {
-          if (error) reject(error);
-          else resolve(result);
-        }
-      );
-      uploadStream.end(imageFile.buffer);
-    });
+    const mois = req.body.mois?.toString();
+    const annee = req.body.annee?.toString();
+    if (!mois || !annee) {
+      return res.status(400).json({ error: 'mois et annee sont requis' });
+    }
 
-    // Uploader l'audio vers Cloudinary
-    const audioResult = await new Promise((resolve, reject) => {
-      const uploadStream = cloudinary.uploader.upload_stream(
-        { folder: 'enseignements/audios', resource_type: 'video' }, // Cloudinary détecte automatiquement
-        (error, result) => {
-          if (error) reject(error);
-          else resolve(result);
-        }
-      );
-      uploadStream.end(audioFile.buffer);
-    });
+    const imageResult = await storage.uploadBuffer(req.files.image[0], 'enseignements/images');
+    const audioResult = await storage.uploadBuffer(req.files.audio[0], 'enseignements/audios');
 
-    // Générer les dates
     const now = new Date();
     const publishedAt = now;
 
-    // Extraire mois et année si fournis, sinon utiliser la date actuelle
-    const mois = req.body.mois?.toString() || (now.getMonth() + 1).toString(); // +1 car les mois commencent à 0
-    const annee = req.body.annee?.toString() || now.getFullYear().toString();
+    let artworkUrl = imageResult.url || '';
+    let audioUrl = audioResult.url || '';
 
-    // Créer l'objet enseignement (compatible avec le modèle Flutter)
+    if (isKeyProvider(imageResult.provider)) {
+      artworkUrl = await storage.getDownloadUrl(imageResult.key) || '';
+    }
+    if (isKeyProvider(audioResult.provider)) {
+      audioUrl = await storage.getDownloadUrl(audioResult.key) || '';
+    }
+
     const enseignementData = {
-      title: title,
-      speaker: speaker,
+      title,
+      speaker,
       description: description || '',
-      category: category,
-      duration: parseInt(req.body.duration) || 0, // en secondes
-      audioUrl: audioResult.secure_url,
-      artworkUrl: imageResult.secure_url,
+      category,
+      duration: parseInt(req.body.duration) || 0,
+      audioUrl,
+      artworkUrl,
       tags: tags ? tags.split(',').map(tag => tag.trim()) : [],
       playCount: 0,
       rating: 0.0,
-      isNew: true, // Par défaut, marqué comme nouveau
-      isFeatured: false, // Par défaut, pas mis en avant
-      publishedAt: publishedAt,
+      isNew: true,
+      isFeatured: false,
+      publishedAt,
       createdAt: now,
       updatedAt: now,
-      mois: mois,
-      annee: annee,
-      typeCulte: req.body.typeCulte || 'Culte de Louange',
-      imagePublicId: imageResult.public_id,
-      audioPublicId: audioResult.public_id
+      mois,
+      annee,
+      typeCulte: req.body.typeCulte || 'Conférence',
     };
 
-    // Sauvegarder dans Firestore
+    if (isKeyProvider(imageResult.provider)) {
+      enseignementData.imageKey = imageResult.key;
+    } else {
+      enseignementData.imagePublicId = imageResult.key;
+    }
+    if (isKeyProvider(audioResult.provider)) {
+      enseignementData.audioKey = audioResult.key;
+    } else {
+      enseignementData.audioPublicId = audioResult.key;
+    }
+
     const docRef = await db.collection('enseignements').add(enseignementData);
 
-    // Envoyer une notification push à tous les utilisateurs
     try {
       await sendNotificationToAllUsers({
         title: '📚 Nouvel enseignement disponible',
         body: `${title} - ${speaker || 'Nouveau contenu'}`,
-        data: {
-          id: docRef.id,
-          type: 'teaching',
-          teachingId: docRef.id,
-        },
-        imageUrl: imageResult.secure_url,
+        data: { id: docRef.id, type: 'teaching', teachingId: docRef.id },
+        imageUrl: artworkUrl,
         type: 'teaching',
       });
     } catch (notifError) {
       console.error('Erreur envoi notification enseignement:', notifError);
-      // Ne pas bloquer la réponse si la notification échoue
     }
 
     res.status(201).json({
       id: docRef.id,
       message: 'Enseignement créé avec succès',
-      data: enseignementData
+      data: enseignementData,
     });
 
   } catch (error) {
     console.error('Erreur lors de la création:', error);
     res.status(500).json({
       error: 'Erreur lors de la création de l\'enseignement',
-      details: error.message
+      details: error.message,
     });
   }
 };
 
+async function formatEnseignement(doc) {
+  const data = doc.data();
+  const [artworkUrl, audioUrl] = await Promise.all([
+    resolveImageUrl(data),
+    resolveAudioUrl(data),
+  ]);
+  return {
+    id: doc.id,
+    title: data.title || 'Titre non disponible',
+    speaker: data.speaker || 'Orateur non disponible',
+    description: data.description || '',
+    category: data.category || 'Non classé',
+    duration: data.duration || 0,
+    audioUrl,
+    artworkUrl,
+    tags: data.tags || [],
+    playCount: data.playCount || 0,
+    rating: data.rating || 0.0,
+    isNew: data.isNew || false,
+    isFeatured: data.isFeatured || false,
+    publishedAt: data.publishedAt?.toDate() || new Date(),
+    createdAt: data.createdAt?.toDate() || new Date(),
+    updatedAt: data.updatedAt?.toDate() || new Date(),
+    mois: data.mois?.toString() || (new Date().getMonth() + 1).toString(),
+    annee: data.annee?.toString() || new Date().getFullYear().toString(),
+    typeCulte: data.typeCulte?.toString() || 'Conférence',
+  };
+}
+
 const getAllEnseignements = async (req, res) => {
   try {
-    const enseignementsSnapshot = await db.collection('enseignements').get();
-    const enseignements = [];
-
-    enseignementsSnapshot.forEach(doc => {
-      const data = doc.data();
-
-      // Transformer les données pour correspondre exactement au modèle Flutter
-      const teachingData = {
-        id: doc.id,
-        title: data.title || 'Titre non disponible',
-        speaker: data.speaker || 'Orateur non disponible',
-        description: data.description || '',
-        category: data.category || 'Non classé',
-        duration: data.duration || 0, // durée en secondes (le modèle Flutter convertit)
-        audioUrl: data.audioUrl || '',
-        artworkUrl: data.artworkUrl || '',
-        tags: data.tags || [],
-        playCount: data.playCount || 0,
-        rating: data.rating || 0.0,
-        isNew: data.isNew || false,
-        isFeatured: data.isFeatured || false,
-        publishedAt: data.publishedAt?.toDate() || new Date(),
-        createdAt: data.createdAt?.toDate() || new Date(),
-        updatedAt: data.updatedAt?.toDate() || new Date(),
-        mois: data.mois?.toString() || (new Date().getMonth() + 1).toString(), // Par défaut mois actuel
-        annee: data.annee?.toString() || new Date().getFullYear().toString(), // Par défaut année actuelle
-        typeCulte: data.typeCulte?.toString() || 'Culte de Louange', // Par défaut
-      };
-
-      enseignements.push(teachingData);
-    });
-
+    let query = db.collection('enseignements');
+    const filters = ['category', 'mois', 'annee', 'typeCulte'];
+    filters.forEach(f => { if (req.query[f]) query = query.where(f, '==', req.query[f]); });
+    const snapshot = await query.get();
+    const enseignements = await Promise.all(
+      snapshot.docs.map(doc => formatEnseignement(doc))
+    );
     res.json(enseignements);
   } catch (error) {
     console.error('Erreur lors de la récupération:', error);
-    res.status(500).json({
-      error: 'Erreur lors de la récupération des enseignements'
-    });
+    res.status(500).json({ error: 'Erreur lors de la récupération des enseignements' });
   }
 };
 
@@ -167,17 +170,12 @@ const updateEnseignement = async (req, res) => {
     const enseignementDoc = await enseignementRef.get();
 
     if (!enseignementDoc.exists) {
-      return res.status(404).json({
-        error: 'Enseignement non trouvé'
-      });
+      return res.status(404).json({ error: 'Enseignement non trouvé' });
     }
 
     const existingData = enseignementDoc.data();
-    const updateData = {
-      updatedAt: new Date(),
-    };
+    const updateData = { updatedAt: new Date() };
 
-    // Mettre à jour les champs textuels si fournis
     if (title !== undefined) updateData.title = title;
     if (speaker !== undefined) updateData.speaker = speaker;
     if (description !== undefined) updateData.description = description;
@@ -190,108 +188,115 @@ const updateEnseignement = async (req, res) => {
     if (isNew !== undefined) updateData.isNew = isNew;
     if (isFeatured !== undefined) updateData.isFeatured = isFeatured;
     if (tags !== undefined) {
-      updateData.tags = typeof tags === 'string' 
+      updateData.tags = typeof tags === 'string'
         ? tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)
         : tags;
     }
 
-    // Gérer la mise à jour de l'image si un nouveau fichier est fourni
     if (req.files && req.files.image && req.files.image[0]) {
-      const imageFile = req.files.image[0];
-      
-      // Supprimer l'ancienne image de Cloudinary si elle existe
-      if (existingData.imagePublicId) {
-        try {
-          await cloudinary.uploader.destroy(existingData.imagePublicId);
-          console.log(`Ancienne image Cloudinary supprimée: ${existingData.imagePublicId}`);
-        } catch (cloudinaryError) {
-          console.error('Erreur lors de la suppression de l\'ancienne image:', cloudinaryError);
-          // Continuer même si la suppression échoue
-        }
+      if (existingData.imageKey) {
+        await storage.deleteFile(existingData.imageKey);
+      } else if (existingData.imagePublicId) {
+        try { await cloudinary.uploader.destroy(existingData.imagePublicId); } catch {}
       }
 
-      // Uploader la nouvelle image vers Cloudinary
-      const imageResult = await new Promise((resolve, reject) => {
-        const uploadStream = cloudinary.uploader.upload_stream(
-          { folder: 'enseignements/images' },
-          (error, result) => {
-            if (error) reject(error);
-            else resolve(result);
-          }
-        );
-        uploadStream.end(imageFile.buffer);
-      });
-
-      updateData.artworkUrl = imageResult.secure_url;
-      updateData.imagePublicId = imageResult.public_id;
+      const result = await storage.uploadBuffer(req.files.image[0], 'enseignements/images');
+      if (isKeyProvider(result.provider)) {
+        updateData.imageKey = result.key;
+        delete updateData.imagePublicId;
+        updateData.artworkUrl = await storage.getDownloadUrl(result.key) || '';
+      } else {
+        updateData.imagePublicId = result.key;
+        delete updateData.imageKey;
+        if (result.url) updateData.artworkUrl = result.url;
+      }
     }
 
     await enseignementRef.update(updateData);
 
-    // Récupérer les données mises à jour
     const updatedDoc = await enseignementRef.get();
-    const updatedData = updatedDoc.data();
-    updatedData.id = id;
+    const formatted = await formatEnseignement(updatedDoc);
 
-    res.json({
-      id: id,
-      message: 'Enseignement mis à jour avec succès',
-      data: updatedData
-    });
+    res.json({ id, message: 'Enseignement mis à jour avec succès', data: formatted });
 
   } catch (error) {
     console.error('Erreur lors de la mise à jour:', error);
     res.status(500).json({
       error: 'Erreur lors de la mise à jour de l\'enseignement',
-      details: error.message
+      details: error.message,
     });
   }
 };
 
+async function deleteFiles(data) {
+  if (data.imageKey) {
+    await storage.deleteFile(data.imageKey);
+  } else if (data.imagePublicId) {
+    try { await cloudinary.uploader.destroy(data.imagePublicId); } catch {}
+  }
+  if (data.audioKey) {
+    await storage.deleteFile(data.audioKey);
+  } else if (data.audioPublicId) {
+    try { await cloudinary.uploader.destroy(data.audioPublicId, { resource_type: 'video' }); } catch {}
+  }
+}
+
 const deleteEnseignement = async (req, res) => {
   try {
     const { id } = req.params;
-
     const enseignementRef = db.collection('enseignements').doc(id);
     const enseignementDoc = await enseignementRef.get();
 
     if (!enseignementDoc.exists) {
-      return res.status(404).json({
-        error: 'Enseignement non trouvé'
-      });
+      return res.status(404).json({ error: 'Enseignement non trouvé' });
     }
 
-    const enseignementData = enseignementDoc.data();
-
-    // Supprimer les fichiers Cloudinary si les public_id existent
-    try {
-      if (enseignementData.imagePublicId) {
-        await cloudinary.uploader.destroy(enseignementData.imagePublicId);
-        console.log(`Image Cloudinary supprimée: ${enseignementData.imagePublicId}`);
-      }
-      if (enseignementData.audioPublicId) {
-        await cloudinary.uploader.destroy(enseignementData.audioPublicId, { resource_type: 'video' });
-        console.log(`Audio Cloudinary supprimé: ${enseignementData.audioPublicId}`);
-      }
-    } catch (cloudinaryError) {
-      console.error('Erreur lors de la suppression Cloudinary:', cloudinaryError);
-      // Continuer même si la suppression Cloudinary échoue
-    }
-
-    // Supprimer le document Firestore
+    await deleteFiles(enseignementDoc.data());
     await enseignementRef.delete();
 
-    res.json({
-      id: id,
-      message: 'Enseignement supprimé avec succès'
-    });
+    res.json({ id, message: 'Enseignement supprimé avec succès' });
 
   } catch (error) {
     console.error('Erreur lors de la suppression:', error);
     res.status(500).json({
       error: 'Erreur lors de la suppression de l\'enseignement',
-      details: error.message
+      details: error.message,
     });
+  }
+};
+
+const deleteAllEnseignements = async (req, res) => {
+  try {
+    const snapshot = await db.collection('enseignements').get();
+    const ids = [];
+    const deletePromises = snapshot.docs.map(async (doc) => {
+      ids.push(doc.id);
+      await deleteFiles(doc.data());
+      await doc.ref.delete();
+    });
+    await Promise.all(deletePromises);
+    res.json({ message: `${ids.length} enseignement(s) supprimé(s)`, ids });
+  } catch (error) {
+    res.status(500).json({ error: 'Erreur lors de la suppression', details: error.message });
+  }
+};
+
+const deleteEnseignementsByFilter = async (req, res) => {
+  try {
+    let query = db.collection('enseignements');
+    const filters = ['category', 'mois', 'annee', 'typeCulte'];
+    filters.forEach(f => { if (req.query[f]) query = query.where(f, '==', req.query[f]); });
+    const snapshot = await query.get();
+    const ids = [];
+    const deletePromises = snapshot.docs.map(async (doc) => {
+      ids.push(doc.id);
+      await deleteFiles(doc.data());
+      await doc.ref.delete();
+    });
+    await Promise.all(deletePromises);
+    res.json({ message: `${ids.length} enseignement(s) supprimé(s)`, ids });
+  } catch (error) {
+    res.status(500).json({ error: 'Erreur lors de la suppression', details: error.message });
   }
 };
 
@@ -299,5 +304,7 @@ module.exports = {
   createEnseignement,
   getAllEnseignements,
   updateEnseignement,
-  deleteEnseignement
+  deleteEnseignement,
+  deleteAllEnseignements,
+  deleteEnseignementsByFilter,
 };

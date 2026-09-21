@@ -94,8 +94,8 @@ class _ConnectionStatusWidgetState extends State<ConnectionStatusWidget> {
             ).animate(
               onPlay: (controller) => controller.repeat(),
             ).scale(
-              begin: 1.0,
-              end: 1.2,
+              begin: const Offset(1.0, 1.0),
+              end: const Offset(1.2, 1.2),
               duration: const Duration(milliseconds: 1000),
               curve: Curves.easeInOut,
             ),
@@ -191,18 +191,10 @@ class _ConnectionStatusWidgetState extends State<ConnectionStatusWidget> {
 
   String _getModeText() {
     switch (_currentMode) {
-      case ApiConfig.modeRender:
-        return 'Render';
-      case ApiConfig.modeUsb:
-        return 'USB';
-      case ApiConfig.modeWifi:
-        return 'WiFi';
-      case ApiConfig.modeHotspotPhone:
-        return 'Hotspot';
-      case ApiConfig.modeHotspotComputer:
-        return 'Hotspot PC';
+      case ApiConfig.modeVps:
+        return 'Serveur VPS';
       default:
-        return 'Inconnu';
+        return 'Serveur VPS';
     }
   }
 
@@ -281,14 +273,10 @@ class CompactConnectionStatusWidget extends StatelessWidget {
 
   String _getCompactModeText(String mode) {
     switch (mode) {
-      case ApiConfig.modeRender:
-        return '☁️ Render';
-      case ApiConfig.modeUsb:
-        return '🔌 USB';
-      case ApiConfig.modeWifi:
-        return '📶 WiFi';
+      case ApiConfig.modeVps:
+        return '☁️ VPS';
       default:
-        return '❓';
+        return '☁️ VPS';
     }
   }
 }

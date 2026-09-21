@@ -2,7 +2,9 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
+const path = require("path");
 const Veilleur = require("./veilleur");
+const { startStreamingServer } = require("./services/streamingService");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -15,6 +17,9 @@ app.use(express.urlencoded({ extended: true }));
 // Servir les fichiers statiques (dashboard admin)
 app.use(express.static('public'));
 
+// Servir les fichiers HLS générés par FFmpeg (hls_output/<streamKey>/index.m3u8)
+app.use('/hls', express.static(path.join(__dirname, 'hls_output')));
+
 // --- ROUTES ---
 app.use("/api/enseignements", require("./routes/enseignements"));
 app.use("/api/annonces", require("./routes/annonces"));
@@ -23,6 +28,7 @@ app.use("/api/calendar", require("./routes/calendar"));
 app.use("/api/users", require("./routes/users"));
 app.use("/api/notifications", require("./routes/notifications"));
 app.use("/api/text-resumes", require("./routes/textResumes"));
+app.use("/api/stream", require("./routes/stream"));
 
 // --- ROUTE DE TEST ---
 app.get("/", (req, res) => {
@@ -47,7 +53,14 @@ app.use((error, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`🚀 Serveur lancé sur le port ${PORT}`);
   console.log("👉 Ouvre ton navigateur et teste /api/enseignements ou /api/lives");
-  
+
+  // Démarrer le serveur de streaming RTMP/HLS (port 1935 / HTTP 8000)
+  try {
+    startStreamingServer();
+  } catch (error) {
+    console.error("❌ Erreur démarrage serveur RTMP:", error.message);
+  }
+
   // Démarrer le veilleur uniquement en production
   if (process.env.NODE_ENV === 'production') {
     console.log("🌐 Serveur déployé sur Render");

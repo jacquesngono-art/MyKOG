@@ -1,0 +1,284 @@
+[
+  {
+    "id": "9f8SPWbXAVbWtfA6YsgW",
+    "title": "L'Amour qui Transforme",
+    "speaker": "Pasteur Sarah",
+    "description": "La grâce suffisante pour chaque saison de votre vie.",
+    "category": "Foi",
+    "duration": 4087,
+    "tags": [
+      "enseignement",
+      "biblique"
+    ],
+    "playCount": 0,
+    "rating": 0,
+    "isNew": true,
+    "isFeatured": false,
+    "publishedAt": {
+      "_seconds": 1786245637,
+      "_nanoseconds": 924000000
+    },
+    "createdAt": {
+      "_seconds": 1786245637,
+      "_nanoseconds": 924000000
+    },
+    "updatedAt": {
+      "_seconds": 1786245637,
+      "_nanoseconds": 924000000
+    },
+    "mois": "Novembre",
+    "annee": "2023",
+    "typeCulte": "Culte Prophétique"
+  },
+  {
+    "id": "BM5sTAPIaDvS5icMSE11",
+    "title": "La Paix au Milieu de la Tempête",
+    "speaker": "Pasteure Ruth",
+    "description": "Un enseignement puissant pour fortifier votre foi au quotidien.",
+    "category": "Adoration",
+    "duration": 4594,
+    "tags": [
+      "louange",
+      "adoration"
+    ],
+    "playCount": 0,
+    "rating": 0,
+    "isNew": true,
+    "isFeatured": false,
+    "publishedAt": {
+      "_seconds": 1786245877,
+      "_nanoseconds": 59000000
+    },
+    "createdAt": {
+      "_seconds": 1786245877,
+      "_nanoseconds": 59000000
+    },
+    "updatedAt": {
+      "_seconds": 1786245877,
+      "_nanoseconds": 59000000
+    },
+    "mois": "Juin",
+    "annee": "2023",
+    "typeCulte": "Séminaire"
+  },
+  {
+    "id": "I8K94Zz8gAlpg7uaEq6Q",
+    "title": "Vaincre par la Louange",
+    "speaker": "Pasteur Cyrille",
+    "description": "Un enseignement puissant pour fortifier votre foi au quotidien.",
+    "category": "Prophétique",
+    "duration": 5853,
+    "tags": [
+      "victoire",
+      "courage"
+    ],
+    "playCount": 0,
+    "rating": 0,
+    "isNew": true,
+    "isFeatured": false,
+    "publishedAt": {
+      "_seconds": 1786245810,
+      "_nanoseconds": 775000000
+    },
+    "createdAt": {
+      "_seconds": 1786245810,
+      "_nanoseconds": 775000000
+    },
+    "updatedAt": {
+      "_seconds": 1786245810,
+      "_nanoseconds": 775000000
+    },
+    "mois": "Décembre",
+    "annee": "2026",
+    "typeCulte": "Culte d'Impact"
+  },
+  {
+    "id": "X9Br1nwBHmCNBEwF8BjL",
+    "title": "Les Fondations Spirituelles",
+    "speaker": "Évangéliste Marc",
+    "description": "Un enseignement puissant pour fortifier votre foi au quotidien.",
+    "category": "Prophétique",
+    "duration": 2794,
+    "tags": [
+      "prière",
+      "spirituel"
+    ],
+    "playCount": 0,
+    "rating": 0,
+    "isNew": true,
+    "isFeatured": false,
+    "publishedAt": {
+      "_seconds": 1786245763,
+      "_nanoseconds": 271000000
+    },
+    "createdAt": {
+      "_seconds": 1786245763,
+      "_nanoseconds": 271000000
+    },
+    "updatedAt": {
+      "_seconds": 1786245763,
+      "_nanoseconds": 271000000
+    },
+    "mois": "Avril",
+    "annee": "2023",
+    "typeCulte": "Culte d'Impact"
+  },
+  {
+    "id": "ZgTphxYLfjaad4Z7hRM0",
+    "title": "Marcher dans la Foi",
+    "speaker": "Évangéliste Marc",
+    "description": "Un enseignement puissant pour fortifier votre foi au quotidien.",
+    "category": "Prière",
+    "duration": 1104,
+    "tags": [
+      "louange",
+      "adoration"
+    ],
+    "playCount": 0,
+    "rating": 0,
+    "isNew": true,
+    "isFeatured": false,
+    "publishedAt": {
+      "_seconds": 1786245591,
+      "_nanoseconds": 518000000
+    },
+    "createdAt": {
+      "_seconds": 1786245591,
+      "_nanoseconds": 518000000
+    },
+    "updatedAt": {
+      "_seconds": 1786245591,
+      "_nanoseconds": 518000000
+    },
+    "mois": "Mai",
+    "annee": "2026",
+    "typeCulte": "Conférence"
+  },
+  {
+    "id": "alSCL7q1kgQ79jzZxtQP",
+    "title": "Test fallback",
+    "speaker": "X",
+    "description": "",
+    "category": "Y",
+    "duration": 0,
+    "tags": [],
+    "playCount": 0,
+    "rating": 0,
+    "isNew": true,
+    "isFeatured": false,
+    "publishedAt": {
+      "_seconds": 1786237726,
+      "_nanoseconds": 994000000
+    },
+    "createdAt": {
+      "_seconds": 1786237726,
+      "_nanoseconds": 994000000
+    },
+    "updatedAt": {
+      "_seconds": 1786237726,
+      "_nanoseconds": 994000000
+    },
+    "mois": "8",
+    "annee": "2026",
+    "typeCulte": "Conférence"
+  },
+  {
+    "id": "cNRPHo5DqdHItfatULxA",
+    "title": "La Grâce qui Suffit",
+    "speaker": "Pasteur Cyrille",
+    "description": "Un enseignement puissant pour fortifier votre foi au quotidien.",
+    "category": "Louange",
+    "duration": 3584,
+    "tags": [
+      "prière",
+      "spirituel"
+    ],
+    "playCount": 0,
+    "rating": 0,
+    "isNew": true,
+    "isFeatured": false,
+    "publishedAt": {
+      "_seconds": 1786245693,
+      "_nanoseconds": 360000000
+    },
+    "createdAt": {
+      "_seconds": 1786245693,
+      "_nanoseconds": 360000000
+    },
+    "updatedAt": {
+      "_seconds": 1786245693,
+      "_nanoseconds": 360000000
+    },
+    "mois": "Novembre",
+    "annee": "2024",
+    "typeCulte": "Culte d'Impact"
+  },
+  {
+    "id": "hHYPKoDEn9KRqoImLLWM",
+    "title": "Les Batailles Spirituelles",
+    "speaker": "Pasteur Fred",
+    "description": "Test de verification du stockage S3 avec URLs signees",
+    "category": "Guerre Spirituelle",
+    "duration": 0,
+    "audioUrl": "https://mykog-cloud.s3.eu-north-1.amazonaws.com/enseignements/audios/1786383042492-915040456.aac?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAQ2BA6XOFQBYIWD53%2F20260810%2Feu-north-1%2Fs3%2Faws4_request&X-Amz-Date=20260810T173047Z&X-Amz-Expires=3600&X-Amz-Signature=b4054a0d3e3410353cceb5f631bfb38a399e2e05e0273665ea962024da83153f&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject",
+    "artworkUrl": "https://mykog-cloud.s3.eu-north-1.amazonaws.com/enseignements/images/1786383042150-915853166.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAQ2BA6XOFQBYIWD53%2F20260810%2Feu-north-1%2Fs3%2Faws4_request&X-Amz-Date=20260810T173047Z&X-Amz-Expires=3600&X-Amz-Signature=4451b18fd3fb7dc61debf7ab17c6b696da2ea7fb6f2c36db0bfaf1510ab50997&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject",
+    "tags": [
+      "bataille",
+      "spirituel",
+      "priere"
+    ],
+    "playCount": 0,
+    "rating": 0,
+    "isNew": true,
+    "isFeatured": false,
+    "publishedAt": {
+      "_seconds": 1786383047,
+      "_nanoseconds": 809000000
+    },
+    "createdAt": {
+      "_seconds": 1786383047,
+      "_nanoseconds": 809000000
+    },
+    "updatedAt": {
+      "_seconds": 1786383047,
+      "_nanoseconds": 809000000
+    },
+    "mois": "Août",
+    "annee": "2026",
+    "typeCulte": "Culte d'Enseignement",
+    "imageKey": "enseignements/images/1786383042150-915853166.jpg",
+    "audioKey": "enseignements/audios/1786383042492-915040456.aac"
+  },
+  {
+    "id": "k42FDluy67ZgfKPd3g28",
+    "title": "La Puissance de la Prière",
+    "speaker": "Pasteur Jean",
+    "description": "La grâce suffisante pour chaque saison de votre vie.",
+    "category": "Prière",
+    "duration": 5133,
+    "tags": [
+      "foi",
+      "pouvoir",
+      "gloire"
+    ],
+    "playCount": 0,
+    "rating": 0,
+    "isNew": true,
+    "isFeatured": false,
+    "publishedAt": {
+      "_seconds": 1786245531,
+      "_nanoseconds": 335000000
+    },
+    "createdAt": {
+      "_seconds": 1786245531,
+      "_nanoseconds": 335000000
+    },
+    "updatedAt": {
+      "_seconds": 1786245531,
+      "_nanoseconds": 335000000
+    },
+    "mois": "Février",
+    "annee": "2025",
+    "typeCulte": "Culte Prophétique"
+  }
+]

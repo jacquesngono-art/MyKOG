@@ -239,6 +239,33 @@ class TeachingProvider extends ChangeNotifier {
     await fetchAvailableTypeCulte();
   }
 
+  /// Rafraîchissement SILENCIEUX : re-fetch l'API en arrière-plan sans
+  /// passer par l'état [loading] (aucun spinner), l'UI conserve ses données
+  /// et se met à jour via [notifyListeners] quand les nouvelles arrivent.
+  /// Utilisé par ContentRefresher (push FCM + polling).
+  Future<void> silentlyRefresh() async {
+    try {
+      TeachingService.clearCache();
+      final teachings = await TeachingService.getAllTeachings();
+
+      // Détecter si de nouvelles entrées sont apparues
+      final oldIds = _allTeachings.map((t) => t.id).toSet();
+      final newIds = teachings.map((t) => t.id).toSet();
+      final hasNew = newIds.difference(oldIds).isNotEmpty;
+
+      _allTeachings = teachings;
+      _categorizeTeachings();
+
+      if (hasNew) {
+        debugPrint('🆕 Nouveaux enseignements détectés (${newIds.length} total)');
+      }
+      _status = TeachingStatus.loaded;
+      notifyListeners();
+    } catch (e) {
+      debugPrint('⚠️ SilentlyRefresh impossible (données existantes conservées): $e');
+    }
+  }
+
   // Réessayer en cas d'erreur
   Future<void> retry() async {
     await fetchAllTeachings();
@@ -249,8 +276,9 @@ class TeachingProvider extends ChangeNotifier {
     _featuredTeachings = _allTeachings.where((t) => t.isFeatured).toList();
     _newTeachings = _allTeachings.where((t) => t.isNew).toList();
 
-    _popularTeachings = List.from(_allTeachings);
-    _popularTeachings.sort((a, b) => b.playCount.compareTo(a.playCount));
+    _popularTeachings = List.from(_allTeachings)
+      ..sort((a, b) => b.playCount.compareTo(a.playCount));
+    _popularTeachings = _popularTeachings.take(20).toList();
   }
 
   // Méthode privée pour mettre à jour un enseignement dans toutes les listes

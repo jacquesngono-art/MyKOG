@@ -96,16 +96,29 @@ class TeachingApiService {
     }
   }
 
-  // Méthode pour récupérer les enseignements par type de culte
+  // Méthode pour récupérer les enseignements par type de culte (filtre serveur)
   Future<List<Teaching>> getTeachingsByTypeCulte(String typeCulte) async {
     try {
-      final allTeachings = await getAllTeachings();
-      return allTeachings
-          .where((t) =>
-            (t.typeCulte?.toLowerCase() ?? '').contains(typeCulte.toLowerCase())
-          )
-          .toList();
+      final base = await baseUrl;
+      final uri = Uri.parse(base).replace(queryParameters: {'typeCulte': typeCulte});
+      final response = await http
+          .get(uri)
+          .timeout(_timeout);
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        return data.map((json) => Teaching.fromJson(json)).toList();
+      } else {
+        throw Exception('Failed to load teachings: ${response.statusCode}');
+      }
+    } on SocketException catch (e) {
+      debugPrint('SocketException getTeachingsByTypeCulte: $e');
+      throw Exception('Aucune connexion internet.');
+    } on TimeoutException catch (e) {
+      debugPrint('TimeoutException getTeachingsByTypeCulte: $e');
+      throw Exception('La requête a expiré.');
     } catch (e) {
+      debugPrint('Erreur getTeachingsByTypeCulte: $e');
       throw Exception('Erreur lors du chargement des enseignements par type: $e');
     }
   }
@@ -163,17 +176,29 @@ class TeachingApiService {
     }
   }
 
-  // Méthode pour obtenir les enseignements par mois/année
+  // Méthode pour obtenir les enseignements par mois/année (filtre serveur)
   Future<List<Teaching>> getTeachingsByMonthYear(int mois, int annee) async {
     try {
-      final allTeachings = await getAllTeachings();
-      return allTeachings
-          .where((t) =>
-            (t.moisSafe == mois.toString()) &&
-            (t.anneeSafe == annee.toString())
-          )
-          .toList();
+      final base = await baseUrl;
+      final uri = Uri.parse(base).replace(queryParameters: {'mois': '$mois', 'annee': '$annee'});
+      final response = await http
+          .get(uri)
+          .timeout(_timeout);
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        return data.map((json) => Teaching.fromJson(json)).toList();
+      } else {
+        throw Exception('Failed to load teachings: ${response.statusCode}');
+      }
+    } on SocketException catch (e) {
+      debugPrint('SocketException getTeachingsByMonthYear: $e');
+      throw Exception('Aucune connexion internet.');
+    } on TimeoutException catch (e) {
+      debugPrint('TimeoutException getTeachingsByMonthYear: $e');
+      throw Exception('La requête a expiré.');
     } catch (e) {
+      debugPrint('Erreur getTeachingsByMonthYear: $e');
       throw Exception('Erreur lors du chargement des enseignements par date: $e');
     }
   }

@@ -1,8 +1,10 @@
+import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:MyKOG/models/teaching.dart';
-import 'package:MyKOG/services/storage_service.dart';
+import 'package:MyKOG/services/hive_storage_service.dart';
 import 'package:MyKOG/services/file_storage_service.dart';
+import 'package:MyKOG/services/user_service.dart';
 
 /// Statut de téléchargement
 enum DownloadStatus {
@@ -39,24 +41,74 @@ class DownloadProgress {
 class DownloadService {
   static const String _downloadedTeachingsKey = 'downloaded_teachings';
   static const String _downloadedDataKey = 'downloaded_data';
+
+  static const int _maxFileSize = 100 * 1024 * 1024; // 100 Mo max par fichier
+  static const int _maxCacheSize = 500 * 1024 * 1024; // 500 Mo max total cache
+
+  /// Vérifie si l'espace disque est suffisant avant de télécharger
+  static Future<String?> checkDiskSpace(String url) async {
+    try {
+      // 1. Vérifier la taille du fichier distant (HEAD request)
+      final headResponse = await _dio.head(
+        url,
+        options: Options(
+          receiveTimeout: const Duration(seconds: 10),
+          sendTimeout: const Duration(seconds: 10),
+        ),
+      );
+
+      final contentLengthStr = headResponse.headers.value('content-length');
+      if (contentLengthStr == null) return null;
+
+      final fileSize = int.tryParse(contentLengthStr);
+      if (fileSize == null) return null;
+
+      if (fileSize > _maxFileSize) {
+        return 'Le fichier est trop volumineux (${FileStorageService.formatFileSize(fileSize)}). Maximum: ${FileStorageService.formatFileSize(_maxFileSize)}.';
+      }
+
+      // 2. Vérifier la taille totale des téléchargements (hors cache PDF)
+      final currentCacheSize = await FileStorageService.getDownloadsSize();
+      if (currentCacheSize + fileSize > _maxCacheSize) {
+        return 'Espace de stockage insuffisant. Libérez de l\'espace dans les paramètres de l\'application.';
+      }
+
+      return null; // OK
+    } catch (_) {
+      return null; // On ne peut pas vérifier → on laisse tenter
+    }
+  }
   
   static List<String> _downloadedTeachingIds = [];
   static final Map<String, DownloadProgress> _activeDownloads = {};
   static final Map<String, CancelToken> _cancelTokens = {};
   static final Dio _dio = Dio();
+  static Future<void>? _saveLock; // Mutuel exclusion pour _saveDownloadedList
+  static int _activeDownloadCount = 0;
+  static const int _maxConcurrentDownloads = 3; // Max téléchargements simultanés
 
   // Callbacks pour notifier l'UI des changements
   static final Map<String, Function(DownloadProgress)?> _progressCallbacks = {};
 
   static Future<void> initialize() async {
-    final stored = StorageService.getString(_downloadedTeachingsKey);
+    final stored = HiveStorageService.getString(_downloadedTeachingsKey);
     if (stored != null && stored.isNotEmpty) {
       _downloadedTeachingIds = stored.split(',').where((id) => id.isNotEmpty).toList();
     }
   }
 
   static Future<void> _saveDownloadedList() async {
-    await StorageService.storeString(
+    // File d'attente sérialisée pour éviter les race conditions
+    while (_saveLock != null) {
+      await _saveLock;
+    }
+    _saveLock = _saveLockImpl();
+    await _saveLock;
+    _saveLock = null;
+  }
+
+  static Future<void> _saveLockImpl() async {
+    await HiveStorageService.storeString(
       _downloadedTeachingsKey,
       _downloadedTeachingIds.join(','),
     );
@@ -80,12 +132,29 @@ class DownloadService {
     Teaching teaching, {
     Function(DownloadProgress)? onProgress,
   }) async {
+    bool slotAcquired = false;
     try {
       // Vérifier si déjà téléchargé
       if (isDownloaded(teaching.id)) {
         debugPrint('Enseignement ${teaching.id} déjà téléchargé');
         return true;
       }
+
+      // Vérifier l'espace disque disponible
+      if (teaching.audioUrl.startsWith('http')) {
+        final spaceError = await checkDiskSpace(teaching.audioUrl);
+        if (spaceError != null) {
+          _updateProgress(teaching.id, 0.0, 0, 0, DownloadStatus.failed, error: spaceError);
+          return false;
+        }
+      }
+
+      // Attendre si le nombre max de téléchargements simultanés est atteint
+      while (_activeDownloadCount >= _maxConcurrentDownloads) {
+        await Future.delayed(const Duration(milliseconds: 500));
+      }
+      _activeDownloadCount++;
+      slotAcquired = true;
 
       // Enregistrer le callback si fourni
       if (onProgress != null) {
@@ -127,6 +196,11 @@ class DownloadService {
         await _saveDownloadedList();
       }
 
+      // Synchroniser avec le UserService (compteur profil)
+      await UserService.syncDownloadedTeachingIds(
+        List.from(_downloadedTeachingIds),
+      );
+
       // Marquer comme complété
       _updateProgress(teaching.id, 1.0, 1, 1, DownloadStatus.completed);
 
@@ -148,6 +222,7 @@ class DownloadService {
       );
       return false;
     } finally {
+      if (slotAcquired) _activeDownloadCount--;
       unregisterProgressCallback(teaching.id);
     }
   }
@@ -155,11 +230,11 @@ class DownloadService {
   /// Télécharger le fichier audio
   static Future<String?> _downloadAudio(Teaching teaching) async {
     try {
-      // Vérifier si l'URL est un asset local
-      if (teaching.audioUrl.startsWith('assets/') || 
+      // Asset local ou URL non-HTTP : pas de téléchargement possible
+      if (teaching.audioUrl.startsWith('assets/') ||
           teaching.audioUrl.startsWith('http') == false) {
         debugPrint('Audio est un asset local, pas de téléchargement nécessaire');
-        return teaching.audioUrl;
+        return null;
       }
 
       final filePath = await FileStorageService.getAudioFilePath(
@@ -197,9 +272,31 @@ class DownloadService {
         return filePath;
       }
 
+      // Statut inattendu : nettoyer le fichier partiel
+      await FileStorageService.deleteFile(filePath);
+      return null;
+    } on DioException catch (e) {
+      if (e.type == DioExceptionType.connectionTimeout || e.type == DioExceptionType.receiveTimeout) {
+        debugPrint('❌ Timeout téléchargement audio: connexion trop lente');
+      } else if (e.error is IOException) {
+        debugPrint('❌ Erreur écriture fichier (espace disque?): $e');
+      } else {
+        debugPrint('❌ Erreur téléchargement audio: $e');
+      }
+      // Nettoyer le fichier partiel en cas d'échec/cancel
+      final partialPath = await FileStorageService.getAudioFilePath(
+        teaching.id,
+        teaching.audioUrl,
+      );
+      await FileStorageService.deleteFile(partialPath);
       return null;
     } catch (e) {
       debugPrint('❌ Erreur téléchargement audio: $e');
+      final partialPath = await FileStorageService.getAudioFilePath(
+        teaching.id,
+        teaching.audioUrl,
+      );
+      await FileStorageService.deleteFile(partialPath);
       return null;
     }
   }
@@ -207,11 +304,11 @@ class DownloadService {
   /// Télécharger l'image de couverture
   static Future<String?> _downloadImage(Teaching teaching) async {
     try {
-      // Vérifier si l'URL est un asset local
-      if (teaching.artworkUrl.startsWith('assets/') || 
+      // Asset local ou URL non-HTTP : pas de téléchargement possible
+      if (teaching.artworkUrl.startsWith('assets/') ||
           teaching.artworkUrl.startsWith('http') == false) {
         debugPrint('Image est un asset local, pas de téléchargement nécessaire');
-        return teaching.artworkUrl;
+        return null;
       }
 
       final filePath = await FileStorageService.getImageFilePath(
@@ -266,7 +363,7 @@ class DownloadService {
       'teaching': teaching.toJson(),
     };
 
-    await StorageService.storeJson(
+    await HiveStorageService.storeJson(
       '${_downloadedDataKey}_${teaching.id}',
       metadata,
     );
@@ -274,7 +371,7 @@ class DownloadService {
 
   /// Récupérer les métadonnées d'un téléchargement
   static Future<Map<String, dynamic>?> getDownloadMetadata(String teachingId) async {
-    return StorageService.getJson('${_downloadedDataKey}_$teachingId');
+    return HiveStorageService.getJson('${_downloadedDataKey}_$teachingId');
   }
 
   /// Obtenir le chemin local de l'audio téléchargé
@@ -287,6 +384,20 @@ class DownloadService {
   static Future<String?> getLocalImagePath(String teachingId) async {
     final metadata = await getDownloadMetadata(teachingId);
     return metadata?['imagePath'] as String?;
+  }
+
+  /// Obtenir l'URL d'artwork effective (locale si téléchargée, distante sinon)
+  /// Utiliser cette méthode dans les widgets pour afficher les images offline
+  static Future<String> getEffectiveArtworkUrl(String teachingId, String remoteUrl) async {
+    if (isDownloaded(teachingId)) {
+      final localPath = await getLocalImagePath(teachingId);
+      if (localPath != null &&
+          localPath.isNotEmpty &&
+          !localPath.startsWith('assets/')) {
+        return localPath;
+      }
+    }
+    return remoteUrl;
   }
 
   /// Mettre à jour la progression
@@ -354,11 +465,16 @@ class DownloadService {
       }
 
       // Supprimer les métadonnées
-      await StorageService.remove('${_downloadedDataKey}_$teachingId');
+      await HiveStorageService.delete('${_downloadedDataKey}_$teachingId');
 
       // Retirer de la liste
       _downloadedTeachingIds.remove(teachingId);
       await _saveDownloadedList();
+
+      // Synchroniser avec le UserService
+      await UserService.syncDownloadedTeachingIds(
+        List.from(_downloadedTeachingIds),
+      );
 
       debugPrint('🗑️ Téléchargement supprimé: $teachingId');
       return true;
@@ -384,7 +500,7 @@ class DownloadService {
     return List.from(_downloadedTeachingIds);
   }
 
-  /// Supprimer tous les téléchargements
+  /// Supprimer tous les téléchargements (sans toucher au cache PDF)
   static Future<void> clearAllDownloads() async {
     try {
       // Annuler tous les téléchargements en cours
@@ -392,17 +508,21 @@ class DownloadService {
         await cancelDownload(teachingId);
       }
 
-      // Supprimer tous les fichiers
-      await FileStorageService.clearAllCache();
+      // Supprimer les fichiers liés aux téléchargements (audio + images
+      // des enseignements) — le cache PDF des textes-résumés est conservé
+      await FileStorageService.clearDownloadsOnly();
 
       // Supprimer toutes les métadonnées
       for (var teachingId in _downloadedTeachingIds) {
-        await StorageService.remove('${_downloadedDataKey}_$teachingId');
+        await HiveStorageService.delete('${_downloadedDataKey}_$teachingId');
       }
 
       // Vider la liste
       _downloadedTeachingIds.clear();
       await _saveDownloadedList();
+
+      // Synchroniser avec le UserService
+      await UserService.syncDownloadedTeachingIds(const []);
 
       debugPrint('🗑️ Tous les téléchargements supprimés');
     } catch (e) {
@@ -418,14 +538,21 @@ class DownloadService {
 
   /// Obtenir des statistiques sur les téléchargements
   static Future<Map<String, dynamic>> getDownloadStatistics() async {
-    final totalSize = await FileStorageService.getTotalCacheSize();
-    final fileCount = (await FileStorageService.listDownloadedFiles()).length;
+    final downloadsSize = await FileStorageService.getDownloadsSize();
+    final pdfCacheSize = await FileStorageService.getPdfCacheSize();
+    final downloadsFileCount =
+        (await FileStorageService.listDownloadedFiles()).length;
 
     return {
       'totalTeachings': _downloadedTeachingIds.length,
-      'totalSize': totalSize,
-      'totalSizeFormatted': FileStorageService.formatFileSize(totalSize),
-      'totalFiles': fileCount,
+      'downloadsSize': downloadsSize,
+      'downloadsSizeFormatted': FileStorageService.formatFileSize(downloadsSize),
+      'pdfCacheSize': pdfCacheSize,
+      'pdfCacheSizeFormatted': FileStorageService.formatFileSize(pdfCacheSize),
+      'totalSize': downloadsSize + pdfCacheSize,
+      'totalSizeFormatted':
+          FileStorageService.formatFileSize(downloadsSize + pdfCacheSize),
+      'totalFiles': downloadsFileCount,
       'activeDownloads': _activeDownloads.length,
     };
   }

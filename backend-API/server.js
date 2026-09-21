@@ -2,7 +2,6 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
-const Veilleur = require("./veilleur");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -23,6 +22,7 @@ app.use("/api/calendar", require("./routes/calendar"));
 app.use("/api/users", require("./routes/users"));
 app.use("/api/notifications", require("./routes/notifications"));
 app.use("/api/text-resumes", require("./routes/textResumes"));
+app.use("/api/upload", require("./routes/upload"));
 
 // --- ROUTE DE TEST ---
 app.get("/", (req, res) => {
@@ -47,12 +47,9 @@ app.use((error, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`🚀 Serveur lancé sur le port ${PORT}`);
   console.log("👉 Ouvre ton navigateur et teste /api/enseignements ou /api/lives");
-  
-  // Démarrer le veilleur uniquement en production
+
   if (process.env.NODE_ENV === 'production') {
-    console.log("🌐 Serveur déployé sur Render");
-    const veilleur = new Veilleur(14); // Ping toutes les 14 minutes
-    veilleur.start();
+    console.log("🌐 Serveur déployé en production (VPS)");
   } else {
     console.log("📱 Pour téléphone : utilise l'IP du PC + :3000");
   }

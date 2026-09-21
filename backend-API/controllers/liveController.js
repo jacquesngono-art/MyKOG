@@ -1,114 +1,143 @@
 const { db } = require('../config/firebase');
-const { 
-  STREAM_CONFIG, 
-  getServerIP,
-  getHLSUrl, 
-  getRTMPUrl, 
-  getHLSUrlWithIP,
-  getRTMPUrlWithIP,
-  isValidStreamKey,
-  generateStreamKey 
-} = require('../utils/stream_helper');
-const FFmpegTranscoder = require('../utils/ffmpeg_transcoder');
-const LiveKitService = require('../services/livekitService');
+const livekit = require('../services/livekitService');
 
-// Gestionnaire global des transcoders actifs
-const activeTranscoders = new Map();
-
-// Instance LiveKit Service (initialisée paresseusement)
-let liveKitService = null;
-
-const getLiveKitService = () => {
-  if (!liveKitService) {
-    liveKitService = new LiveKitService();
-  }
-  return liveKitService;
+const STREAM_CONFIG = {
+  DEFAULT_STREAM_KEY: 'mykog_live',
 };
+
+function isValidStreamKey(streamKey) {
+  if (!streamKey || typeof streamKey !== 'string') return false;
+  return /^[a-zA-Z0-9_-]+$/.test(streamKey);
+}
+
+function toDate(value) {
+  if (!value) return null;
+  if (value instanceof Date) return value;
+  if (typeof value.toDate === 'function') return value.toDate();
+  if (typeof value === 'string') {
+    const d = new Date(value);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  return null;
+}
+
+function generateStreamKey() {
+  const timestamp = Date.now();
+  const random = Math.random().toString(36).substring(2, 8);
+  return `mykog_${timestamp}_${random}`;
+}
+
+function formatLiveStream(id, data, includeLiveKit = false) {
+  const streamKey = data.streamKey || STREAM_CONFIG.DEFAULT_STREAM_KEY;
+  const roomName = livekit.generateRoomName(streamKey);
+  const result = {
+    id,
+    title: data.title || 'Live Stream',
+    description: data.description || '',
+    pastor: data.pastor || 'Unknown',
+    thumbnailUrl: data.thumbnailUrl || '',
+    streamKey,
+    roomName,
+    status: data.status || 'scheduled',
+    scheduledAt: toDate(data.scheduledAt),
+    startedAt: toDate(data.startedAt),
+    endedAt: toDate(data.endedAt),
+    viewerCount: data.viewerCount || 0,
+    peakViewerCount: data.peakViewerCount || 0,
+    tags: data.tags || [],
+    createdAt: toDate(data.createdAt) || new Date(),
+    updatedAt: toDate(data.updatedAt) || new Date(),
+  };
+  if (includeLiveKit) {
+    result.livekitUrl = livekit.getLiveKitUrl();
+    if (data.whipUrl) result.whipUrl = data.whipUrl;
+    if (data.ingressStreamKey) result.ingressStreamKey = data.ingressStreamKey;
+  }
+  return result;
+}
 
 // Créer un live stream
 const createLiveStream = async (req, res) => {
   try {
-    const { title, description, pastor, thumbnailUrl, streamUrl, streamKey, scheduledAt, serverIP } = req.body;
+    const { title, description, pastor, thumbnailUrl, streamKey, scheduledAt } = req.body;
 
-    // Vérifier les champs requis
-    if (!title || !pastor) {
-      return res.status(400).json({
-        error: 'Title et pastor sont requis'
-      });
+    if (!title || !title.trim()) {
+      return res.status(400).json({ error: 'Le titre est requis' });
+    }
+    if (!pastor || !pastor.trim()) {
+      return res.status(400).json({ error: 'Le pasteur est requis' });
+    }
+    if (title.length > 200) {
+      return res.status(400).json({ error: 'Le titre ne peut pas dépasser 200 caractères' });
+    }
+    if (description && description.length > 2000) {
+      return res.status(400).json({ error: 'La description ne peut pas dépasser 2000 caractères' });
     }
 
-    const now = new Date();
-
-    // Générer ou utiliser la clé de stream
-    let finalStreamKey = streamKey || STREAM_CONFIG.DEFAULT_STREAM_KEY;
-    
-    // Si une clé personnalisée est fournie, la valider
+    let finalStreamKey = streamKey || generateStreamKey();
     if (streamKey && !isValidStreamKey(streamKey)) {
       return res.status(400).json({
-        error: 'Clé de stream invalide. Utilisez uniquement des caractères alphanumériques, tirets et underscores.'
+        error: 'Clé de stream invalide. Utilisez uniquement des caractères alphanumériques, tirets et underscores.',
       });
     }
 
-    // Générer les URLs RTMP et HLS
-    const rtmpUrl = serverIP 
-      ? getRTMPUrlWithIP(serverIP, finalStreamKey)
-      : getRTMPUrl(finalStreamKey);
-    
-    const hlsUrl = serverIP 
-      ? getHLSUrlWithIP(serverIP, finalStreamKey)
-      : getHLSUrl(finalStreamKey);
+    const roomName = livekit.generateRoomName(finalStreamKey);
+    const now = new Date();
+    const isLiveNow = (req.body.status || 'scheduled') === 'live';
 
-    // Utiliser l'URL HLS fournie ou générer automatiquement
-    const finalStreamUrl = (streamUrl && streamUrl.trim() !== '') ? streamUrl : hlsUrl;
-
-    // Créer l'objet live stream
     const liveStreamData = {
-      title: title,
+      title,
       description: description || '',
-      pastor: pastor,
+      pastor,
       thumbnailUrl: thumbnailUrl || '',
-      streamUrl: finalStreamUrl, // URL HLS pour la lecture
-      streamKey: finalStreamKey, // Clé de streaming pour OBS
-      rtmpUrl: rtmpUrl, // URL RTMP pour OBS (ajouté)
-      hlsUrl: hlsUrl, // URL HLS générée (ajouté)
-      status: req.body.status || 'scheduled', // scheduled, live, ended
+      streamKey: finalStreamKey,
+      roomName,
+      status: req.body.status || 'scheduled',
       scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
-      startedAt: null,
+      startedAt: isLiveNow ? now : null,
       endedAt: null,
       viewerCount: 0,
       peakViewerCount: 0,
       tags: req.body.tags || [],
+      ingressId: null,
+      whipUrl: null,
+      ingressStreamKey: null,
       createdAt: now,
       updatedAt: now,
     };
 
-    // Sauvegarder dans Firestore
     const docRef = await db.collection('liveStreams').add(liveStreamData);
 
-    // Démarrer le transcodage automatique si le statut est "live"
-    if (liveStreamData.status === 'live') {
-      try {
-        const transcoder = new FFmpegTranscoder(finalStreamKey);
-        transcoder.start();
-        activeTranscoders.set(finalStreamKey, transcoder);
-        console.log(`✅ Transcoder démarré automatiquement pour: ${finalStreamKey}`);
-      } catch (error) {
-        console.error(`⚠️ Erreur démarrage transcoder: ${error.message}`);
-        // Ne pas faire échouer la création du live si le transcoder ne démarre pas
-      }
+    // Créer un Ingress WHIP pour OBS
+    let ingressInfo = null;
+    try {
+      ingressInfo = await livekit.createWhipIngress(roomName, `live-${docRef.id}`, `broadcaster-${docRef.id}`);
+      await docRef.update({
+        ingressId: ingressInfo.ingressId,
+        whipUrl: ingressInfo.url,
+        ingressStreamKey: ingressInfo.streamKey,
+      });
+    } catch (err) {
+      console.error('Erreur création Ingress WHIP:', err.message);
     }
 
     res.status(201).json({
       id: docRef.id,
       message: 'Live stream créé avec succès',
-      data: liveStreamData
+      data: formatLiveStream(docRef.id, liveStreamData, true),
+      livekit: {
+        url: livekit.getLiveKitUrl(),
+        roomName,
+        whipUrl: ingressInfo ? ingressInfo.url : `http://185.98.128.123:3001/whip`,
+        streamKey: ingressInfo ? ingressInfo.streamKey : null,
+        ingressId: ingressInfo ? ingressInfo.ingressId : null,
+      },
     });
-
   } catch (error) {
     console.error('Erreur lors de la création du live:', error);
     res.status(500).json({
       error: 'Erreur lors de la création du live stream',
-      details: error.message
+      details: error.message,
     });
   }
 };
@@ -116,43 +145,22 @@ const createLiveStream = async (req, res) => {
 // Récupérer tous les live streams
 const getAllLiveStreams = async (req, res) => {
   try {
-    const liveStreamsSnapshot = await db.collection('liveStreams').get();
+    const snapshot = await db.collection('liveStreams').get();
     const liveStreams = [];
 
-    const { getServerIP, getHLSUrl, getRTMPUrl } = require('../utils/stream_helper');
-    const currentIP = getServerIP();
-    
-    liveStreamsSnapshot.forEach(doc => {
+    for (const doc of snapshot.docs) {
       const data = doc.data();
-      const streamKey = data.streamKey || 'mykog_live';
-      
-      // Utiliser l'IP actuelle pour les URLs
-      const currentHlsUrl = getHLSUrl(streamKey);
-      const currentRtmpUrl = getRTMPUrl(streamKey);
-      
-      liveStreams.push({
-        id: doc.id,
-        title: data.title || 'Live Stream',
-        description: data.description || '',
-        pastor: data.pastor || 'Unknown',
-        thumbnailUrl: data.thumbnailUrl || '',
-        streamUrl: currentHlsUrl, // Toujours utiliser l'IP actuelle
-        streamKey: streamKey,
-        rtmpUrl: currentRtmpUrl, // Toujours utiliser l'IP actuelle
-        hlsUrl: currentHlsUrl, // Toujours utiliser l'IP actuelle
-        status: data.status || 'scheduled',
-        scheduledAt: data.scheduledAt?.toDate() || null,
-        startedAt: data.startedAt?.toDate() || null,
-        endedAt: data.endedAt?.toDate() || null,
-        viewerCount: data.viewerCount || 0,
-        peakViewerCount: data.peakViewerCount || 0,
-        tags: data.tags || [],
-        createdAt: data.createdAt?.toDate() || new Date(),
-        updatedAt: data.updatedAt?.toDate() || new Date(),
-      });
-    });
+      const formatted = formatLiveStream(doc.id, data, true);
+      // Compter les participants réels via LiveKit si le live est actif
+      if (formatted.status === 'live') {
+        try {
+          const count = await livekit.getParticipantCount(formatted.roomName);
+          formatted.viewerCount = count;
+        } catch {}
+      }
+      liveStreams.push(formatted);
+    }
 
-    // Trier: live en premier, puis scheduled, puis ended
     liveStreams.sort((a, b) => {
       const statusOrder = { live: 0, scheduled: 1, ended: 2 };
       return (statusOrder[a.status] || 3) - (statusOrder[b.status] || 3);
@@ -161,9 +169,7 @@ const getAllLiveStreams = async (req, res) => {
     res.json(liveStreams);
   } catch (error) {
     console.error('Erreur lors de la récupération des lives:', error);
-    res.status(500).json({
-      error: 'Erreur lors de la récupération des live streams'
-    });
+    res.status(500).json({ error: 'Erreur lors de la récupération des live streams' });
   }
 };
 
@@ -171,157 +177,220 @@ const getAllLiveStreams = async (req, res) => {
 const getLiveStreamById = async (req, res) => {
   try {
     const { id } = req.params;
-    const liveStreamDoc = await db.collection('liveStreams').doc(id).get();
+    const doc = await db.collection('liveStreams').doc(id).get();
 
-    if (!liveStreamDoc.exists) {
-      return res.status(404).json({
-        error: 'Live stream non trouvé'
-      });
+    if (!doc.exists) {
+      return res.status(404).json({ error: 'Live stream non trouvé' });
     }
 
-    const data = liveStreamDoc.data();
-    res.json({
-      id: liveStreamDoc.id,
-      ...data,
-      scheduledAt: data.scheduledAt?.toDate(),
-      startedAt: data.startedAt?.toDate(),
-      endedAt: data.endedAt?.toDate(),
-      createdAt: data.createdAt?.toDate(),
-      updatedAt: data.updatedAt?.toDate(),
-    });
+    res.json(formatLiveStream(doc.id, doc.data(), true));
   } catch (error) {
     console.error('Erreur lors de la récupération du live:', error);
+    res.status(500).json({ error: 'Erreur lors de la récupération du live stream' });
+  }
+};
+
+// Obtenir le live actif (status = 'live')
+const getActiveLive = async (req, res) => {
+  try {
+    const snapshot = await db.collection('liveStreams').get();
+    const activeLives = [];
+
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      if (data.status === 'live') {
+        activeLives.push({
+          id: doc.id,
+          data,
+          startedAt: data.startedAt?.toDate() || new Date(0),
+        });
+      }
+    });
+
+    activeLives.sort((a, b) => b.startedAt.getTime() - a.startedAt.getTime());
+
+    if (activeLives.length === 0) {
+      return res.status(404).json({ error: 'Aucun live actif', data: null });
+    }
+
+    const mostRecent = activeLives[0];
+    const formatted = formatLiveStream(mostRecent.id, mostRecent.data, true);
+
+    try {
+      formatted.viewerCount = await livekit.getParticipantCount(formatted.roomName);
+    } catch {}
+
+    res.json(formatted);
+  } catch (error) {
+    console.error('Erreur lors de la récupération du live actif:', error);
     res.status(500).json({
-      error: 'Erreur lors de la récupération du live stream'
+      error: 'Erreur lors de la récupération du live actif',
+      details: error.message,
     });
   }
 };
 
-// Mettre à jour un live stream (complet)
-const updateLiveStream = async (req, res) => {
+// Obtenir un token viewer pour rejoindre un live
+const getViewerToken = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description, pastor, thumbnailUrl, streamUrl, streamKey, status, serverIP } = req.body;
+    const { userId } = req.body || {};
+    const doc = await db.collection('liveStreams').doc(id).get();
 
-    const liveStreamRef = db.collection('liveStreams').doc(id);
-    const liveStreamDoc = await liveStreamRef.get();
+    if (!doc.exists) {
+      return res.status(404).json({ error: 'Live stream non trouvé' });
+    }
 
-    if (!liveStreamDoc.exists) {
-      return res.status(404).json({
-        error: 'Live stream non trouvé'
+    const data = doc.data();
+    if (data.status !== 'live') {
+      return res.status(400).json({ error: 'Le live n\'est pas encore actif' });
+    }
+
+    const roomName = data.roomName || livekit.generateRoomName(data.streamKey);
+    const identity = userId ? `viewer-${userId}` : `viewer-${Date.now()}`;
+
+    const token = await livekit.createViewerToken(roomName, identity);
+
+    res.json({
+      id,
+      token,
+      url: livekit.getLiveKitUrl(),
+      roomName,
+      identity,
+    });
+  } catch (error) {
+    console.error('Erreur génération token viewer:', error);
+    res.status(500).json({
+      error: 'Erreur lors de la génération du token',
+      details: error.message,
+    });
+  }
+};
+
+// Obtenir un token publisher pour diffuser (OBS / app desktop)
+const getPublisherToken = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const doc = await db.collection('liveStreams').doc(id).get();
+
+    if (!doc.exists) {
+      return res.status(404).json({ error: 'Live stream non trouvé' });
+    }
+
+    const data = doc.data();
+    const roomName = data.roomName || livekit.generateRoomName(data.streamKey);
+
+    // Si un Ingress existe déjà, retourner ses infos
+    if (data.ingressId && data.whipUrl) {
+      return res.json({
+        id,
+        url: livekit.getLiveKitUrl(),
+        roomName,
+        whipUrl: data.whipUrl,
+        streamKey: data.ingressStreamKey,
+        ingressId: data.ingressId,
       });
     }
 
-    const now = new Date();
-    const updateData = {
-      updatedAt: now,
-    };
+    // Sinon créer un Ingress WHIP à la volée
+    try {
+      const ingress = await livekit.createWhipIngress(roomName, `live-${id}`, `broadcaster-${id}`);
+      await doc.ref.update({
+        ingressId: ingress.ingressId,
+        whipUrl: ingress.url,
+        ingressStreamKey: ingress.streamKey,
+      });
+      return res.json({
+        id,
+        url: livekit.getLiveKitUrl(),
+        roomName,
+        whipUrl: ingress.url,
+        streamKey: ingress.streamKey,
+        ingressId: ingress.ingressId,
+      });
+    } catch (err) {
+      // Fallback: token publisher direct (WebRTC nat, sans OBS)
+      const token = await livekit.createPublisherToken(roomName, `broadcaster-${id}`);
+      return res.json({
+        id,
+        token,
+        url: livekit.getLiveKitUrl(),
+        roomName,
+        whipUrl: `http://185.98.128.123:3001/whip`,
+      });
+    }
+  } catch (error) {
+    console.error('Erreur génération token publisher:', error);
+    res.status(500).json({
+      error: 'Erreur lors de la génération du token',
+      details: error.message,
+    });
+  }
+};
 
-    // Mettre à jour les champs fournis
+// Mettre à jour un live stream
+const updateLiveStream = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, description, pastor, thumbnailUrl, streamKey, status } = req.body;
+
+    const ref = db.collection('liveStreams').doc(id);
+    const doc = await ref.get();
+
+    if (!doc.exists) {
+      return res.status(404).json({ error: 'Live stream non trouvé' });
+    }
+
+    const now = new Date();
+    const updateData = { updatedAt: now };
+
     if (title !== undefined) updateData.title = title;
     if (description !== undefined) updateData.description = description;
     if (pastor !== undefined) updateData.pastor = pastor;
     if (thumbnailUrl !== undefined) updateData.thumbnailUrl = thumbnailUrl;
-    
-    // Gérer la clé de stream et les URLs
-    const currentData = liveStreamDoc.data();
-    let finalStreamKey = streamKey || currentData.streamKey || STREAM_CONFIG.DEFAULT_STREAM_KEY;
-    
-    // Valider la clé si fournie
-    if (streamKey && !isValidStreamKey(streamKey)) {
-      return res.status(400).json({
-        error: 'Clé de stream invalide. Utilisez uniquement des caractères alphanumériques, tirets et underscores.'
-      });
-    }
-    
-    // Générer les URLs si la clé change ou si l'IP change
-    if (streamKey || serverIP) {
-      const rtmpUrl = serverIP 
-        ? getRTMPUrlWithIP(serverIP, finalStreamKey)
-        : getRTMPUrl(finalStreamKey);
-      
-      const hlsUrl = serverIP 
-        ? getHLSUrlWithIP(serverIP, finalStreamKey)
-        : getHLSUrl(finalStreamKey);
-      
-      updateData.streamKey = finalStreamKey;
-      updateData.rtmpUrl = rtmpUrl;
-      updateData.hlsUrl = hlsUrl;
-      
-      // Mettre à jour l'URL de stream si non fournie explicitement
-      if (!streamUrl) {
-        updateData.streamUrl = hlsUrl;
-      }
-    }
-    
-    if (streamUrl !== undefined) updateData.streamUrl = streamUrl;
-    
-    // Gérer le statut
-    if (status !== undefined) {
-      if (!['scheduled', 'live', 'ended'].includes(status)) {
+
+    if (streamKey !== undefined) {
+      if (!isValidStreamKey(streamKey)) {
         return res.status(400).json({
-          error: 'Status invalide. Doit être: scheduled, live, ou ended'
+          error: 'Clé de stream invalide. Utilisez uniquement des caractères alphanumériques, tirets et underscores.',
         });
       }
+      updateData.streamKey = streamKey;
+      updateData.roomName = livekit.generateRoomName(streamKey);
+    }
+
+    if (status !== undefined) {
+      if (!['scheduled', 'live', 'ended'].includes(status)) {
+        return res.status(400).json({ error: 'Status invalide. Doit être: scheduled, live, ou ended' });
+      }
       updateData.status = status;
-      
-      // Ajouter timestamps selon le statut
-      const currentData = liveStreamDoc.data();
+
+      const currentData = doc.data();
       const previousStatus = currentData.status;
-      const streamKey = currentData.streamKey || finalStreamKey || STREAM_CONFIG.DEFAULT_STREAM_KEY;
-      
+
       if (status === 'live' && !currentData.startedAt) {
         updateData.startedAt = now;
-        // Démarrer le transcodage si on passe à "live"
-        if (previousStatus !== 'live') {
-          try {
-            const transcoder = new FFmpegTranscoder(streamKey);
-            transcoder.start();
-            activeTranscoders.set(streamKey, transcoder);
-            console.log(`✅ Transcoder démarré pour: ${streamKey}`);
-          } catch (error) {
-            console.error(`⚠️ Erreur démarrage transcoder: ${error.message}`);
-          }
-        }
       } else if (status === 'ended') {
         updateData.endedAt = now;
-        // Arrêter le transcodage si on passe à "ended"
-        if (previousStatus === 'live') {
-          const transcoder = activeTranscoders.get(streamKey);
-          if (transcoder) {
-            transcoder.stop();
-            activeTranscoders.delete(streamKey);
-            console.log(`🛑 Transcoder arrêté pour: ${streamKey}`);
-          }
-        }
+        // Supprimer la room LiveKit
+        const roomName = currentData.roomName || livekit.generateRoomName(currentData.streamKey);
+        await livekit.deleteRoom(roomName);
       }
     }
 
-    await liveStreamRef.update(updateData);
-
-    // Récupérer le document mis à jour
-    const updatedDoc = await liveStreamRef.get();
-    const updatedData = updatedDoc.data();
+    await ref.update(updateData);
+    const updatedDoc = await ref.get();
 
     res.json({
-      id: id,
+      id,
       message: 'Live stream mis à jour avec succès',
-      data: {
-        id: updatedDoc.id,
-        ...updatedData,
-        scheduledAt: updatedData.scheduledAt?.toDate(),
-        startedAt: updatedData.startedAt?.toDate(),
-        endedAt: updatedData.endedAt?.toDate(),
-        createdAt: updatedData.createdAt?.toDate(),
-        updatedAt: updatedData.updatedAt?.toDate(),
-      }
+      data: formatLiveStream(id, updatedDoc.data(), true),
     });
-
   } catch (error) {
     console.error('Erreur lors de la mise à jour du live:', error);
     res.status(500).json({
       error: 'Erreur lors de la mise à jour du live stream',
-      details: error.message
+      details: error.message,
     });
   }
 };
@@ -333,264 +402,129 @@ const updateLiveStreamStatus = async (req, res) => {
     const { status } = req.body;
 
     if (!['scheduled', 'live', 'ended'].includes(status)) {
-      return res.status(400).json({
-        error: 'Status invalide. Doit être: scheduled, live, ou ended'
-      });
+      return res.status(400).json({ error: 'Status invalide. Doit être: scheduled, live, ou ended' });
     }
 
-    const liveStreamRef = db.collection('liveStreams').doc(id);
-    const liveStreamDoc = await liveStreamRef.get();
+    const ref = db.collection('liveStreams').doc(id);
+    const doc = await ref.get();
 
-    if (!liveStreamDoc.exists) {
-      return res.status(404).json({
-        error: 'Live stream non trouvé'
-      });
+    if (!doc.exists) {
+      return res.status(404).json({ error: 'Live stream non trouvé' });
     }
 
     const now = new Date();
-    const updateData = {
-      status: status,
-      updatedAt: now,
-    };
-
-    const currentData = liveStreamDoc.data();
+    const updateData = { status, updatedAt: now };
+    const currentData = doc.data();
     const previousStatus = currentData.status;
-    const streamKey = currentData.streamKey || STREAM_CONFIG.DEFAULT_STREAM_KEY;
+    const roomName = currentData.roomName || livekit.generateRoomName(currentData.streamKey);
 
-    // Ajouter timestamps selon le statut
     if (status === 'live' && !currentData.startedAt) {
       updateData.startedAt = now;
-      // Démarrer le transcodage si on passe à "live"
-      if (previousStatus !== 'live') {
-        try {
-          const transcoder = new FFmpegTranscoder(streamKey);
-          transcoder.start();
-          activeTranscoders.set(streamKey, transcoder);
-          console.log(`✅ Transcoder démarré pour: ${streamKey}`);
-        } catch (error) {
-          console.error(`⚠️ Erreur démarrage transcoder: ${error.message}`);
-        }
-      }
     } else if (status === 'ended') {
       updateData.endedAt = now;
-      // Arrêter le transcodage si on passe à "ended"
       if (previousStatus === 'live') {
-        const transcoder = activeTranscoders.get(streamKey);
-        if (transcoder) {
-          transcoder.stop();
-          activeTranscoders.delete(streamKey);
-          console.log(`🛑 Transcoder arrêté pour: ${streamKey}`);
-        }
+        await livekit.deleteRoom(roomName);
       }
     }
 
-    await liveStreamRef.update(updateData);
+    await ref.update(updateData);
 
-    res.json({
-      id: id,
-      message: `Statut mis à jour: ${status}`,
-      data: updateData
-    });
-
+    res.json({ id, message: `Statut mis à jour: ${status}`, data: updateData });
   } catch (error) {
     console.error('Erreur lors de la mise à jour du statut:', error);
-    res.status(500).json({
-      error: 'Erreur lors de la mise à jour du statut'
-    });
+    res.status(500).json({ error: 'Erreur lors de la mise à jour du statut' });
   }
 };
 
-// Incrémenter le nombre de viewers (appelé quand un utilisateur rejoint)
+// Incrémenter le nombre de viewers
 const incrementViewerCount = async (req, res) => {
   try {
     const { id } = req.params;
+    const ref = db.collection('liveStreams').doc(id);
+    const doc = await ref.get();
 
-    const liveStreamRef = db.collection('liveStreams').doc(id);
-    const liveStreamDoc = await liveStreamRef.get();
-
-    if (!liveStreamDoc.exists) {
-      return res.status(404).json({
-        error: 'Live stream non trouvé'
-      });
+    if (!doc.exists) {
+      return res.status(404).json({ error: 'Live stream non trouvé' });
     }
 
-    const currentData = liveStreamDoc.data();
-    const newViewerCount = (currentData.viewerCount || 0) + 1;
-    const peakViewerCount = Math.max(newViewerCount, currentData.peakViewerCount || 0);
+    const data = doc.data();
+    const newCount = (data.viewerCount || 0) + 1;
+    const peak = Math.max(newCount, data.peakViewerCount || 0);
 
-    await liveStreamRef.update({
-      viewerCount: newViewerCount,
-      peakViewerCount: peakViewerCount,
-      updatedAt: new Date(),
-    });
+    await ref.update({ viewerCount: newCount, peakViewerCount: peak, updatedAt: new Date() });
 
-    res.json({
-      id: id,
-      viewerCount: newViewerCount,
-      peakViewerCount: peakViewerCount,
-      message: 'Viewer count incrémenté'
-    });
-
+    res.json({ id, viewerCount: newCount, peakViewerCount: peak, message: 'Viewer count incrémenté' });
   } catch (error) {
-    console.error('Erreur lors de l\'incrémentation des viewers:', error);
-    res.status(500).json({
-      error: 'Erreur lors de l\'incrémentation du compteur'
-    });
+    console.error('Erreur incrémentation viewers:', error);
+    res.status(500).json({ error: 'Erreur lors de l\'incrémentation du compteur' });
   }
 };
 
-// Décrémenter le nombre de viewers (appelé quand un utilisateur quitte)
+// Décrémenter le nombre de viewers
 const decrementViewerCount = async (req, res) => {
   try {
     const { id } = req.params;
+    const ref = db.collection('liveStreams').doc(id);
+    const doc = await ref.get();
 
-    const liveStreamRef = db.collection('liveStreams').doc(id);
-    const liveStreamDoc = await liveStreamRef.get();
-
-    if (!liveStreamDoc.exists) {
-      return res.status(404).json({
-        error: 'Live stream non trouvé'
-      });
+    if (!doc.exists) {
+      return res.status(404).json({ error: 'Live stream non trouvé' });
     }
 
-    const currentData = liveStreamDoc.data();
-    const newViewerCount = Math.max((currentData.viewerCount || 0) - 1, 0);
+    const data = doc.data();
+    const newCount = Math.max((data.viewerCount || 0) - 1, 0);
 
-    await liveStreamRef.update({
-      viewerCount: newViewerCount,
-      updatedAt: new Date(),
-    });
+    await ref.update({ viewerCount: newCount, updatedAt: new Date() });
 
-    res.json({
-      id: id,
-      viewerCount: newViewerCount,
-      message: 'Viewer count décrémenté'
-    });
-
+    res.json({ id, viewerCount: newCount, message: 'Viewer count décrémenté' });
   } catch (error) {
-    console.error('Erreur lors de la décrémentation des viewers:', error);
-    res.status(500).json({
-      error: 'Erreur lors de la décrémentation du compteur'
-    });
+    console.error('Erreur décrémentation viewers:', error);
+    res.status(500).json({ error: 'Erreur lors de la décrémentation du compteur' });
   }
 };
 
-// Obtenir le nombre de viewers en temps réel
+// Obtenir le nombre de viewers
 const getViewerCount = async (req, res) => {
   try {
     const { id } = req.params;
+    const doc = await db.collection('liveStreams').doc(id).get();
 
-    const liveStreamDoc = await db.collection('liveStreams').doc(id).get();
-
-    if (!liveStreamDoc.exists) {
-      return res.status(404).json({
-        error: 'Live stream non trouvé'
-      });
+    if (!doc.exists) {
+      return res.status(404).json({ error: 'Live stream non trouvé' });
     }
 
-    const data = liveStreamDoc.data();
+    const data = doc.data();
+    const roomName = data.roomName || livekit.generateRoomName(data.streamKey);
+    let count = data.viewerCount || 0;
+
+    if (data.status === 'live') {
+      try {
+        count = await livekit.getParticipantCount(roomName);
+      } catch {}
+    }
+
     res.json({
-      id: id,
-      viewerCount: data.viewerCount || 0,
+      id,
+      viewerCount: count,
       peakViewerCount: data.peakViewerCount || 0,
       status: data.status || 'scheduled',
     });
-
   } catch (error) {
-    console.error('Erreur lors de la récupération du compteur:', error);
-    res.status(500).json({
-      error: 'Erreur lors de la récupération du compteur'
-    });
+    console.error('Erreur récupération compteur:', error);
+    res.status(500).json({ error: 'Erreur lors de la récupération du compteur' });
   }
 };
 
-// Obtenir le live actif (status = 'live')
-const getActiveLive = async (req, res) => {
-  try {
-    // Récupérer tous les lives et filtrer côté serveur pour éviter l'index Firestore
-    const liveStreamsSnapshot = await db.collection('liveStreams').get();
-    
-    // Filtrer les lives actifs et trier par startedAt
-    const activeLives = [];
-    liveStreamsSnapshot.forEach(doc => {
-      const data = doc.data();
-      if (data.status === 'live') {
-        activeLives.push({
-          id: doc.id,
-          data: data,
-          startedAt: data.startedAt?.toDate() || new Date(0)
-        });
-      }
-    });
-    
-    // Trier par startedAt (le plus récent en premier)
-    activeLives.sort((a, b) => b.startedAt.getTime() - a.startedAt.getTime());
-    
-    if (activeLives.length === 0) {
-      return res.status(404).json({
-        error: 'Aucun live actif',
-        data: null
-      });
-    }
-
-    // Prendre le live le plus récent
-    const mostRecent = activeLives[0];
-    const data = mostRecent.data;
-
-    // Utiliser l'IP actuelle du serveur pour les URLs
-    const currentIP = getServerIP();
-    const streamKey = data.streamKey || 'mykog_live';
-    
-    // Générer les URLs avec l'IP actuelle
-    const currentHlsUrl = getHLSUrl(streamKey);
-    const currentRtmpUrl = getRTMPUrl(streamKey);
-    
-    res.json({
-      id: mostRecent.id,
-      title: data.title || 'Live en cours',
-      description: data.description || '',
-      pastor: data.pastor || 'MyKOG',
-      thumbnailUrl: data.thumbnailUrl || '',
-      streamUrl: currentHlsUrl, // Toujours utiliser l'IP actuelle
-      streamKey: streamKey,
-      rtmpUrl: currentRtmpUrl, // Toujours utiliser l'IP actuelle
-      hlsUrl: currentHlsUrl, // Toujours utiliser l'IP actuelle
-      status: data.status || 'live',
-      viewerCount: data.viewerCount || 0,
-      peakViewerCount: data.peakViewerCount || 0,
-      scheduledAt: data.scheduledAt?.toDate() || null,
-      startedAt: data.startedAt?.toDate() || null,
-      endedAt: data.endedAt?.toDate() || null,
-      tags: data.tags || [],
-      createdAt: data.createdAt?.toDate() || new Date(),
-      updatedAt: data.updatedAt?.toDate() || new Date(),
-    });
-  } catch (error) {
-    console.error('Erreur lors de la récupération du live actif:', error);
-    res.status(500).json({
-      error: 'Erreur lors de la récupération du live actif',
-      details: error.message
-    });
-  }
-};
-
-// Obtenir les infos serveur (IP + URLs RTMP/HLS)
+// Obtenir les infos serveur (URL LiveKit)
 const getServerInfo = (req, res) => {
   try {
-    const ip = getServerIP();
-    const streamKey = STREAM_CONFIG.DEFAULT_STREAM_KEY;
-
     res.json({
-      serverIP: ip,
-      rtmpUrl: getRTMPUrlWithIP(ip, streamKey),
-      hlsUrl: getHLSUrlWithIP(ip, streamKey),
-      streamKey,
-      rtmpPort: STREAM_CONFIG.RTMP_PORT,
-      hlsPort: STREAM_CONFIG.HLS_PORT,
-      hlsPath: STREAM_CONFIG.HLS_PATH,
+      livekitUrl: livekit.getLiveKitUrl(),
+      whipUrl: 'http://185.98.128.123:3001/whip',
+      defaultStreamKey: STREAM_CONFIG.DEFAULT_STREAM_KEY,
     });
   } catch (error) {
-    console.error('Erreur lors de la récupération des infos serveur:', error);
+    console.error('Erreur infos serveur:', error);
     res.status(500).json({
       error: 'Erreur lors de la récupération des informations serveur',
       details: error.message,
@@ -602,256 +536,45 @@ const getServerInfo = (req, res) => {
 const deleteLiveStream = async (req, res) => {
   try {
     const { id } = req.params;
+    const ref = db.collection('liveStreams').doc(id);
+    const doc = await ref.get();
 
-    const liveStreamRef = db.collection('liveStreams').doc(id);
-    const liveStreamDoc = await liveStreamRef.get();
-
-    if (!liveStreamDoc.exists) {
-      return res.status(404).json({
-        error: 'Live stream non trouvé'
-      });
+    if (!doc.exists) {
+      return res.status(404).json({ error: 'Live stream non trouvé' });
     }
 
-    await liveStreamRef.delete();
+    const data = doc.data();
+    const roomName = data.roomName || livekit.generateRoomName(data.streamKey);
+    if (data.ingressId) await livekit.deleteIngress(data.ingressId);
+    await livekit.deleteRoom(roomName);
+    await ref.delete();
 
-    res.json({
-      id: id,
-      message: 'Live stream supprimé avec succès'
-    });
-
+    res.json({ id, message: 'Live stream supprimé avec succès' });
   } catch (error) {
-    console.error('Erreur lors de la suppression:', error);
-    res.status(500).json({
-      error: 'Erreur lors de la suppression du live stream'
-    });
+    console.error('Erreur suppression live:', error);
+    res.status(500).json({ error: 'Erreur lors de la suppression du live stream' });
   }
 };
 
-// ===== FONCTIONS LIVEKIT =====
-
-// Créer une room LiveKit
-const createLiveKitRoom = async (req, res) => {
+// Supprimer tous les live streams
+const deleteAllLiveStreams = async (req, res) => {
   try {
-    const { roomName, maxParticipants = 1000 } = req.body;
+    const snapshot = await db.collection('liveStreams').get();
+    const ids = [];
 
-    console.log('createLiveKitRoom - roomName:', roomName, 'maxParticipants:', maxParticipants);
-
-    if (!roomName) {
-      return res.status(400).json({
-        error: 'roomName est requis'
-      });
+    for (const doc of snapshot.docs) {
+      const data = doc.data();
+      const roomName = data.roomName || livekit.generateRoomName(data.streamKey);
+      if (data.ingressId) await livekit.deleteIngress(data.ingressId);
+      await livekit.deleteRoom(roomName);
+      await doc.ref.delete();
+      ids.push(doc.id);
     }
 
-    console.log('Appel de getLiveKitService()...');
-    const service = getLiveKitService();
-    console.log('Service obtenu, appel de createRoom...');
-    
-    const room = await service.createRoom(roomName, {
-      maxParticipants
-    });
-    
-    console.log('Room créée:', room);
-
-    res.status(201).json({
-      message: 'Room LiveKit créée avec succès',
-      room: {
-        name: room.name,
-        sid: room.sid,
-        maxParticipants: room.maxParticipants,
-        participantCount: room.participantCount,
-        createdAt: room.createdAt
-      }
-    });
+    res.json({ message: `${ids.length} live stream(s) supprimé(s)`, ids });
   } catch (error) {
-    console.error('Erreur création room LiveKit:', error);
-    res.status(500).json({
-      error: 'Erreur lors de la création de la room LiveKit',
-      details: error.message
-    });
-  }
-};
-
-// Générer un token LiveKit
-const getLiveKitToken = async (req, res) => {
-  try {
-    const { roomName, participantName, isHost = false } = req.body;
-
-    if (!roomName || !participantName) {
-      return res.status(400).json({
-        error: 'roomName et participantName sont requis'
-      });
-    }
-
-    const token = await getLiveKitService().generateParticipantToken(
-      roomName,
-      participantName,
-      isHost
-    );
-
-    res.json({
-      token,
-      roomName,
-      participantName,
-      isHost,
-      liveKitUrl: process.env.LIVEKIT_URL
-    });
-  } catch (error) {
-    console.error('Erreur génération token LiveKit:', error);
-    res.status(500).json({
-      error: 'Erreur lors de la génération du token LiveKit',
-      details: error.message
-    });
-  }
-};
-
-// Lister les rooms LiveKit
-const listLiveKitRooms = async (req, res) => {
-  try {
-    const rooms = await getLiveKitService().listRooms();
-    
-    res.json({
-      rooms: rooms.map(room => ({
-        name: room.name,
-        sid: room.sid,
-        maxParticipants: room.maxParticipants,
-        participantCount: room.participantCount,
-        createdAt: room.createdAt
-      }))
-    });
-  } catch (error) {
-    console.error('Erreur listage rooms LiveKit:', error);
-    res.status(500).json({
-      error: 'Erreur lors du listage des rooms LiveKit',
-      details: error.message
-    });
-  }
-};
-
-// Supprimer une room LiveKit
-const deleteLiveKitRoom = async (req, res) => {
-  try {
-    const { roomName } = req.params;
-
-    await getLiveKitService().deleteRoom(roomName);
-
-    res.json({
-      message: `Room ${roomName} supprimée avec succès`
-    });
-  } catch (error) {
-    console.error('Erreur suppression room LiveKit:', error);
-    res.status(500).json({
-      error: 'Erreur lors de la suppression de la room LiveKit',
-      details: error.message
-    });
-  }
-};
-
-// Démarrer un enregistrement LiveKit
-const startLiveKitRecording = async (req, res) => {
-  try {
-    const { roomName, outputUrl } = req.body;
-
-    if (!roomName) {
-      return res.status(400).json({
-        error: 'roomName est requis'
-      });
-    }
-
-    const egress = await getLiveKitService().startRecording(roomName, outputUrl);
-
-    res.status(201).json({
-      message: 'Enregistrement démarré avec succès',
-      egress: {
-        egressId: egress.egressId,
-        roomName: egress.roomName,
-        status: egress.status,
-        startedAt: egress.startedAt
-      }
-    });
-  } catch (error) {
-    console.error('Erreur démarrage enregistrement LiveKit:', error);
-    res.status(500).json({
-      error: 'Erreur lors du démarrage de l\'enregistrement LiveKit',
-      details: error.message
-    });
-  }
-};
-
-// Configuration OBS complète pour LiveKit
-const getLiveKitObsConfig = async (req, res) => {
-  try {
-    const { roomName = 'mykog-live', hostName = 'obs-broadcaster' } = req.body;
-
-    // Déterminer l'IP locale
-    const { getServerIP } = require('../utils/stream_helper');
-    const serverIP = getServerIP();
-
-    // Créer la room si elle n'existe pas encore
-    const service = getLiveKitService();
-    try {
-      await service.createRoom(roomName, { maxParticipants: 500 });
-    } catch (e) {
-      // Room probablement déjà existante, continuer
-    }
-
-    // Générer le token host pour OBS (WHIP)
-    const obsToken = await service.generateParticipantToken(roomName, hostName, true);
-
-    // Générer un token viewer pour le frontend Flutter
-    const viewerToken = await service.generateParticipantToken(roomName, 'flutter-viewer', false);
-
-    res.json({
-      livekit: {
-        serverUrl: `ws://${serverIP}:7880`,
-        apiKey: process.env.LIVEKIT_API_KEY,
-        roomName,
-      },
-      obs: {
-        // Pour OBS 30+ (WHIP)
-        whip: {
-          url: `http://${serverIP}:7880/rtc`,
-          bearerToken: obsToken,
-          instructions: 'OBS > Paramètres > Flux > Service: WHIP, coller URL et Bearer Token',
-        },
-        // Pour OBS classique (RTMP via nginx)
-        rtmp: {
-          url: `rtmp://${serverIP}:1935/live`,
-          streamKey: roomName,
-          instructions: 'OBS > Paramètres > Flux > Service: Personnalisé, coller URL et Stream Key',
-        },
-      },
-      flutter: {
-        viewerToken,
-        serverUrl: `ws://${serverIP}:7880`,
-        roomName,
-        instructions: 'Utiliser viewerToken + serverUrl dans le widget LiveKit Flutter',
-      },
-    });
-  } catch (error) {
-    console.error('Erreur config OBS LiveKit:', error);
-    res.status(500).json({
-      error: 'Erreur lors de la génération de la config OBS',
-      details: error.message,
-    });
-  }
-};
-
-// Arrêter un enregistrement LiveKit
-const stopLiveKitRecording = async (req, res) => {
-  try {
-    const { egressId } = req.params;
-
-    await getLiveKitService().stopRecording(egressId);
-
-    res.json({
-      message: `Enregistrement ${egressId} arrêté avec succès`
-    });
-  } catch (error) {
-    console.error('Erreur arrêt enregistrement LiveKit:', error);
-    res.status(500).json({
-      error: 'Erreur lors de l\'arrêt de l\'enregistrement LiveKit',
-      details: error.message
-    });
+    console.error('Erreur suppression tous les lives:', error);
+    res.status(500).json({ error: 'Erreur lors de la suppression des live streams' });
   }
 };
 
@@ -860,6 +583,8 @@ module.exports = {
   getAllLiveStreams,
   getLiveStreamById,
   getActiveLive,
+  getViewerToken,
+  getPublisherToken,
   getServerInfo,
   updateLiveStream,
   updateLiveStreamStatus,
@@ -867,13 +592,5 @@ module.exports = {
   decrementViewerCount,
   getViewerCount,
   deleteLiveStream,
-  // LiveKit
-  createLiveKitRoom,
-  getLiveKitToken,
-  listLiveKitRooms,
-  deleteLiveKitRoom,
-  startLiveKitRecording,
-  stopLiveKitRecording,
-  getLiveKitObsConfig,
+  deleteAllLiveStreams,
 };
-

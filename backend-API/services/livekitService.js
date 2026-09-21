@@ -1,183 +1,184 @@
-// Charger les variables d'environnement
-require('dotenv').config();
+const { AccessToken, RoomServiceClient, IngressClient, IngressInput } = require('livekit-server-sdk');
 
-const { RoomServiceClient, EgressClient } = require('livekit-server-sdk');
+const LIVEKIT_URL = process.env.LIVEKIT_URL || 'wss://vps123057.serveur-vps.net';
+const API_KEY = process.env.LIVEKIT_API_KEY;
+const API_SECRET = process.env.LIVEKIT_API_SECRET;
 
-class LiveKitService {
-  constructor() {
-    // Vérifier que les variables d'environnement sont définies
-    if (!process.env.LIVEKIT_URL || !process.env.LIVEKIT_API_KEY || !process.env.LIVEKIT_API_SECRET) {
-      throw new Error('Variables LiveKit manquantes: LIVEKIT_URL, LIVEKIT_API_KEY, LIVEKIT_API_SECRET');
+let roomService = null;
+let ingressClient = null;
+
+function getRoomService() {
+  if (!roomService) {
+    if (!API_KEY || !API_SECRET) {
+      throw new Error('LiveKit non configuré (LIVEKIT_API_KEY / LIVEKIT_API_SECRET manquants)');
     }
-
-    console.log('Initialisation LiveKit avec URL:', process.env.LIVEKIT_URL);
-    
-    // Initialiser le client LiveKit avec vos paramètres
-    this.client = new RoomServiceClient(
-      process.env.LIVEKIT_URL,
-      process.env.LIVEKIT_API_KEY,
-      process.env.LIVEKIT_API_SECRET
-    );
-    
-    this.egressClient = new EgressClient(
-      process.env.LIVEKIT_URL,
-      process.env.LIVEKIT_API_KEY,
-      process.env.LIVEKIT_API_SECRET
-    );
+    const host = LIVEKIT_URL.replace(/^wss?:\/\//, '').replace(/^https?:\/\//, '');
+    roomService = new RoomServiceClient(`https://${host}`, API_KEY, API_SECRET);
   }
+  return roomService;
+}
 
-  /**
-   * Créer une nouvelle room pour le streaming
-   */
-  async createRoom(roomName, options = {}) {
-    try {
-      const room = await this.client.createRoom({
-        name: roomName,
-        emptyTimeout: 300, // 5 minutes avant suppression si vide
-        maxParticipants: 1000,
-        ...options
-      });
-      
-      console.log(`Room créée: ${room.name}`);
-      return room;
-    } catch (error) {
-      console.error('Erreur création room:', error);
-      throw error;
+function getIngressClient() {
+  if (!ingressClient) {
+    if (!API_KEY || !API_SECRET) {
+      throw new Error('LiveKit non configuré (LIVEKIT_API_KEY / LIVEKIT_API_SECRET manquants)');
     }
+    const host = LIVEKIT_URL.replace(/^wss?:\/\//, '').replace(/^https?:\/\//, '');
+    ingressClient = new IngressClient(`https://${host}`, API_KEY, API_SECRET);
   }
+  return ingressClient;
+}
 
-  /**
-   * Générer un token pour un participant
-   */
-  async generateParticipantToken(roomName, participantName, isHost = false) {
-    try {
-      const { AccessToken } = require('livekit-server-sdk');
-      
-      const at = new AccessToken(
-        process.env.LIVEKIT_API_KEY,
-        process.env.LIVEKIT_API_SECRET,
-        {
-          identity: participantName,
-          name: participantName,
-          ttl: '24h', // Token valide 24h
-        }
-      );
+function getLiveKitUrl() {
+  return LIVEKIT_URL;
+}
 
-      // Permissions selon le rôle
-      if (isHost) {
-        at.addGrant({
-          roomJoin: true,
-          room: roomName,
-          canPublish: true,
-          canSubscribe: true,
-          canPublishData: true,
-          canManage: true,
-        });
-      } else {
-        at.addGrant({
-          roomJoin: true,
-          room: roomName,
-          canPublish: false, // Les viewers ne peuvent pas publier
-          canSubscribe: true,
-          canPublishData: true, // Peuvent envoyer des messages
-        });
-      }
+function generateRoomName(streamKey) {
+  return streamKey || 'mykog_live';
+}
 
-      const token = at.toJwt();
-      console.log(`Token généré pour ${participantName} (${isHost ? 'host' : 'viewer'})`);
-      return token;
-    } catch (error) {
-      console.error('Erreur génération token:', error);
-      throw error;
-    }
+async function createPublisherToken(roomName, identity) {
+  if (!API_KEY || !API_SECRET) {
+    throw new Error('LiveKit non configuré');
   }
+  const at = new AccessToken(API_KEY, API_SECRET, {
+    identity: identity || 'broadcaster',
+    ttl: 3600,
+  });
+  at.addGrant({
+    roomJoin: true,
+    room: roomName,
+    canPublish: true,
+    canSubscribe: false,
+    canPublishData: true,
+  });
+  return at.toJwt();
+}
 
-  /**
-   * Lister toutes les rooms actives
-   */
-  async listRooms() {
-    try {
-      const rooms = await this.client.listRooms();
-      return rooms;
-    } catch (error) {
-      console.error('Erreur listage rooms:', error);
-      throw error;
-    }
+async function createViewerToken(roomName, identity) {
+  if (!API_KEY || !API_SECRET) {
+    throw new Error('LiveKit non configuré');
   }
+  const at = new AccessToken(API_KEY, API_SECRET, {
+    identity: identity || `viewer-${Date.now()}`,
+    ttl: 7200,
+  });
+  at.addGrant({
+    roomJoin: true,
+    room: roomName,
+    canPublish: false,
+    canSubscribe: true,
+    canPublishData: false,
+  });
+  return at.toJwt();
+}
 
-  /**
-   * Supprimer une room
-   */
-  async deleteRoom(roomName) {
-    try {
-      await this.client.deleteRoom(roomName);
-      console.log(`Room supprimée: ${roomName}`);
-    } catch (error) {
-      console.error('Erreur suppression room:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Démarrer un enregistrement (egress)
-   */
-  async startRecording(roomName, outputUrl = null) {
-    try {
-      const egress = await this.egressClient.startRoomCompositeEgress({
-        roomName: roomName,
-        layout: 'grid', // ou 'speaker' pour vue principale
-        output: {
-          urls: outputUrl ? [outputUrl] : undefined,
-          fileType: 'mp4',
-        }
-      });
-      
-      console.log(`Enregistrement démarré pour room: ${roomName}`);
-      return egress;
-    } catch (error) {
-      console.error('Erreur démarrage enregistrement:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Arrêter un enregistrement
-   */
-  async stopRecording(egressId) {
-    try {
-      await this.egressClient.stopEgress(egressId);
-      console.log(`Enregistrement arrêté: ${egressId}`);
-    } catch (error) {
-      console.error('Erreur arrêt enregistrement:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Obtenir les participants d'une room
-   */
-  async getParticipants(roomName) {
-    try {
-      const participants = await this.client.listParticipants(roomName);
-      return participants;
-    } catch (error) {
-      console.error('Erreur récupération participants:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Éjecter un participant
-   */
-  async removeParticipant(roomName, participantIdentity) {
-    try {
-      await this.client.removeParticipant(roomName, participantIdentity);
-      console.log(`Participant éjecté: ${participantIdentity}`);
-    } catch (error) {
-      console.error('Erreur éjection participant:', error);
-      throw error;
-    }
+async function listRooms() {
+  try {
+    return await getRoomService().listRooms();
+  } catch (err) {
+    console.error('Erreur listRooms LiveKit:', err.message);
+    return [];
   }
 }
 
-module.exports = LiveKitService;
+async function getRoomInfo(roomName) {
+  try {
+    const rooms = await getRoomService().listRooms([roomName]);
+    return rooms[0] || null;
+  } catch (err) {
+    console.error('Erreur getRoomInfo LiveKit:', err.message);
+    return null;
+  }
+}
+
+async function deleteRoom(roomName) {
+  try {
+    await getRoomService().deleteRoom(roomName);
+    return true;
+  } catch (err) {
+    console.error('Erreur deleteRoom LiveKit:', err.message);
+    return false;
+  }
+}
+
+async function getParticipantCount(roomName) {
+  const room = await getRoomInfo(roomName);
+  return room ? room.numParticipants : 0;
+}
+
+async function createWhipIngress(roomName, name, identity) {
+  try {
+    const ingress = await getIngressClient().createIngress(IngressInput.WHIP_INPUT, {
+      name: name || 'mykog-whip',
+      roomName,
+      participantIdentity: identity || 'broadcaster',
+      participantName: 'Broadcaster',
+      enableTranscoding: false,
+    });
+    return {
+      ingressId: ingress.ingressId,
+      url: ingress.url,
+      streamKey: ingress.streamKey,
+      state: ingress.state,
+    };
+  } catch (err) {
+    console.error('Erreur createWhipIngress:', err.message);
+    throw err;
+  }
+}
+
+async function createRtmpIngress(roomName, name, identity) {
+  try {
+    const ingress = await getIngressClient().createIngress(IngressInput.RTMP_INPUT, {
+      name: name || 'mykog-rtmp',
+      roomName,
+      participantIdentity: identity || 'broadcaster',
+      participantName: 'Broadcaster',
+      enableTranscoding: true,
+    });
+    return {
+      ingressId: ingress.ingressId,
+      url: ingress.url,
+      streamKey: ingress.streamKey,
+      state: ingress.state,
+    };
+  } catch (err) {
+    console.error('Erreur createRtmpIngress:', err.message);
+    throw err;
+  }
+}
+
+async function listIngress(roomName) {
+  try {
+    return await getIngressClient().listIngress({ roomName });
+  } catch (err) {
+    console.error('Erreur listIngress:', err.message);
+    return [];
+  }
+}
+
+async function deleteIngress(ingressId) {
+  try {
+    await getIngressClient().deleteIngress(ingressId);
+    return true;
+  } catch (err) {
+    console.error('Erreur deleteIngress:', err.message);
+    return false;
+  }
+}
+
+module.exports = {
+  getLiveKitUrl,
+  generateRoomName,
+  createPublisherToken,
+  createViewerToken,
+  listRooms,
+  getRoomInfo,
+  deleteRoom,
+  getParticipantCount,
+  createWhipIngress,
+  createRtmpIngress,
+  listIngress,
+  deleteIngress,
+};

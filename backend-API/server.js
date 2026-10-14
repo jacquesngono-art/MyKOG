@@ -2,9 +2,6 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
-const path = require("path");
-const Veilleur = require("./veilleur");
-const { startStreamingServer } = require("./services/streamingService");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -21,6 +18,7 @@ app.use(express.static('public'));
 app.use('/hls', express.static(path.join(__dirname, 'hls_output')));
 
 // --- ROUTES ---
+app.use("/api/auth", require("./routes/auth"));
 app.use("/api/enseignements", require("./routes/enseignements"));
 app.use("/api/annonces", require("./routes/annonces"));
 app.use("/api/lives", require("./routes/lives"));
@@ -28,7 +26,9 @@ app.use("/api/calendar", require("./routes/calendar"));
 app.use("/api/users", require("./routes/users"));
 app.use("/api/notifications", require("./routes/notifications"));
 app.use("/api/text-resumes", require("./routes/textResumes"));
-app.use("/api/stream", require("./routes/stream"));
+app.use("/api/upload", require("./routes/upload"));
+app.use("/api/files", require("./routes/files"));
+app.use("/api/storage", require("./routes/storage"));
 
 // --- ROUTE DE TEST ---
 app.get("/", (req, res) => {
@@ -54,18 +54,8 @@ app.listen(PORT, () => {
   console.log(`🚀 Serveur lancé sur le port ${PORT}`);
   console.log("👉 Ouvre ton navigateur et teste /api/enseignements ou /api/lives");
 
-  // Démarrer le serveur de streaming RTMP/HLS (port 1935 / HTTP 8000)
-  try {
-    startStreamingServer();
-  } catch (error) {
-    console.error("❌ Erreur démarrage serveur RTMP:", error.message);
-  }
-
-  // Démarrer le veilleur uniquement en production
   if (process.env.NODE_ENV === 'production') {
-    console.log("🌐 Serveur déployé sur Render");
-    const veilleur = new Veilleur(14); // Ping toutes les 14 minutes
-    veilleur.start();
+    console.log("🌐 Serveur déployé en production (VPS)");
   } else {
     console.log("📱 Pour téléphone : utilise l'IP du PC + :3000");
   }

@@ -26,7 +26,9 @@ const ProfilePage = {
     el.innerHTML = `
       <div class="profile-header">
         <div class="profile-avatar" onclick="ProfilePage.showEditProfile()">
-          <span class="avatar-letter">${firstLetter}</span>
+          ${user.profileImageUrl
+            ? `<img src="${user.profileImageUrl}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.outerHTML='<span class=avatar-letter>${firstLetter}</span>'">`
+            : `<span class="avatar-letter">${firstLetter}</span>`}
           <div class="avatar-edit">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
           </div>
@@ -225,7 +227,7 @@ const ProfilePage = {
       <div class="modal">
         <h3>À propos de MyKOG</h3>
         <p style="color:var(--text-secondary);line-height:1.6;margin-bottom:16px;">
-          MyKOG est une application de streaming audio spirituel qui combine le design élégant de Spotify avec l'esthétique raffinée d'Apple Music, offrant une expérience immersive pour les contenus basés sur la foi.
+          MyKOG est une application de streaming qui permet aux utilisateurs d'accéder à une large bibliothèque d'enseignements du ministère KINGDOM OF GLORY MINISTRIES.
         </p>
         <p style="color:var(--text-tertiary);margin-bottom:16px;">Version 1.0.0 — Desktop</p>
         <div class="modal-actions">

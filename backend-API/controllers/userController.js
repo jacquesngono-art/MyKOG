@@ -1,5 +1,44 @@
 const { db } = require('../config/firebase');
 
+// Connexion d'un utilisateur existant par nom + numéro de téléphone
+// (le téléphone est stocké dans le champ email)
+const loginUser = async (req, res) => {
+  try {
+    const { phone, name } = req.body;
+    if (!phone || !phone.trim()) {
+      return res.status(400).json({ error: 'Numéro de téléphone requis' });
+    }
+    if (!name || !name.trim()) {
+      return res.status(400).json({ error: 'Nom requis' });
+    }
+    const snap = await db.collection('users')
+      .where('email', '==', phone.trim())
+      .limit(1)
+      .get();
+    if (snap.empty) {
+      return res.status(404).json({ error: 'Aucun compte associé à ce numéro' });
+    }
+    const doc = snap.docs[0];
+    const data = doc.data();
+
+    // Vérifier que le nom correspond (insensible à la casse / espaces)
+    const norm = (s) => (s || '').trim().toLowerCase().replace(/\s+/g, ' ');
+    if (norm(data.name) !== norm(name)) {
+      return res.status(401).json({ error: 'Nom ou numéro incorrect' });
+    }
+
+    res.json({
+      id: doc.id,
+      ...data,
+      createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
+      updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
+    });
+  } catch (error) {
+    console.error('Erreur login utilisateur:', error);
+    res.status(500).json({ error: 'Erreur lors de la connexion', details: error.message });
+  }
+};
+
 // Créer ou mettre à jour un utilisateur
 const createOrUpdateUser = async (req, res) => {
   try {
@@ -256,6 +295,7 @@ const getUserStats = async (req, res) => {
 
 module.exports = {
   createOrUpdateUser,
+  loginUser,
   getAllUsers,
   getUserById,
   updateUser,

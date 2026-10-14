@@ -1,73 +1,106 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+/// Palette historique (accents partagés entre les thèmes + anciens noms
+/// conservés pour compatibilité).
 class MyKOGColors {
-  // Primary Dark (Spotify inspired)
+  // Gold Accent (Apple Music inspired) - identique en clair et en sombre
+  static const accent = Color(0xFFd4af37);
+  static const accentLight = Color(0xFFe6c758);
+
+  // Success (Spotify green)
+  static const success = Color(0xFF1db954);
+
+  // Error
+  static const error = Color(0xFFe22134);
+
+  // Glass Effect (fond sombre translucide)
+  static const glassEffect = Color(0x20FFFFFF);
+
+  // ---- Anciens noms (palette sombre) conservés pour compatibilité ----
   static const primary = Color(0xFF000000);
   static const primaryDark = Color(0xFF000000);
   static const secondary = Color(0xFF1a1a1a);
   static const surface = Color(0xFF121212);
-  
-  // Gold Accent (Apple Music inspired)  
-  static const accent = Color(0xFFd4af37);
-  static const accentLight = Color(0xFFe6c758);
-  
-  // Text Colors
   static const textPrimary = Color(0xFFffffff);
   static const textSecondary = Color(0xFFb3b3b3);
   static const textTertiary = Color(0xFF808080);
-  
-  // Success (Spotify green)
-  static const success = Color(0xFF1db954);
-  
-  // Glass Effect
-  static const glassEffect = Color(0x20FFFFFF);
-  
-  // Warning (amber/orange)
-  static const warning = Color(0xFFf59e0b);
-
-  // Error
-  static const error = Color(0xFFe22134);
 }
 
-class LightModeColors {
-  static const lightPrimary = Color(0xFF000000);
-  static const lightOnPrimary = Color(0xFFFFFFFF);
-  static const lightPrimaryContainer = Color(0xFFf5f5f5);
-  static const lightOnPrimaryContainer = Color(0xFF000000);
-  static const lightSecondary = Color(0xFF1a1a1a);
-  static const lightOnSecondary = Color(0xFFFFFFFF);
-  static const lightTertiary = Color(0xFFd4af37);
-  static const lightOnTertiary = Color(0xFF000000);
-  static const lightError = Color(0xFFe22134);
-  static const lightOnError = Color(0xFFFFFFFF);
-  static const lightErrorContainer = Color(0xFFffebee);
-  static const lightOnErrorContainer = Color(0xFFe22134);
-  static const lightInversePrimary = Color(0xFFd4af37);
-  static const lightShadow = Color(0xFF000000);
-  static const lightSurface = Color(0xFFffffff);
-  static const lightOnSurface = Color(0xFF000000);
-  static const lightAppBarBackground = Color(0xFFffffff);
+/// Couleurs sémantiques qui s'adaptent automatiquement au thème clair/sombre.
+///
+/// Utilisation : `context.appColors.textPrimary`
+class AppColors {
+  final Color background; // fond principal (scaffold, barres)
+  final Color surface; // cartes / surfaces élevées
+  final Color surfaceVariant; // panneaux secondaires, champs
+  final Color primary; // contraste fort (badges, éléments marqués)
+  final Color textPrimary;
+  final Color textSecondary;
+  final Color textTertiary;
+  final Color divider;
+  final Color border;
+  final Color accent;
+  final Color success;
+  final Color error;
+  final Color glass;
+
+  const AppColors({
+    required this.background,
+    required this.surface,
+    required this.surfaceVariant,
+    required this.primary,
+    required this.textPrimary,
+    required this.textSecondary,
+    required this.textTertiary,
+    required this.divider,
+    required this.border,
+    required this.accent,
+    required this.success,
+    required this.error,
+    required this.glass,
+  });
+
+  static const light = AppColors(
+    background: Color(0xFFFFFFFF),
+    surface: Color(0xFFFFFFFF),
+    surfaceVariant: Color(0xFFF2F2F4),
+    primary: Color(0xFF3B82F6),
+    textPrimary: Color(0xFF111111),
+    textSecondary: Color(0xFF5A5A5A),
+    textTertiary: Color(0xFF8A8A8A),
+    divider: Color(0xFFE5E5E7),
+    border: Color(0xFFE0E0E2),
+    accent: MyKOGColors.accent,
+    success: MyKOGColors.success,
+    error: Color(0xFFE22134),
+    glass: Color(0x14FFFFFF),
+  );
+
+  static const dark = AppColors(
+    background: Color(0xFF0A1424),
+    surface: Color(0xFF0F1E38),
+    surfaceVariant: Color(0xFF15294A),
+    primary: Color(0xFF3B82F6),
+    textPrimary: Color(0xFFF2F6FF),
+    textSecondary: Color(0xFFB3C2E0),
+    textTertiary: Color(0xFF8091B3),
+    divider: Color(0xFF1E3252),
+    border: Color(0xFF23395E),
+    accent: MyKOGColors.accent,
+    success: MyKOGColors.success,
+    error: Color(0xFFFF5252),
+    glass: MyKOGColors.glassEffect,
+  );
 }
 
-class DarkModeColors {
-  static const darkPrimary = Color(0xFFd4af37);
-  static const darkOnPrimary = Color(0xFF000000);
-  static const darkPrimaryContainer = Color(0xFF1a1a1a);
-  static const darkOnPrimaryContainer = Color(0xFFffffff);
-  static const darkSecondary = Color(0xFF1a1a1a);
-  static const darkOnSecondary = Color(0xFFffffff);
-  static const darkTertiary = Color(0xFFd4af37);
-  static const darkOnTertiary = Color(0xFF000000);
-  static const darkError = Color(0xFFff5252);
-  static const darkOnError = Color(0xFF000000);
-  static const darkErrorContainer = Color(0xFF1a1a1a);
-  static const darkOnErrorContainer = Color(0xFFff5252);
-  static const darkInversePrimary = Color(0xFF000000);
-  static const darkShadow = Color(0xFF000000);
-  static const darkSurface = Color(0xFF121212);
-  static const darkOnSurface = Color(0xFFffffff);
-  static const darkAppBarBackground = Color(0xFF000000);
+/// Accès rapide aux couleurs dépendantes du thème depuis n'importe quel widget.
+extension AppColorsExtension on BuildContext {
+  AppColors get appColors => Theme.of(this).brightness == Brightness.dark
+      ? AppColors.dark
+      : AppColors.light;
+
+  bool get isDarkMode => Theme.of(this).brightness == Brightness.dark;
 }
 
 class FontSizes {
@@ -88,219 +121,143 @@ class FontSizes {
   static const double bodySmall = 12.0;
 }
 
-ThemeData get lightTheme => ThemeData(
-  useMaterial3: true,
-  colorScheme: ColorScheme.light(
-    primary: LightModeColors.lightPrimary,
-    onPrimary: LightModeColors.lightOnPrimary,
-    primaryContainer: LightModeColors.lightPrimaryContainer,
-    onPrimaryContainer: LightModeColors.lightOnPrimaryContainer,
-    secondary: LightModeColors.lightSecondary,
-    onSecondary: LightModeColors.lightOnSecondary,
-    tertiary: LightModeColors.lightTertiary,
-    onTertiary: LightModeColors.lightOnTertiary,
-    error: LightModeColors.lightError,
-    onError: LightModeColors.lightOnError,
-    errorContainer: LightModeColors.lightErrorContainer,
-    onErrorContainer: LightModeColors.lightOnErrorContainer,
-    inversePrimary: LightModeColors.lightInversePrimary,
-    shadow: LightModeColors.lightShadow,
-    surface: LightModeColors.lightSurface,
-    onSurface: LightModeColors.lightOnSurface,
-  ),
-  brightness: Brightness.light,
-  appBarTheme: AppBarTheme(
-    backgroundColor: LightModeColors.lightAppBarBackground,
-    foregroundColor: LightModeColors.lightOnPrimaryContainer,
-    elevation: 0,
-  ),
-  textTheme: TextTheme(
+TextTheme _buildTextTheme(AppColors c) {
+  return TextTheme(
     displayLarge: GoogleFonts.poppins(
       fontSize: FontSizes.displayLarge,
       fontWeight: FontWeight.bold,
-      color: LightModeColors.lightOnSurface,
+      color: c.textPrimary,
     ),
     displayMedium: GoogleFonts.poppins(
       fontSize: FontSizes.displayMedium,
       fontWeight: FontWeight.bold,
-      color: LightModeColors.lightOnSurface,
+      color: c.textPrimary,
     ),
     displaySmall: GoogleFonts.poppins(
       fontSize: FontSizes.displaySmall,
       fontWeight: FontWeight.w600,
-      color: LightModeColors.lightOnSurface,
+      color: c.textPrimary,
     ),
     headlineLarge: GoogleFonts.poppins(
       fontSize: FontSizes.headlineLarge,
       fontWeight: FontWeight.bold,
-      color: LightModeColors.lightOnSurface,
+      color: c.textPrimary,
     ),
     headlineMedium: GoogleFonts.poppins(
       fontSize: FontSizes.headlineMedium,
       fontWeight: FontWeight.w600,
-      color: LightModeColors.lightOnSurface,
+      color: c.textPrimary,
     ),
     headlineSmall: GoogleFonts.poppins(
       fontSize: FontSizes.headlineSmall,
       fontWeight: FontWeight.bold,
-      color: LightModeColors.lightOnSurface,
+      color: c.textPrimary,
     ),
     titleLarge: GoogleFonts.inter(
       fontSize: FontSizes.titleLarge,
       fontWeight: FontWeight.w600,
-      color: LightModeColors.lightOnSurface,
+      color: c.textPrimary,
     ),
     titleMedium: GoogleFonts.inter(
       fontSize: FontSizes.titleMedium,
       fontWeight: FontWeight.w500,
-      color: LightModeColors.lightOnSurface,
+      color: c.textPrimary,
     ),
     titleSmall: GoogleFonts.inter(
       fontSize: FontSizes.titleSmall,
       fontWeight: FontWeight.w500,
-      color: LightModeColors.lightOnSurface,
+      color: c.textPrimary,
     ),
     labelLarge: GoogleFonts.inter(
       fontSize: FontSizes.labelLarge,
       fontWeight: FontWeight.w500,
-      color: LightModeColors.lightTertiary,
+      color: c.accent,
     ),
     labelMedium: GoogleFonts.inter(
       fontSize: FontSizes.labelMedium,
       fontWeight: FontWeight.w500,
-      color: LightModeColors.lightTertiary,
+      color: c.accent,
     ),
     labelSmall: GoogleFonts.inter(
       fontSize: FontSizes.labelSmall,
       fontWeight: FontWeight.w500,
-      color: LightModeColors.lightTertiary,
+      color: c.accent,
     ),
     bodyLarge: GoogleFonts.inter(
       fontSize: FontSizes.bodyLarge,
       fontWeight: FontWeight.normal,
-      color: LightModeColors.lightOnSurface,
+      color: c.textPrimary,
     ),
     bodyMedium: GoogleFonts.inter(
       fontSize: FontSizes.bodyMedium,
       fontWeight: FontWeight.normal,
-      color: LightModeColors.lightOnSurface,
+      color: c.textPrimary,
     ),
     bodySmall: GoogleFonts.inter(
       fontSize: FontSizes.bodySmall,
       fontWeight: FontWeight.normal,
-      color: MyKOGColors.textSecondary,
+      color: c.textSecondary,
     ),
-  ),
-);
+  );
+}
 
-ThemeData get darkTheme => ThemeData(
-  useMaterial3: true,
-  colorScheme: ColorScheme.dark(
-    primary: DarkModeColors.darkPrimary,
-    onPrimary: DarkModeColors.darkOnPrimary,
-    primaryContainer: DarkModeColors.darkPrimaryContainer,
-    onPrimaryContainer: DarkModeColors.darkOnPrimaryContainer,
-    secondary: DarkModeColors.darkSecondary,
-    onSecondary: DarkModeColors.darkOnSecondary,
-    tertiary: DarkModeColors.darkTertiary,
-    onTertiary: DarkModeColors.darkOnTertiary,
-    error: DarkModeColors.darkError,
-    onError: DarkModeColors.darkOnError,
-    errorContainer: DarkModeColors.darkErrorContainer,
-    onErrorContainer: DarkModeColors.darkOnErrorContainer,
-    inversePrimary: DarkModeColors.darkInversePrimary,
-    shadow: DarkModeColors.darkShadow,
-    surface: DarkModeColors.darkSurface,
-    onSurface: DarkModeColors.darkOnSurface,
-  ),
-  brightness: Brightness.dark,
-  scaffoldBackgroundColor: MyKOGColors.primaryDark,
-  appBarTheme: AppBarTheme(
-    backgroundColor: DarkModeColors.darkAppBarBackground,
-    foregroundColor: DarkModeColors.darkOnPrimaryContainer,
-    elevation: 0,
-  ),
-  bottomNavigationBarTheme: BottomNavigationBarThemeData(
-    backgroundColor: MyKOGColors.primaryDark,
-    selectedItemColor: MyKOGColors.accent,
-    unselectedItemColor: MyKOGColors.textSecondary,
-    type: BottomNavigationBarType.fixed,
-  ),
-  textTheme: TextTheme(
-    displayLarge: GoogleFonts.poppins(
-      fontSize: FontSizes.displayLarge,
-      fontWeight: FontWeight.bold,
-      color: MyKOGColors.textPrimary,
+ThemeData _baseTheme(AppColors c, Brightness brightness) {
+  return ThemeData(
+    useMaterial3: true,
+    brightness: brightness,
+    scaffoldBackgroundColor: c.background,
+    canvasColor: c.background,
+    cardColor: c.surface,
+    dividerColor: c.divider,
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: c.primary,
+      brightness: brightness,
+    ).copyWith(
+      primary: c.primary,
+      onPrimary: const Color(0xFFFFFFFF),
+      secondary: c.accent,
+      onSecondary: const Color(0xFF000000),
+      surface: c.surface,
+      onSurface: c.textPrimary,
+      surfaceContainerHighest: c.surfaceVariant,
+      error: c.error,
+      outline: c.border,
     ),
-    displayMedium: GoogleFonts.poppins(
-      fontSize: FontSizes.displayMedium,
-      fontWeight: FontWeight.bold,
-      color: MyKOGColors.textPrimary,
+    appBarTheme: AppBarTheme(
+      backgroundColor: c.background,
+      foregroundColor: c.textPrimary,
+      elevation: 0,
+      centerTitle: false,
+      iconTheme: IconThemeData(color: c.textPrimary),
+      titleTextStyle: GoogleFonts.poppins(
+        fontSize: FontSizes.titleLarge,
+        fontWeight: FontWeight.w600,
+        color: c.textPrimary,
+      ),
     ),
-    displaySmall: GoogleFonts.poppins(
-      fontSize: FontSizes.displaySmall,
-      fontWeight: FontWeight.w600,
-      color: MyKOGColors.textPrimary,
+    bottomNavigationBarTheme: BottomNavigationBarThemeData(
+      backgroundColor: c.background,
+      selectedItemColor: c.accent,
+      unselectedItemColor: c.textSecondary,
+      type: BottomNavigationBarType.fixed,
     ),
-    headlineLarge: GoogleFonts.poppins(
-      fontSize: FontSizes.headlineLarge,
-      fontWeight: FontWeight.bold,
-      color: MyKOGColors.textPrimary,
+    iconTheme: IconThemeData(color: c.textPrimary),
+    dialogTheme: DialogThemeData(backgroundColor: c.surface),
+    popupMenuTheme: PopupMenuThemeData(color: c.surface),
+    cardTheme: CardThemeData(
+      color: c.surface,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: c.border.withValues(alpha: 0.6)),
+      ),
     ),
-    headlineMedium: GoogleFonts.poppins(
-      fontSize: FontSizes.headlineMedium,
-      fontWeight: FontWeight.w600,
-      color: MyKOGColors.textPrimary,
-    ),
-    headlineSmall: GoogleFonts.poppins(
-      fontSize: FontSizes.headlineSmall,
-      fontWeight: FontWeight.bold,
-      color: MyKOGColors.textPrimary,
-    ),
-    titleLarge: GoogleFonts.inter(
-      fontSize: FontSizes.titleLarge,
-      fontWeight: FontWeight.w600,
-      color: MyKOGColors.textPrimary,
-    ),
-    titleMedium: GoogleFonts.inter(
-      fontSize: FontSizes.titleMedium,
-      fontWeight: FontWeight.w500,
-      color: MyKOGColors.textPrimary,
-    ),
-    titleSmall: GoogleFonts.inter(
-      fontSize: FontSizes.titleSmall,
-      fontWeight: FontWeight.w500,
-      color: MyKOGColors.textPrimary,
-    ),
-    labelLarge: GoogleFonts.inter(
-      fontSize: FontSizes.labelLarge,
-      fontWeight: FontWeight.w500,
-      color: MyKOGColors.accent,
-    ),
-    labelMedium: GoogleFonts.inter(
-      fontSize: FontSizes.labelMedium,
-      fontWeight: FontWeight.w500,
-      color: MyKOGColors.accent,
-    ),
-    labelSmall: GoogleFonts.inter(
-      fontSize: FontSizes.labelSmall,
-      fontWeight: FontWeight.w500,
-      color: MyKOGColors.accent,
-    ),
-    bodyLarge: GoogleFonts.inter(
-      fontSize: FontSizes.bodyLarge,
-      fontWeight: FontWeight.normal,
-      color: MyKOGColors.textPrimary,
-    ),
-    bodyMedium: GoogleFonts.inter(
-      fontSize: FontSizes.bodyMedium,
-      fontWeight: FontWeight.normal,
-      color: MyKOGColors.textPrimary,
-    ),
-    bodySmall: GoogleFonts.inter(
-      fontSize: FontSizes.bodySmall,
-      fontWeight: FontWeight.normal,
-      color: MyKOGColors.textSecondary,
-    ),
-  ),
-);
+    dividerTheme: DividerThemeData(color: c.divider, thickness: 1),
+    listTileTheme: ListTileThemeData(iconColor: c.textSecondary),
+    textTheme: _buildTextTheme(c),
+  );
+}
+
+ThemeData get lightTheme => _baseTheme(AppColors.light, Brightness.light);
+
+ThemeData get darkTheme => _baseTheme(AppColors.dark, Brightness.dark);

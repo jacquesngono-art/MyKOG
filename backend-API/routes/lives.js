@@ -5,6 +5,8 @@ const {
   getAllLiveStreams,
   getLiveStreamById,
   getActiveLive,
+  getViewerToken,
+  getPublisherToken,
   getServerInfo,
   updateLiveStream,
   updateLiveStreamStatus,
@@ -13,7 +15,15 @@ const {
   getViewerCount,
   deleteLiveStream,
   deleteAllLiveStreams,
+  livekitWebhook,
 } = require('../controllers/liveController');
+const {
+  getComments,
+  createComment,
+  voteComment,
+  updateComment,
+  deleteComment,
+} = require('../controllers/commentController');
 
 /**
  * @openapi
@@ -72,6 +82,15 @@ router.get('/server-info', getServerInfo);
 
 /**
  * @openapi
+ * /api/lives/webhook:
+ *   post:
+ *     summary: Webhook LiveKit (fin d'ingress / room terminée → suppression du live)
+ *     tags: [Lives]
+ */
+router.post('/webhook', express.raw({ type: 'application/webhook+json' }), livekitWebhook);
+
+/**
+ * @openapi
  * /api/lives/{id}/viewers:
  *   get:
  *     summary: Obtenir le nombre de viewers
@@ -105,6 +124,85 @@ router.get('/:id/viewers', getViewerCount);
  *         description: Live trouvé
  */
 router.get('/:id', getLiveStreamById);
+
+/**
+ * @openapi
+ * /api/lives/{id}/token:
+ *   post:
+ *     summary: Obtenir un token viewer pour rejoindre le live LiveKit
+ *     tags: [Lives]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               userId:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Token généré
+ */
+router.post('/:id/token', getViewerToken);
+
+/**
+ * @openapi
+ * /api/lives/{id}/publisher-token:
+ *   post:
+ *     summary: Obtenir un token publisher pour diffuser (OBS / app desktop)
+ *     tags: [Lives]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Token publisher généré
+ */
+router.post('/:id/publisher-token', getPublisherToken);
+
+/**
+ * @openapi
+ * /api/lives/{id}/comments:
+ *   get:
+ *     summary: Récupérer les commentaires d'un live (arbre imbriqué)
+ *     tags: [Lives]
+ *   post:
+ *     summary: Poster un commentaire sur un live
+ *     tags: [Lives]
+ */
+router.get('/:id/comments', getComments);
+router.post('/:id/comments', createComment);
+
+/**
+ * @openapi
+ * /api/lives/{id}/comments/{commentId}/vote:
+ *   post:
+ *     summary: Voter sur un commentaire (delta +1 ou -1)
+ *     tags: [Lives]
+ */
+router.post('/:id/comments/:commentId/vote', voteComment);
+
+/**
+ * @openapi
+ * /api/lives/{id}/comments/{commentId}:
+ *   put:
+ *     summary: Modifier un commentaire
+ *     tags: [Lives]
+ *   delete:
+ *     summary: Supprimer un commentaire et ses réponses
+ *     tags: [Lives]
+ */
+router.put('/:id/comments/:commentId', updateComment);
+router.delete('/:id/comments/:commentId', deleteComment);
 
 /**
  * @openapi
@@ -229,6 +327,18 @@ router.post('/:id/leave', decrementViewerCount);
 
 /**
  * @openapi
+ * /api/lives/all:
+ *   delete:
+ *     summary: Supprimer tous les lives
+ *     tags: [Lives]
+ *     responses:
+ *       200:
+ *         description: Tous les lives supprimés
+ */
+router.delete('/all', deleteAllLiveStreams);
+
+/**
+ * @openapi
  * /api/lives/{id}:
  *   delete:
  *     summary: Supprimer un live
@@ -245,16 +355,6 @@ router.post('/:id/leave', decrementViewerCount);
  */
 router.delete('/:id', deleteLiveStream);
 
-/**
- * @openapi
- * /api/lives:
- *   delete:
- *     summary: Supprimer tous les lives
- *     tags: [Lives]
- *     responses:
- *       200:
- *         description: Tous les lives supprimés
- */
-router.delete('/', deleteAllLiveStreams);
+
 
 module.exports = router;

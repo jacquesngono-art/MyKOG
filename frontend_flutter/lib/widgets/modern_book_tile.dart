@@ -35,7 +35,7 @@ class ModernBookTile extends StatelessWidget {
         child: Row(
           children: [
             // Artwork 80x80 comme code.html
-            _buildLibraryBookArtwork(),
+            _buildLibraryBookArtwork(context),
             SizedBox(width: 16.w),
 
             // Titre et sous-titre empilés
@@ -48,7 +48,7 @@ class ModernBookTile extends StatelessWidget {
                   Text(
                     book.title,
                     style: GoogleFonts.poppins(
-                      color: MyKOGColors.textPrimary,
+                      color: context.appColors.textPrimary,
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w600,
                       height: 1.3,
@@ -62,7 +62,7 @@ class ModernBookTile extends StatelessWidget {
                   Text(
                     '${book.author ?? 'Auteur inconnu'}${book.pageCount != null ? ' • ${book.pageCount} pages' : ''}',
                     style: GoogleFonts.manrope(
-                      color: MyKOGColors.textSecondary,
+                      color: context.appColors.textSecondary,
                       fontSize: 13.sp,
                       fontWeight: FontWeight.w400,
                     ),
@@ -81,7 +81,7 @@ class ModernBookTile extends StatelessWidget {
     );
   }
 
-  Widget _buildLibraryBookArtwork() {
+  Widget _buildLibraryBookArtwork(BuildContext context) {
     return Container(
       width: 80.w,
       height: 80.w,
@@ -104,7 +104,7 @@ class ModernBookTile extends StatelessWidget {
               end: Alignment.bottomRight,
               colors: [
                 MyKOGColors.accent.withValues(alpha: 0.4),
-                MyKOGColors.primaryDark,
+                context.appColors.background,
               ],
             ),
           ),
@@ -124,7 +124,7 @@ class ModernBookTile extends StatelessWidget {
     return Text(
       book.title,
       style: theme.textTheme.titleMedium?.copyWith(
-        color: MyKOGColors.textPrimary,
+        color: context.appColors.textPrimary,
         fontWeight: FontWeight.w600,
         fontSize: 16.sp,
       ),
@@ -133,7 +133,7 @@ class ModernBookTile extends StatelessWidget {
     );
   }
 
-  Widget _buildAuthorSection(ThemeData theme) {
+  Widget _buildAuthorSection(BuildContext context, ThemeData theme) {
     return Row(
       children: [
         Container(
@@ -153,7 +153,7 @@ class ModernBookTile extends StatelessWidget {
           child: Text(
             book.author!,
             style: theme.textTheme.bodySmall?.copyWith(
-              color: MyKOGColors.textSecondary,
+              color: context.appColors.textSecondary,
               fontSize: 13.sp,
             ),
             maxLines: 1,
@@ -164,7 +164,7 @@ class ModernBookTile extends StatelessWidget {
     );
   }
 
-  Widget _buildMetadataSection(ThemeData theme) {
+  Widget _buildMetadataSection(BuildContext context, ThemeData theme) {
     return Row(
       children: [
         // Taille du fichier
@@ -172,7 +172,7 @@ class ModernBookTile extends StatelessWidget {
           Container(
             padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
             decoration: BoxDecoration(
-              color: MyKOGColors.primary.withValues(alpha: 0.1),
+              color: context.appColors.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8.r),
             ),
             child: Row(
@@ -181,13 +181,13 @@ class ModernBookTile extends StatelessWidget {
                 Icon(
                   Icons.storage_rounded,
                   size: 12.w,
-                  color: MyKOGColors.primary,
+                  color: context.appColors.primary,
                 ),
                 SizedBox(width: 4.w),
                 Text(
                   book.fileSize!,
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: MyKOGColors.primary,
+                    color: context.appColors.primary,
                     fontSize: 11.sp,
                     fontWeight: FontWeight.w500,
                   ),
@@ -264,14 +264,14 @@ class ModernBookTile extends StatelessWidget {
           color: Colors.transparent,
           shape: BoxShape.circle,
           border: Border.all(
-            color: MyKOGColors.textSecondary.withValues(alpha: 0.3),
+            color: context.appColors.textSecondary.withValues(alpha: 0.3),
             width: 1.5.w,
           ),
         ),
         child: Center(
           child: Icon(
             Icons.file_download_outlined,
-            color: MyKOGColors.textSecondary,
+            color: context.appColors.textSecondary,
             size: 20.w,
           ),
         ),

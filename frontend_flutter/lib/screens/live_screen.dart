@@ -157,7 +157,7 @@ class _LiveScreenState extends State<LiveScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: MyKOGColors.primaryDark,
+      backgroundColor: context.appColors.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -191,7 +191,7 @@ class _LiveScreenState extends State<LiveScreen>
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [MyKOGColors.primaryDark, MyKOGColors.secondary],
+          colors: [context.appColors.background, context.appColors.surfaceVariant],
         ),
       ),
       child: Row(
@@ -204,30 +204,24 @@ class _LiveScreenState extends State<LiveScreen>
             ),
             child: Icon(Icons.live_tv, color: MyKOGColors.accent, size: 28.sp),
           ),
-          SizedBox(width: 16.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  l10n.liveServices,
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        color: MyKOGColors.textPrimary,
-                        fontWeight: FontWeight.bold,
-                      ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Text(
-                  l10n.watchInRealTime,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: MyKOGColors.textSecondary,
-                      ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
+          const SizedBox(width: 16),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                l10n.liveServices,
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      color: context.appColors.textPrimary,
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+              Text(
+                l10n.watchInRealTime,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: context.appColors.textSecondary,
+                    ),
+              ),
+            ],
           ),
         ],
       ),
@@ -238,8 +232,8 @@ class _LiveScreenState extends State<LiveScreen>
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
       decoration: BoxDecoration(
-        color: MyKOGColors.secondary,
-        borderRadius: BorderRadius.circular(12.r),
+        color: context.appColors.surfaceVariant,
+        borderRadius: BorderRadius.circular(12),
       ),
       child: TabBar(
         controller: _tabController,
@@ -247,8 +241,8 @@ class _LiveScreenState extends State<LiveScreen>
           color: MyKOGColors.accent,
           borderRadius: BorderRadius.circular(12.r),
         ),
-        labelColor: MyKOGColors.primaryDark,
-        unselectedLabelColor: MyKOGColors.textSecondary,
+        labelColor: context.appColors.background,
+        unselectedLabelColor: context.appColors.textSecondary,
         labelStyle: const TextStyle(fontWeight: FontWeight.w600),
         tabs: [
           Tab(text: AppLocalizations.of(context)!.liveNow),
@@ -277,7 +271,7 @@ class _LiveScreenState extends State<LiveScreen>
               Text(
                 'Autres lives en cours',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: MyKOGColors.textPrimary,
+                      color: context.appColors.textPrimary,
                       fontWeight: FontWeight.bold,
                     ),
               ),
@@ -299,14 +293,14 @@ class _LiveScreenState extends State<LiveScreen>
           children: [
             Icon(
               _isOffline ? Icons.wifi_off : Icons.live_tv,
-              size: 64.sp,
-              color: MyKOGColors.textSecondary,
+              size: 64,
+              color: context.appColors.textSecondary,
             ),
             SizedBox(height: 16.h),
             Text(
               _isOffline ? 'Mode hors ligne' : l10n.noLiveStreamsNow,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: MyKOGColors.textSecondary,
+                    color: context.appColors.textSecondary,
                   ),
             ),
             SizedBox(height: 8.h),
@@ -315,7 +309,7 @@ class _LiveScreenState extends State<LiveScreen>
                   ? 'Les lives ne sont pas disponibles hors ligne'
                   : l10n.checkBackLater,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: MyKOGColors.textTertiary,
+                    color: context.appColors.textTertiary,
                   ),
               textAlign: TextAlign.center,
             ),
@@ -349,14 +343,14 @@ class _LiveScreenState extends State<LiveScreen>
           children: [
             Icon(
               _isOffline ? Icons.wifi_off : Icons.calendar_today,
-              size: 64.sp,
-              color: MyKOGColors.textSecondary,
+              size: 64,
+              color: context.appColors.textSecondary,
             ),
             SizedBox(height: 16.h),
             Text(
               _isOffline ? 'Mode hors ligne' : 'Aucun live programmé',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: MyKOGColors.textSecondary,
+                    color: context.appColors.textSecondary,
                   ),
             ),
             SizedBox(height: 8.h),
@@ -364,7 +358,7 @@ class _LiveScreenState extends State<LiveScreen>
               Text(
                 'Les lives programmés ne sont pas disponibles hors ligne',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: MyKOGColors.textTertiary,
+                      color: context.appColors.textTertiary,
                     ),
                 textAlign: TextAlign.center,
               ),
@@ -410,8 +404,8 @@ class _LiveScreenState extends State<LiveScreen>
                               stream.thumbnailUrl,
                               fit: BoxFit.cover,
                               errorBuilder: (context, error, stackTrace) => Container(
-                                color: MyKOGColors.secondary,
-                                child: Center(
+                                color: context.appColors.surfaceVariant,
+                                child: const Center(
                                   child: Icon(
                                     Icons.live_tv,
                                     color: MyKOGColors.accent,
@@ -421,8 +415,8 @@ class _LiveScreenState extends State<LiveScreen>
                               ),
                             )
                           : Container(
-                              color: MyKOGColors.secondary,
-                              child: Center(
+                              color: context.appColors.surfaceVariant,
+                              child: const Center(
                                 child: Icon(
                                   Icons.live_tv,
                                   color: MyKOGColors.accent,
@@ -502,7 +496,7 @@ class _LiveScreenState extends State<LiveScreen>
               Text(
                 stream.title,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: MyKOGColors.textPrimary,
+                      color: context.appColors.textPrimary,
                       fontWeight: FontWeight.bold,
                     ),
               ),
@@ -510,12 +504,12 @@ class _LiveScreenState extends State<LiveScreen>
               Row(
                 children: [
                   Icon(Icons.person,
-                      size: 16.sp, color: MyKOGColors.textSecondary),
-                  SizedBox(width: 4.w),
+                      size: 16, color: context.appColors.textSecondary),
+                  const SizedBox(width: 4),
                   Text(
                     stream.pastor,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: MyKOGColors.textSecondary,
+                          color: context.appColors.textSecondary,
                         ),
                   ),
                 ],
@@ -524,7 +518,7 @@ class _LiveScreenState extends State<LiveScreen>
               Text(
                 stream.description,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: MyKOGColors.textTertiary,
+                      color: context.appColors.textTertiary,
                     ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -569,8 +563,8 @@ class _LiveScreenState extends State<LiveScreen>
                       height: 90.h,
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) => Container(
-                        color: MyKOGColors.secondary,
-                        child: Center(
+                        color: context.appColors.surfaceVariant,
+                        child: const Center(
                           child: Icon(
                             Icons.live_tv,
                             color: MyKOGColors.accent,
@@ -580,10 +574,10 @@ class _LiveScreenState extends State<LiveScreen>
                       ),
                     )
                   : Container(
-                      width: 120.w,
-                      height: 90.h,
-                      color: MyKOGColors.secondary,
-                      child: Center(
+                      width: 120,
+                      height: 90,
+                      color: context.appColors.surfaceVariant,
+                      child: const Center(
                         child: Icon(
                           Icons.live_tv,
                           color: MyKOGColors.accent,
@@ -600,7 +594,7 @@ class _LiveScreenState extends State<LiveScreen>
                   Text(
                     stream.title,
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          color: MyKOGColors.textPrimary,
+                          color: context.appColors.textPrimary,
                           fontWeight: FontWeight.bold,
                         ),
                     maxLines: 2,
@@ -610,12 +604,12 @@ class _LiveScreenState extends State<LiveScreen>
                   Row(
                     children: [
                       Icon(Icons.person,
-                          size: 14.sp, color: MyKOGColors.textSecondary),
-                      SizedBox(width: 4.w),
+                          size: 14, color: context.appColors.textSecondary),
+                      const SizedBox(width: 4),
                       Text(
                         stream.pastor,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: MyKOGColors.textSecondary,
+                              color: context.appColors.textSecondary,
                             ),
                       ),
                     ],
@@ -651,7 +645,7 @@ class _LiveScreenState extends State<LiveScreen>
               ),
             ),
             Icon(Icons.notifications_outlined,
-                color: MyKOGColors.textSecondary),
+                color: context.appColors.textSecondary),
           ],
         ),
       ),
@@ -669,7 +663,7 @@ class _LiveScreenState extends State<LiveScreen>
             end: Alignment.bottomRight,
             colors: [
               MyKOGColors.accent.withValues(alpha: 0.2),
-              MyKOGColors.secondary,
+              context.appColors.surfaceVariant,
             ],
           ),
           border: Border.all(
@@ -691,8 +685,8 @@ class _LiveScreenState extends State<LiveScreen>
                             stream.thumbnailUrl,
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) => Container(
-                              color: MyKOGColors.secondary,
-                              child: Center(
+                              color: context.appColors.surfaceVariant,
+                              child: const Center(
                                 child: Icon(
                                   Icons.live_tv,
                                   color: MyKOGColors.accent,
@@ -702,8 +696,8 @@ class _LiveScreenState extends State<LiveScreen>
                             ),
                           )
                         : Container(
-                            color: MyKOGColors.secondary,
-                            child: Center(
+                            color: context.appColors.surfaceVariant,
+                            child: const Center(
                               child: Icon(
                                 Icons.live_tv,
                                 color: MyKOGColors.accent,
@@ -792,19 +786,19 @@ class _LiveScreenState extends State<LiveScreen>
                   Text(
                     stream.title,
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          color: MyKOGColors.textPrimary,
+                          color: context.appColors.textPrimary,
                           fontWeight: FontWeight.bold,
                         ),
                   ),
                   SizedBox(height: 8.h),
                   Row(
                     children: [
-                      Icon(Icons.person, size: 18.sp, color: MyKOGColors.textSecondary),
-                      SizedBox(width: 6.w),
+                      Icon(Icons.person, size: 18, color: context.appColors.textSecondary),
+                      const SizedBox(width: 6),
                       Text(
                         stream.pastor,
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              color: MyKOGColors.textSecondary,
+                              color: context.appColors.textSecondary,
                             ),
                       ),
                     ],
@@ -814,7 +808,7 @@ class _LiveScreenState extends State<LiveScreen>
                     Text(
                       stream.description,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: MyKOGColors.textTertiary,
+                            color: context.appColors.textTertiary,
                           ),
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,

@@ -37,7 +37,7 @@ class MiniPlayerImproved extends StatelessWidget {
                   horizontal: 16.h,
                 ),
                 decoration: BoxDecoration(
-                  color: MyKOGColors.secondary,
+                  color: context.appColors.surfaceVariant,
                   borderRadius: BorderRadius.circular(12.r),
                   border: Border.all(
                     color: MyKOGColors.accent.withValues(alpha: 0.3),
@@ -57,7 +57,7 @@ class MiniPlayerImproved extends StatelessWidget {
                     LinearProgressIndicator(
                       value: progress,
                       backgroundColor:
-                          MyKOGColors.textTertiary.withValues(alpha: 0.3),
+                          context.appColors.textTertiary.withValues(alpha: 0.3),
                       valueColor:
                           AlwaysStoppedAnimation<Color>(MyKOGColors.accent),
                       minHeight: 2.h,
@@ -80,11 +80,13 @@ class MiniPlayerImproved extends StatelessWidget {
                                 children: [
                                   Text(
                                     teaching.title,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                     style: Theme.of(context)
                                         .textTheme
                                         .titleSmall
                                         ?.copyWith(
-                                          color: MyKOGColors.textPrimary,
+                                          color: context.appColors.textPrimary,
                                           fontWeight: FontWeight.w600,
                                         ),
                                     maxLines: 1,
@@ -97,7 +99,7 @@ class MiniPlayerImproved extends StatelessWidget {
                                         .textTheme
                                         .bodySmall
                                         ?.copyWith(
-                                          color: MyKOGColors.textSecondary,
+                                          color: context.appColors.textSecondary,
                                         ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
@@ -107,7 +109,7 @@ class MiniPlayerImproved extends StatelessWidget {
                             ),
                             
                             // Controls
-                            _buildControls(audioProvider),
+                            _buildControls(context, audioProvider),
                           ],
                         ),
                       ),
@@ -149,15 +151,42 @@ class MiniPlayerImproved extends StatelessWidget {
   }
 
   Widget _buildArtwork(teaching) {
-    return TeachingArtwork(
-      teaching: teaching,
-      width: 48.w,
-      height: 48.h,
-      borderRadius: 6.r,
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(6.r),
+      child: teaching.artworkUrl.startsWith('assets/')
+          ? Image.asset(
+              teaching.artworkUrl,
+              width: 48.w,
+              height: 48.h,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) =>
+                  _buildPlaceholder(context),
+            )
+          : CachedNetworkImage(
+              imageUrl: teaching.artworkUrl,
+              width: 48.w,
+              height: 48.h,
+              fit: BoxFit.cover,
+              placeholder: (context, url) => _buildPlaceholder(context),
+              errorWidget: (context, url, error) => _buildPlaceholder(context),
+            ),
     );
   }
 
-  Widget _buildControls(AudioPlayerProvider audioProvider) {
+  Widget _buildPlaceholder(BuildContext context) {
+    return Container(
+      width: 48.w,
+      height: 48.h,
+      color: context.appColors.surface,
+      child: Icon(
+        Icons.music_note,
+        color: MyKOGColors.accent,
+        size: 24.sp,
+      ),
+    );
+  }
+
+  Widget _buildControls(BuildContext context, AudioPlayerProvider audioProvider) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -166,8 +195,8 @@ class MiniPlayerImproved extends StatelessWidget {
           onPressed: audioProvider.seekBackward,
           icon: Icon(
             Icons.replay_10,
-            color: MyKOGColors.textPrimary,
-            size: 24.sp,
+            color: context.appColors.textPrimary,
+            size: 24,
           ),
           constraints: BoxConstraints(
             minWidth: 32.w,
@@ -211,8 +240,8 @@ class MiniPlayerImproved extends StatelessWidget {
           onPressed: audioProvider.seekForward,
           icon: Icon(
             Icons.forward_10,
-            color: MyKOGColors.textPrimary,
-            size: 24.sp,
+            color: context.appColors.textPrimary,
+            size: 24,
           ),
           constraints: BoxConstraints(
             minWidth: 32.w,
@@ -233,7 +262,7 @@ class MiniPlayerImproved extends StatelessWidget {
         horizontal: 16.h,
       ),
       decoration: BoxDecoration(
-        color: MyKOGColors.secondary,
+        color: context.appColors.surfaceVariant,
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(
           color: Colors.red.withValues(alpha: 0.3),
@@ -254,7 +283,7 @@ class MiniPlayerImproved extends StatelessWidget {
               AppLocalizations.of(context)?.error ?? 'Erreur audio',
               style: TextStyle(
                 fontSize: 14.sp,
-                color: MyKOGColors.textPrimary,
+                color: context.appColors.textPrimary,
               ),
             ),
           ),
@@ -279,21 +308,21 @@ class MiniPlayerImproved extends StatelessWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: MyKOGColors.secondary,
+        backgroundColor: context.appColors.surfaceVariant,
         title: Text(
           l10n?.closePlayer ?? 'Fermer le lecteur',
-          style: TextStyle(color: MyKOGColors.textPrimary),
+          style: TextStyle(color: context.appColors.textPrimary),
         ),
         content: Text(
           l10n?.stopPlaybackConfirm ?? 'Voulez-vous arrêter la lecture ?',
-          style: TextStyle(color: MyKOGColors.textSecondary),
+          style: TextStyle(color: context.appColors.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
             child: Text(
               l10n?.cancel ?? 'Annuler',
-              style: TextStyle(color: MyKOGColors.textSecondary),
+              style: TextStyle(color: context.appColors.textSecondary),
             ),
           ),
           TextButton(

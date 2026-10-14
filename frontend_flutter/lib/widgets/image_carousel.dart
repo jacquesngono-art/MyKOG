@@ -179,14 +179,32 @@ class _ImageCarouselState extends State<ImageCarousel> {
                 fit: BoxFit.cover,
                 width: double.infinity,
                 height: double.infinity,
-                placeholder: Container(
+                placeholder: (context, url) => Container(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        MyKOGColors.primaryDark,
-                        MyKOGColors.secondary,
+                        context.appColors.background,
+                        context.appColors.surfaceVariant,
+                      ],
+                    ),
+                  ),
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      color: MyKOGColors.accent,
+                      strokeWidth: 2.w,
+                    ),
+                  ),
+                ),
+                errorWidget: (context, url, error) => Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        context.appColors.background,
+                        context.appColors.surfaceVariant,
                       ],
                     ),
                   ),

@@ -56,7 +56,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final isLast = _pageIndex == _pages.length - 1;
 
     return Scaffold(
-      backgroundColor: MyKOGColors.primaryDark,
+      backgroundColor: context.appColors.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -79,30 +79,32 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  Widget _buildPage(Map<String, dynamic> page) {
-    return SingleChildScrollView(
-      padding: EdgeInsets.symmetric(horizontal: 28.w),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          SizedBox(height: 40.h),
-          Image.asset(
-            'assets/images/kog.png',
-            width: 120.w,
-            height: 120.h,
-            fit: BoxFit.contain,
+  Widget _buildPage({
+    required String title,
+    required String subtitle,
+    required Widget animation,
+  }) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        SizedBox(height: 50.h),
+        animation,
+        SizedBox(height: 50.h),
+        Text(
+          title,
+          style: GoogleFonts.poppins(
+            fontSize: 24.sp,
+            fontWeight: FontWeight.bold,
+            color: context.appColors.textPrimary,
           ),
-          SizedBox(height: 36.h),
-          Text(
-            page['title'],
-            style: GoogleFonts.poppins(
-              fontSize: 24.sp,
-              fontWeight: FontWeight.bold,
-              color: MyKOGColors.accent,
-              letterSpacing: 1.5,
-              height: 1.3,
-            ),
-            textAlign: TextAlign.center,
+          textAlign: TextAlign.center,
+        ),
+        SizedBox(height: 16.h),
+        Text(
+          subtitle,
+          style: GoogleFonts.inter(
+            fontSize: 16.sp,
+            color: context.appColors.textSecondary,
           ),
           SizedBox(height: 24.h),
           if (page['isMission']) ...[
@@ -215,9 +217,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           height: 8.h,
           width: _pageIndex == index ? 24.w : 8.w,
           decoration: BoxDecoration(
-            color: _pageIndex == index
-                ? MyKOGColors.accent
-                : MyKOGColors.textTertiary,
+            color: _pageIndex == index ? MyKOGColors.accent : context.appColors.textTertiary,
             borderRadius: BorderRadius.circular(4.r),
           ),
         ),

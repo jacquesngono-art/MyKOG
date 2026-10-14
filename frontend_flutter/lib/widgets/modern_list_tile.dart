@@ -37,7 +37,7 @@ class ModernListTile extends StatelessWidget {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
       decoration: BoxDecoration(
-        color: MyKOGColors.secondary,
+        color: context.appColors.surfaceVariant,
         borderRadius: BorderRadius.circular(16.r),
         border: Border.all(
           color: color.withValues(alpha: 0.1),
@@ -145,7 +145,7 @@ class ModernListTile extends StatelessWidget {
               child: Text(
                 title,
                 style: theme.textTheme.titleMedium?.copyWith(
-                  color: MyKOGColors.textPrimary,
+                  color: context.appColors.textPrimary,
                   fontWeight: FontWeight.w600,
                   fontSize: 16.sp,
                 ),
@@ -163,7 +163,7 @@ class ModernListTile extends StatelessWidget {
           Text(
             subtitle!,
             style: theme.textTheme.bodySmall?.copyWith(
-              color: MyKOGColors.textSecondary,
+              color: context.appColors.textSecondary,
               fontSize: 13.sp,
             ),
             maxLines: 1,
@@ -197,7 +197,7 @@ class ModernListTile extends StatelessWidget {
           Container(
             padding: EdgeInsets.all(4.w),
             decoration: BoxDecoration(
-              color: MyKOGColors.secondary,
+              color: context.appColors.surfaceVariant,
               shape: BoxShape.circle,
               border: Border.all(
                 color: color.withValues(alpha: 0.3),

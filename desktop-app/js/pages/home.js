@@ -1,16 +1,10 @@
 const HomePage = {
   viewingPackageId: null,
   editingPackageId: null,
-  deletingPackageId: null,
-  deleteProgress: 0,
-  deleteTimer: null,
-  deleteInterval: null,
   menuOpenPkgId: null,
 
   render() {
     this.editingPackageId = null;
-    this.deletingPackageId = null;
-    this.clearDeleteTimers();
 
     if (this.viewingPackageId) {
       this.renderPackageDetail(this.viewingPackageId);
@@ -20,7 +14,7 @@ const HomePage = {
     const s = Store.state;
     const user = s.user || { name: 'Utilisateur' };
     const greeting = Store.getGreeting();
-    const popular = Store.getPopularTeachings(5);
+    const popular = Store.getAllTeachingsSorted();
     const recent = s.recentlyPlayed.slice(0, 5).map(id => Store.getTeachingById(id)).filter(Boolean);
     const packages = s.favoritePackages || [];
 
@@ -52,21 +46,7 @@ const HomePage = {
         </div>
       </div>
 
-      ${packages.length ? `
-        <div class="section-header" style="margin-top: 24px;">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
-          <h2>Mes Packs Favoris</h2>
-        </div>
-        <div class="package-grid">
-          ${packages.map(p => this.renderPackageCard(p)).join('')}
-          <div class="glass-card create-pkg-card" onclick="App.showCreatePackageModal('')">
-            <div class="create-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            </div>
-            <span class="create-text">Nouveau pack</span>
-          </div>
-        </div>
-      ` : ''}
+      <div id="home-packs-section">${this.renderPacksSection()}</div>
 
       ${recent.length ? `
         <div class="section-header">
@@ -90,7 +70,7 @@ const HomePage = {
 
       <div class="section-header" style="margin-top: 24px;">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
-        <h2>Populaires cette semaine</h2>
+        <h2>Tous les enseignements disponibles</h2>
       </div>
       <div class="horizontal-list">
         ${popular.map(t => this.renderCard(t)).join('')}
@@ -106,32 +86,69 @@ const HomePage = {
     `;
   },
 
+  renderPacksSection() {
+    const packages = Store.state.favoritePackages || [];
+    if (!packages.length) return '';
+    return `
+      <div class="section-header" style="margin-top: 24px;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+        <h2>Mes Packs Favoris</h2>
+      </div>
+      <div class="pack-folders-grid">
+        ${packages.map(p => this.renderPackageCard(p)).join('')}
+        <div class="pack-folder pack-folder-new" onclick="App.showCreatePackageModal('')">
+          <div class="pack-folder-new-inner">
+            <div class="pack-folder-new-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </div>
+            <span>Nouveau pack</span>
+          </div>
+        </div>
+      </div>
+    `;
+  },
+
   renderPackageCard(pkg) {
-    const count = pkg.teachingIds.length;
-    const iconSvg = count > 0
-      ? '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>'
-      : '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>';
+    const teachings = Store.getTeachingsInPackage(pkg.id);
+    const count = teachings.length;
+    const n = Math.min(Math.max(count, 1), 5);
+    const thumbs = Array.from({ length: n }, (_, i) =>
+      LibraryPage._packThumb(teachings.length ? teachings[i % count] : null, i, n)
+    ).join('');
+    const date = pkg.createdAt ? new Date(pkg.createdAt) : null;
+    const months = ['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Août','Sep','Oct','Nov','Déc'];
+    const dateLabel = date ? `${date.getDate()} ${months[date.getMonth()]}` : '';
     const isMenuOpen = this.menuOpenPkgId === pkg.id;
     return `
-      <div class="glass-card package-card" onclick="HomePage.viewPackage('${pkg.id}')" style="position:relative;">
-        <div class="package-icon">${iconSvg}</div>
-        <span class="package-name">${pkg.name}</span>
-        <span class="package-count">${count} enseignement${count !== 1 ? 's' : ''}</span>
-        <button class="more-btn ${isMenuOpen ? 'open' : ''}" onclick="event.stopPropagation();HomePage.togglePackageMenu('${pkg.id}')" title="Plus d'options">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="19" r="1.5" fill="currentColor"/></svg>
-        </button>
-        ${isMenuOpen ? `
-          <div class="dropdown-menu" onclick="event.stopPropagation()">
-            <button class="dropdown-menu-item" onclick="event.stopPropagation();HomePage.renamePackageInline('${pkg.id}')">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-              Renommer
-            </button>
-            <button class="dropdown-menu-item danger" onclick="event.stopPropagation();HomePage.confirmDeletePackage('${pkg.id}')">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
-              Supprimer
-            </button>
+      <div class="pack-folder ${isMenuOpen ? 'menu-open' : ''}" onclick="HomePage.viewPackage('${pkg.id}')">
+        <div class="pack-folder-back">
+          <div class="pack-folder-thumbs">${thumbs}</div>
+          ${!count ? `<div class="pack-folder-empty"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div>` : ''}
+        </div>
+        <div class="pack-folder-front">
+          <h3 class="pack-folder-title">${pkg.name}</h3>
+          <div class="pack-folder-footer">
+            <span class="pack-folder-count"><b>${count}</b>&nbsp;audio${count !== 1 ? 's' : ''}</span>
+            <div class="pack-folder-right">
+              <span class="pack-folder-date">${dateLabel}</span>
+              <button class="pack-folder-menu-btn" onclick="event.stopPropagation();HomePage.togglePackageMenu('${pkg.id}')" title="Plus d'options">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="19" r="1.5" fill="currentColor"/></svg>
+              </button>
+              ${isMenuOpen ? `
+                <div class="dropdown-menu pack-folder-menu" onclick="event.stopPropagation()">
+                  <button class="dropdown-menu-item" onclick="event.stopPropagation();HomePage.renamePackageInline('${pkg.id}')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    Renommer
+                  </button>
+                  <button class="dropdown-menu-item danger" onclick="event.stopPropagation();HomePage.confirmDeletePackage('${pkg.id}')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+                    Supprimer
+                  </button>
+                </div>
+              ` : ''}
+            </div>
           </div>
-        ` : ''}
+        </div>
       </div>
     `;
   },
@@ -152,8 +169,35 @@ const HomePage = {
 
   confirmDeletePackage(pkgId) {
     this.menuOpenPkgId = null;
-    this.viewingPackageId = pkgId;
-    this.deletePackage(pkgId);
+    const pkg = Store.getPackageById(pkgId);
+    if (!pkg) return;
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay open';
+    overlay.innerHTML = `
+      <div class="modal" style="max-width:380px;animation:menuAppear 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;">
+        <h3 style="margin:0 0 8px;">Supprimer ce pack ?</h3>
+        <p style="color:var(--text-secondary);font-size:14px;margin:0 0 16px;">« ${pkg.name} » sera supprimé. Les enseignements restent dans la bibliothèque.</p>
+        <div class="modal-actions">
+          <button class="modal-btn secondary" id="pkg-del-cancel">Annuler</button>
+          <button class="modal-btn danger" id="pkg-del-confirm">Supprimer</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    overlay.querySelector('#pkg-del-cancel').onclick = () => overlay.remove();
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+    overlay.querySelector('#pkg-del-confirm').onclick = () => {
+      overlay.remove();
+      Store.deletePackage(pkgId);
+      App.showToast(`Pack « ${pkg.name} » supprimé`);
+      // refreshPackUI (abonnement favoritePackages) met à jour l'UI ;
+      // si le pack supprimé était ouvert en détail, on revient à l'accueil
+      if (this.viewingPackageId === pkgId) {
+        this.viewingPackageId = null;
+        this.editingPackageId = null;
+        this.render();
+      }
+    };
   },
 
   viewPackage(packageId) {
@@ -199,31 +243,12 @@ const HomePage = {
             <button class="hero-btn" onclick="HomePage.editingPackageId='${packageId}';HomePage.renderPackageDetail('${packageId}')" title="Renommer">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             </button>
-            <button class="hero-btn" onclick="HomePage.deletePackage('${packageId}')" title="Supprimer" style="color:var(--error)">
+            <button class="hero-btn" onclick="HomePage.confirmDeletePackage('${packageId}')" title="Supprimer" style="color:var(--error)">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
             </button>
           ` : ''}
         </div>
       </div>
-
-      ${this.deletingPackageId === packageId ? `
-        <div class="pkg-delete-overlay">
-          <div class="delete-content">
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--error)" stroke-width="1.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
-            <div class="delete-title">Supprimer « ${pkg.name} » ?</div>
-            <div class="delete-desc">Cette action est irréversible. Maintenez pour confirmer.</div>
-            <div class="delete-progress-bar">
-              <div class="delete-progress-fill" style="width:${this.deleteProgress}%"></div>
-            </div>
-            <div class="delete-btns">
-              <button class="delete-btn secondary" onclick="HomePage.cancelDeleteCountdown()">Annuler</button>
-              <button class="delete-btn danger" onmousedown="HomePage.startDeleteCountdown('${packageId}')" onmouseup="HomePage.cancelDeleteCountdown()" onmouseleave="HomePage.cancelDeleteCountdown()" ontouchstart="HomePage.startDeleteCountdown('${packageId}')" ontouchend="HomePage.cancelDeleteCountdown()">
-                ${this.deleteProgress > 0 && this.deleteProgress < 100 ? 'Suppression...' : 'Maintenir pour supprimer'}
-              </button>
-            </div>
-          </div>
-        </div>
-      ` : ''}
 
       ${teachings.length === 0 ? `
         <div class="empty-state">
@@ -295,61 +320,6 @@ const HomePage = {
     App.showToast('Pack renommé');
   },
 
-  deletePackage(packageId) {
-    const pkg = Store.getPackageById(packageId);
-    if (!pkg) return;
-    this.deletingPackageId = packageId;
-    this.deleteProgress = 0;
-    this.renderPackageDetail(packageId);
-  },
-
-  startDeleteCountdown(packageId) {
-    if (this.deleteTimer) return;
-    this.deleteProgress = 0;
-    const duration = 1500;
-    const interval = 50;
-    let elapsed = 0;
-
-    this.deleteInterval = setInterval(() => {
-      elapsed += interval;
-      this.deleteProgress = Math.min(100, (elapsed / duration) * 100);
-      const fill = document.querySelector('.delete-progress-fill');
-      if (fill) fill.style.width = this.deleteProgress + '%';
-      const btn = document.querySelector('.delete-btn.danger');
-      if (btn) btn.textContent = this.deleteProgress >= 100 ? 'Suppression...' : 'Maintenir pour supprimer';
-    }, interval);
-
-    this.deleteTimer = setTimeout(() => {
-      this.clearDeleteTimers();
-      Store.deletePackage(packageId);
-      this.deletingPackageId = null;
-      this.viewingPackageId = null;
-      this.render();
-      App.showToast('Pack supprimé');
-    }, duration);
-  },
-
-  cancelDeleteCountdown() {
-    if (!this.deleteTimer && !this.deleteInterval) return;
-    this.clearDeleteTimers();
-    this.deletingPackageId = null;
-    this.deleteProgress = 0;
-    if (this.viewingPackageId) {
-      this.renderPackageDetail(this.viewingPackageId);
-    }
-  },
-
-  clearDeleteTimers() {
-    if (this.deleteInterval) {
-      clearInterval(this.deleteInterval);
-      this.deleteInterval = null;
-    }
-    if (this.deleteTimer) {
-      clearTimeout(this.deleteTimer);
-      this.deleteTimer = null;
-    }
-  },
-
   removeFromPackage(packageId, teachingId) {
     Store.removeTeachingFromPackage(packageId, teachingId);
     this.renderPackageDetail(packageId);
@@ -365,9 +335,7 @@ const HomePage = {
   backToHome() {
     this.viewingPackageId = null;
     this.editingPackageId = null;
-    this.deletingPackageId = null;
     this.menuOpenPkgId = null;
-    this.clearDeleteTimers();
     this.render();
   },
 

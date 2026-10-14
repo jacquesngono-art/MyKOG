@@ -1,40 +1,19 @@
-# Secrets - ne jamais commiter
-.env
-.env.local
-.env.*.local
-.env.production
-backend-API/.env.render
-
-# Dépendances
+# Dependances
 node_modules/
 
-# HLS / médias générés
-hls_output/
-backend-API/hls_output/
-*.m3u8
-*.ts
-
-# Logs
-*.log
-npm-debug.log*
-
-# Build
-dist/
+# Sorties de build / compilation
 build/
+dist/
+out/
 .next/
-
-# OS / éditeur
-.DS_Store
-Thumbs.db
-*.swp
-
-# Dart / Flutter
+.gradle/
 .dart_tool/
-.packages
-build/ios/
-build/android/
-*.iml
+.flutter-plugins
+.flutter-plugins-dependencies
+Pods/
+DerivedData/
 
-# LiveKit
-livekit.log
-backend-API/livekit.log
+# Caches
+coverage/
+.npm/
+.cache/

@@ -129,18 +129,19 @@ class _ConnectionSettingsScreenState extends State<ConnectionSettingsScreen> {
     }
   }
 
-  Future<void> _pingBackend() async {
+  Future<void> _checkVps() async {
     setState(() => _isLoading = true);
 
     try {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('☁️ Ping du backend VPS...'),
+          content: Text('☁️ Vérification du backend VPS...'),
           duration: Duration(seconds: 2),
         ),
       );
 
-      await ApiConfig.testConnection();
+      await ApiConfig.forceVpsMode();
+      await ApiConfig.testVpsConnection();
       await _loadConnectionInfo();
 
       if (mounted) {
@@ -171,12 +172,11 @@ class _ConnectionSettingsScreenState extends State<ConnectionSettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: MyKOGColors.primaryDark,
-      resizeToAvoidBottomInset: false,
+      backgroundColor: context.appColors.background,
       appBar: AppBar(
         title: const Text('Paramètres de Connexion'),
-        backgroundColor: MyKOGColors.primaryDark,
-        foregroundColor: MyKOGColors.textPrimary,
+        backgroundColor: context.appColors.background,
+        foregroundColor: context.appColors.textPrimary,
         elevation: 0,
       ),
       body: _isLoading
@@ -202,7 +202,7 @@ class _ConnectionSettingsScreenState extends State<ConnectionSettingsScreen> {
     return Container(
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
-        color: MyKOGColors.secondary,
+        color: context.appColors.surfaceVariant,
         borderRadius: BorderRadius.circular(16.r),
         border: Border.all(
           color: _isConnected
@@ -227,7 +227,7 @@ class _ConnectionSettingsScreenState extends State<ConnectionSettingsScreen> {
               Text(
                 'État de la Connexion',
                 style: TextStyle(
-                  color: MyKOGColors.textPrimary,
+                  color: context.appColors.textPrimary,
                   fontSize: 18.sp,
                   fontWeight: FontWeight.bold,
                 ),
@@ -252,14 +252,14 @@ class _ConnectionSettingsScreenState extends State<ConnectionSettingsScreen> {
           Text(
             label,
             style: TextStyle(
-              color: MyKOGColors.textSecondary,
+              color: context.appColors.textSecondary,
               fontSize: 14.sp,
             ),
           ),
           Text(
             value,
             style: TextStyle(
-              color: MyKOGColors.textPrimary,
+              color: context.appColors.textPrimary,
               fontSize: 14.sp,
               fontWeight: FontWeight.w500,
             ),
@@ -276,17 +276,17 @@ class _ConnectionSettingsScreenState extends State<ConnectionSettingsScreen> {
         Text(
           'Modes de Connexion',
           style: TextStyle(
-            color: MyKOGColors.textPrimary,
+            color: context.appColors.textPrimary,
             fontSize: 18.sp,
             fontWeight: FontWeight.bold,
           ),
         ),
         SizedBox(height: 16.h),
 
-        // Mode VPS (unique)
+        // Mode VPS (priorité)
         _buildModeOption(
-          title: 'Backend VPS',
-          subtitle: 'http://185.98.128.123:3001/mykog-api',
+          title: 'Backend VPS (Recommandé)',
+          subtitle: ApiConfig.vpsBaseUrl,
           icon: Icons.cloud_rounded,
           color: MyKOGColors.accent,
           mode: ApiConfig.modeVps,
@@ -312,7 +312,7 @@ class _ConnectionSettingsScreenState extends State<ConnectionSettingsScreen> {
         padding: EdgeInsets.all(16.w),
         decoration: BoxDecoration(
           color:
-              isSelected ? color.withValues(alpha: 0.2) : MyKOGColors.secondary,
+              isSelected ? color.withValues(alpha: 0.2) : context.appColors.surfaceVariant,
           borderRadius: BorderRadius.circular(12.r),
           border: Border.all(
             color:
@@ -344,7 +344,7 @@ class _ConnectionSettingsScreenState extends State<ConnectionSettingsScreen> {
                       Text(
                         title,
                         style: TextStyle(
-                          color: MyKOGColors.textPrimary,
+                          color: context.appColors.textPrimary,
                           fontSize: 16.sp,
                           fontWeight: FontWeight.w600,
                         ),
@@ -374,7 +374,7 @@ class _ConnectionSettingsScreenState extends State<ConnectionSettingsScreen> {
                   Text(
                     subtitle,
                     style: TextStyle(
-                      color: MyKOGColors.textSecondary,
+                      color: context.appColors.textSecondary,
                       fontSize: 13.sp,
                     ),
                   ),
@@ -400,20 +400,21 @@ class _ConnectionSettingsScreenState extends State<ConnectionSettingsScreen> {
         Text(
           'Actions',
           style: TextStyle(
-            color: MyKOGColors.textPrimary,
+            color: context.appColors.textPrimary,
             fontSize: 18.sp,
             fontWeight: FontWeight.bold,
           ),
         ),
         SizedBox(height: 16.h),
 
-        // Bouton ping VPS
-        Container(
+        // Bouton vérifier le backend VPS
+        if (_currentMode == ApiConfig.modeVps)
+          Container(
             margin: EdgeInsets.only(bottom: 12.h),
             child: ElevatedButton.icon(
-              onPressed: _pingBackend,
-              icon: const Icon(Icons.cloud_sync_rounded),
-              label: const Text('☁️ Ping backend VPS'),
+              onPressed: _checkVps,
+              icon: const Icon(Icons.wb_sunny_rounded),
+              label: const Text('☁️ Vérifier le backend VPS'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.orange,
                 foregroundColor: Colors.white,
@@ -449,7 +450,7 @@ class _ConnectionSettingsScreenState extends State<ConnectionSettingsScreen> {
                 icon: const Icon(Icons.restore_rounded),
                 label: const Text('Réinitialiser'),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: MyKOGColors.textPrimary,
+                  foregroundColor: context.appColors.textPrimary,
                   side: BorderSide(
                       color: MyKOGColors.accent.withValues(alpha: 0.5)),
                   padding: EdgeInsets.symmetric(vertical: 12.h),

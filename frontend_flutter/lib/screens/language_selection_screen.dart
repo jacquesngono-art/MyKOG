@@ -19,8 +19,8 @@ class LanguageSelectionScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.language),
-        backgroundColor: MyKOGColors.primaryDark,
-        foregroundColor: MyKOGColors.textPrimary,
+        backgroundColor: context.appColors.background,
+        foregroundColor: context.appColors.textPrimary,
         elevation: 0,
       ),
       body: Container(
@@ -29,8 +29,8 @@ class LanguageSelectionScreen extends StatelessWidget {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              MyKOGColors.primaryDark,
-              MyKOGColors.secondary,
+              context.appColors.background,
+              context.appColors.surfaceVariant,
             ],
           ),
         ),
@@ -41,8 +41,8 @@ class LanguageSelectionScreen extends StatelessWidget {
             Container(
               padding: EdgeInsets.all(20.w),
               decoration: BoxDecoration(
-                color: MyKOGColors.secondary.withOpacity(0.5),
-                borderRadius: BorderRadius.circular(16.r),
+                color: context.appColors.surfaceVariant.withOpacity(0.5),
+                borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: MyKOGColors.accent.withOpacity(0.2),
                   width: 1.w,
@@ -59,7 +59,7 @@ class LanguageSelectionScreen extends StatelessWidget {
                   Text(
                     l10n.language,
                     style: theme.textTheme.headlineSmall?.copyWith(
-                      color: MyKOGColors.textPrimary,
+                      color: context.appColors.textPrimary,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -67,7 +67,7 @@ class LanguageSelectionScreen extends StatelessWidget {
                   Text(
                     'Select your preferred language',
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: MyKOGColors.textSecondary,
+                      color: context.appColors.textSecondary,
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -121,8 +121,8 @@ class LanguageSelectionScreen extends StatelessWidget {
                     child: Text(
                       'The app will restart with the selected language. Your settings and downloads will be preserved.',
                       style: TextStyle(
-                        color: MyKOGColors.textSecondary,
-                        fontSize: 13.sp,
+                        color: context.appColors.textSecondary,
+                        fontSize: 13,
                       ),
                     ),
                   ),
@@ -151,8 +151,8 @@ class LanguageSelectionScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: isSelected 
             ? MyKOGColors.accent.withOpacity(0.15)
-            : MyKOGColors.secondary,
-              borderRadius: BorderRadius.circular(16.r),
+            : context.appColors.surfaceVariant,
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isSelected 
               ? MyKOGColors.accent
@@ -178,7 +178,7 @@ class LanguageSelectionScreen extends StatelessWidget {
           decoration: BoxDecoration(
             color: isSelected 
                 ? MyKOGColors.accent.withOpacity(0.2)
-                : MyKOGColors.primaryDark.withOpacity(0.3),
+                : context.appColors.background.withOpacity(0.3),
             shape: BoxShape.circle,
           ),
           child: Center(
@@ -191,14 +191,14 @@ class LanguageSelectionScreen extends StatelessWidget {
         title: Text(
           languageName,
           style: theme.textTheme.titleMedium?.copyWith(
-            color: isSelected ? MyKOGColors.accent : MyKOGColors.textPrimary,
+            color: isSelected ? MyKOGColors.accent : context.appColors.textPrimary,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
           ),
         ),
         subtitle: Text(
           englishName,
           style: theme.textTheme.bodySmall?.copyWith(
-            color: MyKOGColors.textSecondary,
+            color: context.appColors.textSecondary,
           ),
         ),
         trailing: isSelected
@@ -216,8 +216,8 @@ class LanguageSelectionScreen extends StatelessWidget {
               )
             : Icon(
                 Icons.arrow_forward_ios,
-                color: MyKOGColors.textSecondary,
-                size: 16.sp,
+                color: context.appColors.textSecondary,
+                size: 16,
               ),
       ),
     );
@@ -236,8 +236,8 @@ class LanguageSelectionScreen extends StatelessWidget {
           child: Container(
             padding: EdgeInsets.all(24.w),
             decoration: BoxDecoration(
-              color: MyKOGColors.secondary,
-        borderRadius: BorderRadius.circular(16.r),
+              color: context.appColors.surfaceVariant,
+              borderRadius: BorderRadius.circular(16),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -246,7 +246,7 @@ class LanguageSelectionScreen extends StatelessWidget {
                 SizedBox(height: 16.h),
                 Text(
                   'Changing language...',
-                  style: TextStyle(color: MyKOGColors.textPrimary),
+                  style: TextStyle(color: context.appColors.textPrimary),
                 ),
               ],
             ),

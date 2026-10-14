@@ -15,6 +15,13 @@ class LiveStream {
   final DateTime createdAt;
   final DateTime updatedAt;
 
+  // Champs LiveKit (WebRTC)
+  final String? streamKey;
+  final String? roomName;
+  final String? livekitUrl;
+  final String? whipUrl;
+  final String? ingressStreamKey;
+
   LiveStream({
     required this.id,
     required this.title,
@@ -31,6 +38,11 @@ class LiveStream {
     this.tags = const [],
     required this.createdAt,
     required this.updatedAt,
+    this.streamKey,
+    this.roomName,
+    this.livekitUrl,
+    this.whipUrl,
+    this.ingressStreamKey,
   });
 
   LiveStream copyWith({
@@ -49,6 +61,11 @@ class LiveStream {
     List<String>? tags,
     DateTime? createdAt,
     DateTime? updatedAt,
+    String? streamKey,
+    String? roomName,
+    String? livekitUrl,
+    String? whipUrl,
+    String? ingressStreamKey,
   }) {
     return LiveStream(
       id: id ?? this.id,
@@ -66,6 +83,11 @@ class LiveStream {
       tags: tags ?? this.tags,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      streamKey: streamKey ?? this.streamKey,
+      roomName: roomName ?? this.roomName,
+      livekitUrl: livekitUrl ?? this.livekitUrl,
+      whipUrl: whipUrl ?? this.whipUrl,
+      ingressStreamKey: ingressStreamKey ?? this.ingressStreamKey,
     );
   }
 
@@ -86,6 +108,11 @@ class LiveStream {
       'tags': tags,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
+      'streamKey': streamKey,
+      'roomName': roomName,
+      'livekitUrl': livekitUrl,
+      'whipUrl': whipUrl,
+      'ingressStreamKey': ingressStreamKey,
     };
   }
 
@@ -123,9 +150,14 @@ class LiveStream {
               : (json['startedAt'] as DateTime?))
           : null,
       viewerCount: (json['viewerCount'] as int?) ?? 0,
-      tags: json['tags'] != null 
+      tags: json['tags'] != null
           ? List<String>.from((json['tags'] as List).map((e) => e.toString()))
           : [],
+      streamKey: json['streamKey']?.toString(),
+      roomName: json['roomName']?.toString(),
+      livekitUrl: json['livekitUrl']?.toString(),
+      whipUrl: json['whipUrl']?.toString(),
+      ingressStreamKey: json['ingressStreamKey']?.toString(),
       createdAt: json['createdAt'] != null
           ? (json['createdAt'] is String 
               ? DateTime.parse(json['createdAt'] as String) 

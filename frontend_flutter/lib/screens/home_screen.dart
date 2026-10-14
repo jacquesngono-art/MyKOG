@@ -168,8 +168,8 @@ class _HomeScreenState extends State<HomeScreen> {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            MyKOGColors.primaryDark,
-            MyKOGColors.secondary,
+            context.appColors.background,
+            context.appColors.surfaceVariant,
           ],
         ),
       ),
@@ -188,14 +188,14 @@ class _HomeScreenState extends State<HomeScreen> {
                     Text(
                       greetingTime,
                       style: theme.textTheme.titleMedium?.copyWith(
-                        color: MyKOGColors.textSecondary,
+                        color: context.appColors.textSecondary,
                       ),
                     ).animate().fadeIn().slideY(),
                     SizedBox(height: 4.h),
                     Text(
                       userName,
                       style: theme.textTheme.headlineMedium?.copyWith(
-                        color: MyKOGColors.textPrimary,
+                        color: context.appColors.textPrimary,
                         fontWeight: FontWeight.bold,
                       ),
                     ).animate(delay: 200.ms).fadeIn().slideY(),
@@ -269,7 +269,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 Text(
                   '"Nous Avons un puissant culte ce dimanche ! Rejoignez-nous pour une experience spirituelle transformative."',
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: MyKOGColors.textPrimary,
+                    color: context.appColors.textPrimary,
                     height: 1.5,
                     fontStyle: FontStyle.italic,
                   ),
@@ -278,7 +278,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 Text(
                   'Communiquez !',
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: MyKOGColors.textSecondary,
+                    color: context.appColors.textSecondary,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -305,7 +305,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Text(
             title,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: MyKOGColors.textPrimary,
+                  color: context.appColors.textPrimary,
                   fontWeight: FontWeight.bold,
                 ),
           ),
@@ -356,13 +356,13 @@ class _HomeScreenState extends State<HomeScreen> {
           Icon(
             Icons.cloud_off_outlined,
             size: 80.w,
-            color: MyKOGColors.textSecondary.withValues(alpha: 0.5),
+            color: context.appColors.textSecondary.withValues(alpha: 0.5),
           ),
           SizedBox(height: 24.h),
           Text(
             'Mode hors ligne',
             style: theme.textTheme.titleLarge?.copyWith(
-              color: MyKOGColors.textPrimary,
+              color: context.appColors.textPrimary,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -371,7 +371,7 @@ class _HomeScreenState extends State<HomeScreen> {
             'Aucun contenu téléchargé disponible.\nTéléchargez des enseignements pour les écouter hors ligne.',
             textAlign: TextAlign.center,
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: MyKOGColors.textSecondary,
+              color: context.appColors.textSecondary,
             ),
           ),
         ],

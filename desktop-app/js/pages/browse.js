@@ -53,8 +53,8 @@ const BrowsePage = {
   },
 
   renderSections(s) {
-    const recommended = Store.getRecommendedTeachings();
-    const popular = Store.getPopularTeachings(6);
+    const recommended = Store.getRandomTeachings(5);
+    const allTeachings = Store.getAllTeachingsSorted();
     const categories = s.categories;
     const typeCultes = s.typeCultes;
     const colors = ['#d4af37', '#1db954', '#3b82f6', '#8b5cf6', '#f59e0b', '#14b8a6'];
@@ -81,13 +81,13 @@ const BrowsePage = {
         </div>
       ` : ''}
 
-      ${popular.length ? `
+      ${allTeachings.length ? `
         <div class="section-header" style="margin-top: 24px;">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
-          <h2>Populaires cette semaine</h2>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+          <h2>Tous les enseignements disponibles</h2>
         </div>
         <div class="horizontal-list">
-          ${popular.map(t => BrowsePage.renderCard(t)).join('')}
+          ${allTeachings.map(t => BrowsePage.renderCard(t)).join('')}
         </div>
       ` : ''}
 

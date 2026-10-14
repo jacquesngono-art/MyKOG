@@ -114,8 +114,8 @@ class _CoverFlowListState extends State<CoverFlowList> {
                               width: double.infinity,
                               height: double.infinity,
                               errorBuilder: (context, error, stackTrace) => Container(
-                                color: MyKOGColors.secondary,
-                                child: Center(
+                                color: context.appColors.surfaceVariant,
+                                child: const Center(
                                   child: Icon(
                                     Icons.music_note,
                                     color: MyKOGColors.accent,
@@ -128,14 +128,23 @@ class _CoverFlowListState extends State<CoverFlowList> {
                               url: teaching.artworkUrl,
                               width: double.infinity,
                               height: double.infinity,
-                              fit: BoxFit.cover,
-                              placeholder: Container(
-                                color: MyKOGColors.secondary,
-                                child: Center(
+                              placeholder: (context, url) => Container(
+                                color: context.appColors.surfaceVariant,
+                                child: const Center(
                                   child: Icon(
                                     Icons.music_note,
                                     color: MyKOGColors.accent,
-                                    size: 32.sp,
+                                    size: 32,
+                                  ),
+                                ),
+                              ),
+                              errorWidget: (context, url, error) => Container(
+                                color: context.appColors.surfaceVariant,
+                                child: const Center(
+                                  child: Icon(
+                                    Icons.music_note,
+                                    color: MyKOGColors.accent,
+                                    size: 32,
                                   ),
                                 ),
                               ),
@@ -239,7 +248,7 @@ class _CoverFlowListState extends State<CoverFlowList> {
               Text(
                 teaching.title,
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: MyKOGColors.textPrimary,
+                      color: context.appColors.textPrimary,
                       fontWeight: FontWeight.w600,
                     ),
                 textAlign: TextAlign.center,
@@ -248,7 +257,7 @@ class _CoverFlowListState extends State<CoverFlowList> {
               Text(
                 teaching.speaker,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: MyKOGColors.textSecondary,
+                      color: context.appColors.textSecondary,
                     ),
                 textAlign: TextAlign.center,
                 maxLines: 1,

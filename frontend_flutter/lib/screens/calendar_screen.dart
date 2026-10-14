@@ -136,19 +136,18 @@ class _CalendarScreenState extends State<CalendarScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: MyKOGColors.primaryDark,
-      resizeToAvoidBottomInset: false,
+      backgroundColor: context.appColors.background,
       appBar: AppBar(
-        backgroundColor: MyKOGColors.primaryDark,
+        backgroundColor: context.appColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: MyKOGColors.textPrimary),
+          icon: Icon(Icons.arrow_back, color: context.appColors.textPrimary),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
           'Calendrier',
           style: theme.textTheme.titleLarge?.copyWith(
-            color: MyKOGColors.textPrimary,
+            color: context.appColors.textPrimary,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -170,19 +169,19 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(Icons.calendar_today,
-                          size: 64.w, color: MyKOGColors.textSecondary),
+                          size: 64.w, color: context.appColors.textSecondary),
                       SizedBox(height: 16.h),
                       Text(
                         'Aucun événement',
                         style: theme.textTheme.titleMedium?.copyWith(
-                          color: MyKOGColors.textPrimary,
+                          color: context.appColors.textPrimary,
                         ),
                       ),
                       SizedBox(height: 8.h),
                       Text(
                         'Les événements apparaîtront ici',
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: MyKOGColors.textSecondary,
+                          color: context.appColors.textSecondary,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -226,18 +225,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
             icon: const Icon(Icons.chevron_left, color: MyKOGColors.accent),
             onPressed: _previousMonth,
           ),
-          Expanded(
-            child: Text(
-              monthName,
-              style: theme.textTheme.headlineSmall?.copyWith(
-                color: MyKOGColors.textPrimary,
-                fontWeight: FontWeight.bold,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-            ).animate().fadeIn().slideX(),
-          ),
+          Text(
+            monthName,
+            style: theme.textTheme.headlineSmall?.copyWith(
+              color: context.appColors.textPrimary,
+              fontWeight: FontWeight.bold,
+            ),
+          ).animate().fadeIn().slideX(),
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -279,7 +273,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   child: Text(
                     day,
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: MyKOGColors.textSecondary,
+                      color: context.appColors.textSecondary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -288,7 +282,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
             }).toList(),
           ),
           SizedBox(height: 8.h),
-          Divider(color: MyKOGColors.textTertiary, height: 1.h),
+          Divider(color: context.appColors.textTertiary, height: 1.h),
           SizedBox(height: 8.h),
 
           // Grille du calendrier
@@ -354,7 +348,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                       ? MyKOGColors.accent
                                       : isToday
                                           ? MyKOGColors.accent
-                                          : MyKOGColors.textPrimary,
+                                          : context.appColors.textPrimary,
                                   fontWeight: isSelected || isToday
                                       ? FontWeight.bold
                                       : FontWeight.normal,
@@ -402,7 +396,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
             child: Text(
               DateFormat('EEEE d MMMM', 'fr_FR').format(_selectedDate),
               style: theme.textTheme.titleLarge?.copyWith(
-                color: MyKOGColors.textPrimary,
+                color: context.appColors.textPrimary,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -418,7 +412,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
           child: Text(
             'Événements du mois',
             style: theme.textTheme.titleLarge?.copyWith(
-              color: MyKOGColors.textPrimary,
+              color: context.appColors.textPrimary,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -431,13 +425,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
               child: Center(
                 child: Column(
                   children: [
-                      Icon(Icons.event_busy,
-                          size: 48.w, color: MyKOGColors.textSecondary),
-                    SizedBox(height: 12.h),
+                    Icon(Icons.event_busy,
+                        size: 48, color: context.appColors.textSecondary),
+                    const SizedBox(height: 12),
                     Text(
                       'Aucun événement ce mois-ci',
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: MyKOGColors.textSecondary,
+                        color: context.appColors.textSecondary,
                       ),
                     ),
                   ],
@@ -491,7 +485,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     Text(
                       event.title,
                       style: theme.textTheme.titleMedium?.copyWith(
-                        color: MyKOGColors.textPrimary,
+                        color: context.appColors.textPrimary,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -500,7 +494,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       Text(
                         event.description!,
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: MyKOGColors.textSecondary,
+                          color: context.appColors.textSecondary,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -510,12 +504,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     Row(
                       children: [
                         Icon(Icons.access_time,
-                            size: 14.sp, color: MyKOGColors.textSecondary),
-                        SizedBox(width: 4.w),
+                            size: 14, color: context.appColors.textSecondary),
+                        const SizedBox(width: 4),
                         Text(
                           '${dateFormat.format(event.startDate)} ${event.isAllDay ? '' : 'à ${timeFormat.format(event.startDate)}'}',
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: MyKOGColors.textSecondary,
+                            color: context.appColors.textSecondary,
                           ),
                         ),
                       ],
@@ -525,13 +519,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       Row(
                         children: [
                           Icon(Icons.location_on,
-                              size: 14.sp, color: MyKOGColors.textSecondary),
-                          SizedBox(width: 4.w),
+                              size: 14, color: context.appColors.textSecondary),
+                          const SizedBox(width: 4),
                           Expanded(
                             child: Text(
                               event.location!,
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: MyKOGColors.textSecondary,
+                                color: context.appColors.textSecondary,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -545,8 +539,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
               ),
               if (_isAdmin)
                 IconButton(
-                  icon: const Icon(Icons.more_vert,
-                      color: MyKOGColors.textSecondary),
+                  icon: Icon(Icons.more_vert,
+                      color: context.appColors.textSecondary),
                   onPressed: () => _showEventActions(context, event),
                 ),
             ],
@@ -559,9 +553,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
   void _showEventDetails(BuildContext context, CalendarEvent event) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: MyKOGColors.secondary,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+      backgroundColor: context.appColors.surfaceVariant,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) => Container(
         padding: EdgeInsets.all(24.w),
@@ -572,7 +566,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
             Text(
               event.title,
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    color: MyKOGColors.textPrimary,
+                    color: context.appColors.textPrimary,
                     fontWeight: FontWeight.bold,
                   ),
             ),
@@ -581,7 +575,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
               Text(
                 event.description!,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: MyKOGColors.textSecondary,
+                      color: context.appColors.textSecondary,
                     ),
               ),
             ],
@@ -610,7 +604,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
             child: Text(
               text,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: MyKOGColors.textPrimary,
+                    color: context.appColors.textPrimary,
                   ),
             ),
           ),
@@ -622,9 +616,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
   void _showEventActions(BuildContext context, CalendarEvent event) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: MyKOGColors.secondary,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+      backgroundColor: context.appColors.surfaceVariant,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) => Container(
         padding: EdgeInsets.all(24.w),
@@ -633,7 +627,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
           children: [
             ListTile(
               leading: const Icon(Icons.edit, color: MyKOGColors.accent),
-              title: const Text('Modifier', style: TextStyle(color: MyKOGColors.textPrimary)),
+              title: Text('Modifier', style: TextStyle(color: context.appColors.textPrimary)),
               onTap: () {
                 Navigator.pop(context);
                 _showEditEventDialog(context, event);
@@ -658,9 +652,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: MyKOGColors.secondary,
-        title: const Text('Nouvel événement', style: TextStyle(color: MyKOGColors.textPrimary)),
-        content: const Text('Formulaire à implémenter', style: TextStyle(color: MyKOGColors.textSecondary)),
+        backgroundColor: context.appColors.surfaceVariant,
+        title: Text('Nouvel événement', style: TextStyle(color: context.appColors.textPrimary)),
+        content: Text('Formulaire à implémenter', style: TextStyle(color: context.appColors.textSecondary)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -676,9 +670,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: MyKOGColors.secondary,
-        title: const Text('Modifier l\'événement', style: TextStyle(color: MyKOGColors.textPrimary)),
-        content: const Text('Formulaire à implémenter', style: TextStyle(color: MyKOGColors.textSecondary)),
+        backgroundColor: context.appColors.surfaceVariant,
+        title: Text('Modifier l\'événement', style: TextStyle(color: context.appColors.textPrimary)),
+        content: Text('Formulaire à implémenter', style: TextStyle(color: context.appColors.textSecondary)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -693,11 +687,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: MyKOGColors.secondary,
-        title: const Text('Supprimer l\'événement', style: TextStyle(color: MyKOGColors.textPrimary)),
+        backgroundColor: context.appColors.surfaceVariant,
+        title: Text('Supprimer l\'événement', style: TextStyle(color: context.appColors.textPrimary)),
         content: Text(
           'Êtes-vous sûr de vouloir supprimer "${event.title}" ?',
-          style: const TextStyle(color: MyKOGColors.textSecondary),
+          style: TextStyle(color: context.appColors.textSecondary),
         ),
         actions: [
           TextButton(

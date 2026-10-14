@@ -223,25 +223,22 @@ class _MainAppState extends State<MainApp> with TickerProviderStateMixin {
       return _buildLoadingScreen(context);
     }
     return Scaffold(
-      backgroundColor: MyKOGColors.primaryDark,
-      resizeToAvoidBottomInset: false,
-      body: SafeArea(
-        child: FadeTransition(
-          opacity: _fadeAnimation,
-          child: Stack(
-            children: [
-              IndexedStack(
-                index: _currentIndex,
-                children: _screens,
-              ),
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 70.h,
-                child: const MiniPlayerImproved(),
-              ),
-            ],
-          ),
+      backgroundColor: context.appColors.background,
+      body: FadeTransition(
+        opacity: _fadeAnimation,
+        child: Stack(
+          children: [
+            IndexedStack(
+              index: _currentIndex,
+              children: _screens,
+            ),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 70.h,
+              child: const MiniPlayerImproved(),
+            ),
+          ],
         ),
       ),
       bottomNavigationBar: _buildBottomNavigationBar(),
@@ -250,7 +247,7 @@ class _MainAppState extends State<MainApp> with TickerProviderStateMixin {
 
   Widget _buildLoadingScreen(BuildContext context) {
     return Scaffold(
-      backgroundColor: MyKOGColors.primaryDark,
+      backgroundColor: context.appColors.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -281,7 +278,7 @@ class _MainAppState extends State<MainApp> with TickerProviderStateMixin {
         Text(
           'MyKOG',
           style: GoogleFonts.poppins(
-            color: MyKOGColors.textPrimary,
+            color: context.appColors.textPrimary,
             fontSize: 24.sp,
             fontWeight: FontWeight.w600,
             letterSpacing: 4,
@@ -325,7 +322,7 @@ class _MainAppState extends State<MainApp> with TickerProviderStateMixin {
                   _loadingParagraphs[currentIndex],
                   textAlign: TextAlign.center,
                   style: GoogleFonts.poppins(
-                    color: MyKOGColors.textPrimary,
+                    color: context.appColors.textPrimary,
                     fontSize: 16.sp,
                     fontWeight: FontWeight.w400,
                     height: 1.5,
@@ -340,7 +337,7 @@ class _MainAppState extends State<MainApp> with TickerProviderStateMixin {
                     _loadingParagraphs[nextIndex],
                     textAlign: TextAlign.center,
                     style: GoogleFonts.poppins(
-                      color: MyKOGColors.textPrimary,
+                      color: context.appColors.textPrimary,
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w400,
                       height: 1.5,
@@ -375,7 +372,7 @@ class _MainAppState extends State<MainApp> with TickerProviderStateMixin {
   Widget _buildBottomNavigationBar() {
     return Container(
       decoration: BoxDecoration(
-        color: MyKOGColors.primaryDark,
+        color: context.appColors.background,
         border: Border(
           top: BorderSide(
             color: MyKOGColors.accent.withValues(alpha: 0.2),
@@ -461,7 +458,7 @@ class _MainAppState extends State<MainApp> with TickerProviderStateMixin {
                     icon,
                     color: isSelected
                         ? MyKOGColors.accent
-                        : MyKOGColors.textSecondary,
+                        : context.appColors.textSecondary,
                     size: 22.w,
                   ),
                 ),
@@ -472,7 +469,7 @@ class _MainAppState extends State<MainApp> with TickerProviderStateMixin {
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: isSelected
                               ? MyKOGColors.accent
-                              : MyKOGColors.textSecondary,
+                              : context.appColors.textSecondary,
                           fontWeight:
                               isSelected ? FontWeight.w700 : FontWeight.normal,
                           fontSize: 10.sp,

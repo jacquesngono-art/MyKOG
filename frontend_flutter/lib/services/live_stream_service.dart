@@ -27,6 +27,7 @@ class LiveStreamService {
         tags: ['worship', 'sunday service', 'live'],
         createdAt: now.subtract(const Duration(days: 1)),
         updatedAt: now,
+        roomName: 'live1',
       ),
       LiveStream(
         id: 'live2',
@@ -44,6 +45,7 @@ class LiveStreamService {
         tags: ['bible study', 'teaching', 'wednesday'],
         createdAt: now.subtract(const Duration(days: 2)),
         updatedAt: now,
+        roomName: 'live2',
       ),
       LiveStream(
         id: 'live3',
@@ -61,6 +63,7 @@ class LiveStreamService {
         tags: ['youth', 'worship', 'friday'],
         createdAt: now.subtract(const Duration(days: 3)),
         updatedAt: now,
+        roomName: 'live3',
       ),
     ];
   }
@@ -185,6 +188,40 @@ class LiveStreamService {
       return result?['viewerCount'];
     } catch (e) {
       debugPrint('Erreur getViewerCount: $e');
+      return null;
+    }
+  }
+
+  /// Obtenir un token viewer LiveKit pour rejoindre un live
+  /// Retourne: { id, token, url, roomName, identity }
+  static Future<Map<String, dynamic>?> getViewerToken(String id,
+      {String? userId}) async {
+    try {
+      return await _apiService.getViewerToken(id, userId: userId);
+    } catch (e) {
+      debugPrint('Erreur getViewerToken: $e');
+      return null;
+    }
+  }
+
+  /// Obtenir un token publisher LiveKit pour diffuser (OBS / app desktop)
+  /// Retourne: { id, url, roomName, whipUrl, streamKey, ingressId }
+  static Future<Map<String, dynamic>?> getPublisherToken(String id) async {
+    try {
+      return await _apiService.getPublisherToken(id);
+    } catch (e) {
+      debugPrint('Erreur getPublisherToken: $e');
+      return null;
+    }
+  }
+
+  /// Obtenir les informations du serveur de streaming
+  /// Retourne: { livekitUrl, whipUrl, defaultStreamKey }
+  static Future<Map<String, dynamic>?> getServerInfo() async {
+    try {
+      return await _apiService.getServerInfo();
+    } catch (e) {
+      debugPrint('Erreur getServerInfo: $e');
       return null;
     }
   }

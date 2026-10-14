@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:livekit_client/livekit_client.dart';
 import 'package:MyKOG/models/live_stream.dart';
 import 'package:MyKOG/api/live_api_service.dart';
+import 'package:MyKOG/widgets/live_comments.dart';
 import 'package:MyKOG/theme.dart';
 
 /// Écran de lecture de live stream via LiveKit (WebRTC)
@@ -21,23 +22,23 @@ class LivePlayerScreen extends StatefulWidget {
 }
 
 class _LivePlayerScreenState extends State<LivePlayerScreen> {
-  Room? _room;
-  RemoteParticipant? _participant;
-  VideoTrack? _videoTrack;
-  EventsListener<RoomEvent>? _listener;
   final LiveApiService _apiService = LiveApiService();
+
+  Room? _room;
+  EventsListener<RoomEvent>? _listener;
+  VideoTrack? _videoTrack;
 
   int _viewerCount = 0;
   Timer? _viewerCountTimer;
   bool _isLoading = true;
   bool _hasError = false;
   String? _errorMessage;
-  bool _isConnected = false;
+  bool _isReconnecting = false;
 
   @override
   void initState() {
     super.initState();
-    _connectToLive();
+    _connectToRoom();
     _joinLive();
     _startViewerCountPolling();
   }
@@ -46,68 +47,189 @@ class _LivePlayerScreenState extends State<LivePlayerScreen> {
   void dispose() {
     _leaveLive();
     _viewerCountTimer?.cancel();
-    _disconnectFromLive();
+    _disconnectRoom();
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     super.dispose();
   }
 
-  /// Se connecter au live via LiveKit
-  Future<void> _connectToLive() async {
-    setState(() {
-      _isLoading = true;
-      _hasError = false;
-    });
-
+  /// Déconnecter et libérer la room LiveKit
+  Future<void> _disconnectRoom() async {
     try {
-      // 1. Obtenir le token via API
+      await _listener?.dispose();
+    } catch (_) {}
+    _listener = null;
+
+    final room = _room;
+    _room = null;
+    if (room != null) {
+      try {
+        await room.disconnect();
+      } catch (_) {}
+      try {
+        await room.dispose();
+      } catch (_) {}
+    }
+    _videoTrack = null;
+  }
+
+  /// Attacher un track vidéo distant
+  void _attachVideoTrack(VideoTrack track) {
+    if (!mounted || _videoTrack == track) return;
+    debugPrint('📺 Track vidéo attaché');
+    setState(() {
+      _videoTrack = track;
+    });
+  }
+
+  /// Détacher le track vidéo courant
+  void _detachVideoTrack() {
+    if (!mounted || _videoTrack == null) return;
+    setState(() {
+      _videoTrack = null;
+    });
+  }
+
+  /// Connecter la room LiveKit et afficher le flux du broadcaster
+  Future<void> _connectToRoom() async {
+    try {
+      if (mounted) {
+        setState(() {
+          _isLoading = true;
+          _hasError = false;
+          _errorMessage = null;
+        });
+      }
+
+      // Nettoyer une éventuelle room précédente (cas d'un retry)
+      await _disconnectRoom();
+
+      // 1. Déterminer l'URL LiveKit (modèle → server-info → token)
+      String? livekitUrl = widget.liveStream.livekitUrl;
+      if (livekitUrl == null || livekitUrl.isEmpty) {
+        final serverInfo = await _apiService.getServerInfo();
+        livekitUrl = serverInfo['livekitUrl'] as String?;
+      }
+
+      // 2. Obtenir le token viewer depuis le backend
       final tokenData = await _apiService.getViewerToken(widget.liveStream.id);
-      if (tokenData == null) {
-        throw Exception('Impossible d\'obtenir le token LiveKit');
+      final token = tokenData['token'] as String?;
+      livekitUrl ??= tokenData['url'] as String?;
+
+      if (token == null || token.isEmpty) {
+        throw Exception('Token viewer introuvable');
+      }
+      if (livekitUrl == null || livekitUrl.isEmpty) {
+        throw Exception('URL LiveKit introuvable');
       }
 
-      final token = tokenData['token']?.toString() ?? '';
-      final url = tokenData['url']?.toString() ?? widget.liveStream.livekitUrl;
+      debugPrint(
+          '🎥 Connexion LiveKit: $livekitUrl (room: ${tokenData['roomName']})');
 
-      if (token.isEmpty || url.isEmpty) {
-        throw Exception('Token ou URL LiveKit manquant');
+      // 3. Créer la room et écouter les événements
+      final room = Room(
+        roomOptions: const RoomOptions(
+          adaptiveStream: true,
+          dynacast: true,
+        ),
+      );
+      _room = room;
+
+      final listener = room.createListener();
+      _listener = listener;
+
+      listener
+        ..on<TrackSubscribedEvent>((event) {
+          debugPrint('📡 Track subscribed: ${event.track.kind}');
+          final track = event.track;
+          if (track is VideoTrack) {
+            _attachVideoTrack(track);
+          }
+        })
+        ..on<TrackUnsubscribedEvent>((event) {
+          final track = event.track;
+          if (track is VideoTrack && track == _videoTrack) {
+            _detachVideoTrack();
+          }
+        })
+        ..on<RoomReconnectingEvent>((event) {
+          debugPrint('🔄 Reconnexion LiveKit en cours...');
+          if (mounted) {
+            setState(() {
+              _isReconnecting = true;
+            });
+          }
+        })
+        ..on<RoomReconnectedEvent>((event) {
+          debugPrint('✅ Reconnecté à la room LiveKit');
+          if (mounted) {
+            setState(() {
+              _isReconnecting = false;
+            });
+          }
+          _attachExistingVideoTracks();
+        })
+        ..on<RoomDisconnectedEvent>((event) {
+          debugPrint('🔌 Room LiveKit déconnectée');
+          if (mounted) {
+            setState(() {
+              _isReconnecting = false;
+              _videoTrack = null;
+              _hasError = true;
+              _errorMessage =
+                  'La connexion au live a été perdue.\n\nLe live est peut-être terminé ou vérifiez votre connexion internet.';
+            });
+          }
+        });
+
+      // 4. Connecter la room
+      await room.connect(livekitUrl, token);
+
+      // 5. Attacher les tracks déjà publiés (arrivée après le début du live)
+      _attachExistingVideoTracks();
+
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
       }
-
-      debugPrint('🎥 Connexion à LiveKit: $url, room: ${tokenData['roomName']}');
-
-      // 2. Connecter la room LiveKit
-      _room = Room();
-      await _room!.connect(url, token);
-
-      // 3. Écouter les événements de la room
-      _setupRoomListeners();
-
-      // 4. Vérifier les participants déjà connectés
-      _tryAttachVideoTrack();
-
-      setState(() {
-        _isLoading = false;
-        _isConnected = true;
-      });
+      debugPrint('✅ Connecté à la room LiveKit');
     } catch (e, stackTrace) {
       debugPrint('❌ Erreur connexion LiveKit: $e');
       debugPrint('📚 Stack trace: $stackTrace');
 
-      String errorMsg = 'Erreur lors de la connexion au live';
-      if (e.toString().contains('timeout') ||
-          e.toString().contains('Timeout')) {
+      String errorMsg;
+      if (e.toString().contains('pas encore actif')) {
         errorMsg =
-            'Timeout: Le serveur LiveKit ne répond pas.\n\nVérifiez que:\n• Le live est actif\n• Le diffuseur est connecté';
-      } else if (e.toString().contains('token') ||
-          e.toString().contains('Token')) {
-        errorMsg =
-            'Erreur d\'authentification LiveKit.\n\nImpossible d\'obtenir un token valide.';
+            'Le live n\'est pas encore actif.\n\nRéessayez dans quelques instants.';
+      } else if (e.toString().contains('connexion internet')) {
+        errorMsg = 'Aucune connexion internet.\n\nVérifiez votre réseau.';
+      } else {
+        errorMsg = 'Erreur de connexion au live:\n${e.toString()}';
       }
 
-      setState(() {
-        _isLoading = false;
-        _hasError = true;
-        _errorMessage = errorMsg;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _hasError = true;
+          _errorMessage = errorMsg;
+        });
+      }
+    }
+  }
+
+  /// Attacher les tracks vidéo déjà souscrits parmi les participants distants
+  void _attachExistingVideoTracks() {
+    final room = _room;
+    if (room == null) return;
+
+    for (final participant in room.remoteParticipants.values) {
+      for (final publication in participant.videoTrackPublications) {
+        final track = publication.track;
+        if (track != null) {
+          _attachVideoTrack(track);
+          return;
+        }
+      }
     }
   }
 
@@ -235,33 +357,54 @@ class _LivePlayerScreenState extends State<LivePlayerScreen> {
       backgroundColor: Colors.black,
       resizeToAvoidBottomInset: false,
       body: SafeArea(
-        child: Stack(
+        child: Column(
           children: [
-            // Lecteur vidéo LiveKit
-            _buildVideoPlayer(),
+            // Zone vidéo 16:9 avec overlays
+            AspectRatio(
+              aspectRatio: 16 / 9,
+              child: Stack(
+                children: [
+                  // Lecteur vidéo LiveKit
+                  Positioned.fill(child: _buildVideoPlayer()),
 
-            // Header avec informations
-            _buildHeader(),
+                  // Header avec informations
+                  _buildHeader(),
 
-            // Bouton retour
-            Positioned(
-              top: 16,
-              left: 16,
-              child: _buildBackButton(),
+                  // Bouton retour
+                  Positioned(
+                    top: 8,
+                    left: 8,
+                    child: _buildBackButton(),
+                  ),
+
+                  // Compteur de viewers
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: _buildViewerCounter(),
+                  ),
+
+                  // Badge LIVE
+                  Positioned(
+                    top: 52,
+                    left: 12,
+                    child: _buildLiveBadge(),
+                  ),
+
+                  // Indicateur de reconnexion
+                  if (_isReconnecting)
+                    Positioned(
+                      top: 52,
+                      right: 8,
+                      child: _buildReconnectingBadge(),
+                    ),
+                ],
+              ),
             ),
 
-            // Compteur de viewers
-            Positioned(
-              top: 16,
-              right: 16,
-              child: _buildViewerCounter(),
-            ),
-
-            // Badge LIVE
-            Positioned(
-              top: 70,
-              left: 16,
-              child: _buildLiveBadge(),
+            // Section commentaires (style Reddit)
+            Expanded(
+              child: LiveCommentsPanel(liveId: widget.liveStream.id),
             ),
           ],
         ),
@@ -278,7 +421,7 @@ class _LivePlayerScreenState extends State<LivePlayerScreen> {
 
     if (_hasError) {
       return Container(
-        color: MyKOGColors.primaryDark,
+        color: context.appColors.background,
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -292,8 +435,8 @@ class _LivePlayerScreenState extends State<LivePlayerScreen> {
               Text(
                 'Erreur de chargement du stream',
                 style: TextStyle(
-                  color: MyKOGColors.textPrimary,
-                  fontSize: 18.sp,
+                  color: context.appColors.textPrimary,
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -303,18 +446,15 @@ class _LivePlayerScreenState extends State<LivePlayerScreen> {
                 child: Text(
                   _errorMessage ?? 'Impossible de charger le live',
                   style: TextStyle(
-                    color: MyKOGColors.textSecondary,
-                    fontSize: 14.sp,
+                    color: context.appColors.textSecondary,
+                    fontSize: 14,
                   ),
                   textAlign: TextAlign.center,
                 ),
               ),
               SizedBox(height: 24.h),
               ElevatedButton.icon(
-                onPressed: () {
-                  _disconnectFromLive();
-                  _connectToLive();
-                },
+                onPressed: _connectToRoom,
                 icon: const Icon(Icons.refresh),
                 label: const Text('Réessayer'),
                 style: ElevatedButton.styleFrom(
@@ -328,29 +468,23 @@ class _LivePlayerScreenState extends State<LivePlayerScreen> {
       );
     }
 
-    // Connecté mais aucune piste vidéo disponible (diffuseur pas encore prêt)
-    if (_videoTrack == null) {
+    final videoTrack = _videoTrack;
+
+    // Connecté à la room mais le broadcaster n'a pas encore publié de vidéo
+    if (videoTrack == null) {
       return Container(
-        color: MyKOGColors.primaryDark,
+        color: context.appColors.background,
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const CircularProgressIndicator(color: MyKOGColors.accent),
-              SizedBox(height: 16.h),
+              const SizedBox(height: 16),
               Text(
-                'En attente du diffuseur...',
+                'En attente du flux vidéo...',
                 style: TextStyle(
-                  color: MyKOGColors.textPrimary,
-                  fontSize: 16.sp,
-                ),
-              ),
-              SizedBox(height: 8.h),
-              Text(
-                'Le live va démarrer automatiquement',
-                style: TextStyle(
-                  color: MyKOGColors.textSecondary,
-                  fontSize: 13.sp,
+                  color: context.appColors.textSecondary,
+                  fontSize: 14,
                 ),
               ),
             ],
@@ -359,52 +493,12 @@ class _LivePlayerScreenState extends State<LivePlayerScreen> {
       );
     }
 
-    // Déconnecté
-    if (!_isConnected) {
-      return Container(
-        color: MyKOGColors.primaryDark,
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.wifi_off,
-                color: MyKOGColors.textSecondary,
-                size: 64.sp,
-              ),
-              SizedBox(height: 16.h),
-              Text(
-                'Déconnecté du live',
-                style: TextStyle(
-                  color: MyKOGColors.textPrimary,
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(height: 24.h),
-              ElevatedButton.icon(
-                onPressed: () {
-                  _disconnectFromLive();
-                  _connectToLive();
-                },
-                icon: const Icon(Icons.refresh),
-                label: const Text('Reconnecter'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: MyKOGColors.accent,
-                  foregroundColor: Colors.white,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    // Afficher la vidéo LiveKit
     return Center(
-      child: VideoTrackRenderer(
-        _videoTrack!,
-        fit: VideoViewFit.cover,
+      child: AspectRatio(
+        aspectRatio: 16 / 9,
+        child: VideoTrackRenderer(
+          videoTrack,
+        ),
       ),
     );
   }
@@ -553,6 +647,38 @@ class _LivePlayerScreenState extends State<LivePlayerScreen> {
               fontWeight: FontWeight.bold,
               fontSize: 12.sp,
               letterSpacing: 1.2,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReconnectingBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.orange.withOpacity(0.9),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: 12,
+            height: 12,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: Colors.white,
+            ),
+          ),
+          SizedBox(width: 6),
+          Text(
+            'Reconnexion...',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
             ),
           ),
         ],

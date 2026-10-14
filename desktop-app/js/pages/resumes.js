@@ -16,8 +16,47 @@ const ResumesPage = {
     if (resume.pdfUrl && resume.pdfUrl.includes('cloudinary.com')) {
       return resume.pdfUrl.replace('/upload/', '/upload/w_200,h_300,c_fit,pg_1/');
     }
-    if (resume.pdfUrl) return resume.pdfUrl;
+    // Un PDF brut (S3) ne peut pas servir de miniature dans un <img>
     return null;
+  },
+
+  // Génère la miniature de la 1ère page du PDF via pdf.js (bytes récupérés
+  // par le processus main → pas de blocage CORS). Résultat mis en cache.
+  async _pdfThumb(resume, slotEl) {
+    try {
+      const cacheKey = `pdfthumb_${resume.id}`;
+      let dataUrl = localStorage.getItem(cacheKey);
+
+      if (!dataUrl) {
+        if (!window.electronAPI?.fetchPdfBytes || !window.pdfjsLib) return;
+        if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+          pdfjsLib.GlobalWorkerOptions.workerSrc = 'node_modules/pdfjs-dist/build/pdf.worker.min.js';
+        }
+        const bytes = await window.electronAPI.fetchPdfBytes(resume.pdfUrl);
+        if (!bytes) return;
+        const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
+        const page = await pdf.getPage(1);
+        const viewport = page.getViewport({ scale: 1 });
+        const vp = page.getViewport({ scale: 480 / viewport.width });
+        const canvas = document.createElement('canvas');
+        canvas.width = vp.width;
+        canvas.height = vp.height;
+        await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+        dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+        try { localStorage.setItem(cacheKey, dataUrl); } catch (_) {}
+      }
+
+      if (slotEl.isConnected) {
+        slotEl.innerHTML = `<img src="${dataUrl}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;">`;
+      }
+    } catch (_) { /* conserve le placeholder */ }
+  },
+
+  renderPdfThumbs(rootEl) {
+    rootEl.querySelectorAll('.pdf-thumb-slot').forEach(slot => {
+      const resume = (Store.state.textResumes || []).find(r => String(r.id) === slot.dataset.rid);
+      if (resume && resume.pdfUrl) this._pdfThumb(resume, slot);
+    });
   },
 
   render() {
@@ -91,6 +130,8 @@ const ResumesPage = {
         `}
       </div>
     `;
+
+    this.renderPdfThumbs(el);
   },
 
   filterResumes(resumes) {
@@ -182,8 +223,10 @@ const ResumesPage = {
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
             </div>
           ` : `
-            <div class="resume-book-placeholder">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <div class="pdf-thumb-slot" data-rid="${resume.id}" style="width:100%;height:100%;">
+              <div class="resume-book-placeholder">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              </div>
             </div>
           `}
           ${hasPdf ? `<div class="resume-book-play"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>` : ''}

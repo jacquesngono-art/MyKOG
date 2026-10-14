@@ -29,8 +29,8 @@ import 'package:MyKOG/config/api_config.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 🌐 FORCER Render uniquement (pas de détection locale)
-  await ApiConfig.initializeRenderOnly();
+  // 🌐 FORCER l'API VPS uniquement (pas de détection locale)
+  await ApiConfig.initializeVpsOnly();
 
   // ⚡ Initialiser le stockage AVANT runApp : le sélecteur de route initiale
   // (FirstLaunchService) et les providers Langue/Thème en dépendent.
@@ -167,7 +167,7 @@ class _InitialRouteSelectorState extends State<InitialRouteSelector> {
   Widget build(BuildContext context) {
     // Afficher un écran de chargement pendant la vérification
     return Scaffold(
-      backgroundColor: MyKOGColors.primaryDark,
+      backgroundColor: context.appColors.background,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -182,7 +182,7 @@ class _InitialRouteSelectorState extends State<InitialRouteSelector> {
             Text(
               'MyKOG',
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    color: MyKOGColors.textPrimary,
+                    color: context.appColors.textPrimary,
                     fontWeight: FontWeight.bold,
                     fontSize: 24.sp,
                   ),

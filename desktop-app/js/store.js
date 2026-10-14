@@ -45,13 +45,13 @@ const Store = {
     };
   },
 
-  notify() {
-    this.listeners.forEach(l => l(this.state));
+  notify(changedKeys) {
+    this.listeners.forEach(l => l(this.state, changedKeys));
   },
 
   setState(updates) {
     Object.assign(this.state, updates);
-    this.notify();
+    this.notify(Object.keys(updates));
   },
 
   async initialize() {
@@ -303,8 +303,26 @@ const Store = {
     return this._shuffle(this.state.teachings).slice(0, limit);
   },
 
+  getRandomTeachings(limit = 5) {
+    return this._shuffle(this.state.teachings || []).slice(0, limit);
+  },
+
+  getAllTeachingsSorted() {
+    return [...(this.state.teachings || [])].sort((a, b) => {
+      if (a.isFeatured && !b.isFeatured) return -1;
+      if (!a.isFeatured && b.isFeatured) return 1;
+      if (a.isNew && !b.isNew) return -1;
+      if (!a.isNew && b.isNew) return 1;
+      return new Date(b.publishedAt) - new Date(a.publishedAt);
+    });
+  },
+
   getRecommendedTeachings() {
-    return this._shuffle(this.state.teachings).slice(0, 6);
+    const all = this.state.teachings || [];
+    // Recommandés = mis en avant + nouveaux (comme l'app mobile)
+    const flagged = all.filter(t => t.isFeatured || t.isNew);
+    const pool = flagged.length ? flagged : all;
+    return this._shuffle(pool).slice(0, 6);
   },
 
   getTypeCultes() {

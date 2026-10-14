@@ -283,7 +283,7 @@ class _TeachingsScreenState extends State<TeachingsScreen>
           Container(
             padding: EdgeInsets.fromLTRB(16.w, 60.h, 16.w, 16.h),
             decoration: BoxDecoration(
-              color: MyKOGColors.primaryDark,
+              color: context.appColors.background,
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.1),
@@ -302,7 +302,7 @@ class _TeachingsScreenState extends State<TeachingsScreen>
                       child: Text(
                         l10n.library,
                         style: theme.textTheme.headlineMedium?.copyWith(
-                          color: MyKOGColors.textPrimary,
+                          color: context.appColors.textPrimary,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -364,7 +364,7 @@ class _TeachingsScreenState extends State<TeachingsScreen>
                 // Tabs
                 Container(
                   decoration: BoxDecoration(
-                    color: MyKOGColors.secondary,
+                    color: context.appColors.surfaceVariant,
                     borderRadius: BorderRadius.circular(12.r),
                   ),
                   child: TabBar(
@@ -374,8 +374,8 @@ class _TeachingsScreenState extends State<TeachingsScreen>
                       color: MyKOGColors.accent,
                       borderRadius: BorderRadius.circular(12.r),
                     ),
-                    labelColor: MyKOGColors.primaryDark,
-                    unselectedLabelColor: MyKOGColors.textSecondary,
+                    labelColor: context.appColors.background,
+                    unselectedLabelColor: context.appColors.textSecondary,
                     labelStyle:
                         TextStyle(fontWeight: FontWeight.w600, fontSize: 13.sp),
                     unselectedLabelStyle: TextStyle(fontSize: 12.sp),
@@ -396,7 +396,7 @@ class _TeachingsScreenState extends State<TeachingsScreen>
                 if (_currentTabIndex == 0)
                   Container(
                     decoration: BoxDecoration(
-                      color: MyKOGColors.secondary,
+                      color: context.appColors.surfaceVariant,
                       borderRadius: BorderRadius.circular(12.r),
                       border: Border.all(
                         color: MyKOGColors.accent.withValues(alpha: 0.2),
@@ -406,16 +406,16 @@ class _TeachingsScreenState extends State<TeachingsScreen>
                     child: TextField(
                       controller: _searchController,
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: MyKOGColors.textPrimary,
+                        color: context.appColors.textPrimary,
                       ),
                       decoration: InputDecoration(
                         hintText: l10n.searchTeachings,
                         hintStyle: theme.textTheme.bodyMedium?.copyWith(
-                          color: MyKOGColors.textSecondary,
+                          color: context.appColors.textSecondary,
                         ),
                         prefixIcon: Icon(
                           Icons.search,
-                          color: MyKOGColors.textSecondary,
+                          color: context.appColors.textSecondary,
                         ),
                         suffixIcon: _searchController.text.isNotEmpty
                             ? IconButton(
@@ -425,7 +425,7 @@ class _TeachingsScreenState extends State<TeachingsScreen>
                                 },
                                 icon: Icon(
                                   Icons.clear,
-                                  color: MyKOGColors.textSecondary,
+                                  color: context.appColors.textSecondary,
                                 ),
                               )
                             : null,
@@ -474,12 +474,12 @@ class _TeachingsScreenState extends State<TeachingsScreen>
                         decoration: BoxDecoration(
                           color: isSelected
                               ? MyKOGColors.accent
-                              : MyKOGColors.secondary,
+                              : context.appColors.surfaceVariant,
                           borderRadius: BorderRadius.circular(20.r),
                           border: Border.all(
                             color: isSelected
                                 ? MyKOGColors.accent
-                                : MyKOGColors.textSecondary.withOpacity(0.3),
+                                : context.appColors.textSecondary.withOpacity(0.3),
                             width: 1.w,
                           ),
                         ),
@@ -490,7 +490,7 @@ class _TeachingsScreenState extends State<TeachingsScreen>
                               size: 14.w,
                               color: isSelected
                                   ? Colors.black
-                                  : MyKOGColors.textSecondary,
+                                  : context.appColors.textSecondary,
                             ),
                             SizedBox(width: 4.w),
                             Text(
@@ -498,7 +498,7 @@ class _TeachingsScreenState extends State<TeachingsScreen>
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: isSelected
                                     ? Colors.black
-                                    : MyKOGColors.textSecondary,
+                                    : context.appColors.textSecondary,
                                 fontWeight: isSelected
                                     ? FontWeight.w600
                                     : FontWeight.normal,
@@ -540,12 +540,12 @@ class _TeachingsScreenState extends State<TeachingsScreen>
                         decoration: BoxDecoration(
                           color: isSelected
                               ? MyKOGColors.accent.withOpacity(0.2)
-                              : MyKOGColors.secondary,
+                              : context.appColors.surfaceVariant,
                           borderRadius: BorderRadius.circular(20.r),
                           border: Border.all(
                             color: isSelected
                                 ? MyKOGColors.accent
-                                : MyKOGColors.textSecondary.withOpacity(0.3),
+                                : context.appColors.textSecondary.withOpacity(0.3),
                             width: 1.w,
                           ),
                         ),
@@ -556,7 +556,7 @@ class _TeachingsScreenState extends State<TeachingsScreen>
                               size: 14.w,
                               color: isSelected
                                   ? MyKOGColors.accent
-                                  : MyKOGColors.textSecondary,
+                                  : context.appColors.textSecondary,
                             ),
                             SizedBox(width: 4.w),
                             Text(
@@ -564,7 +564,7 @@ class _TeachingsScreenState extends State<TeachingsScreen>
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: isSelected
                                     ? MyKOGColors.accent
-                                    : MyKOGColors.textSecondary,
+                                    : context.appColors.textSecondary,
                                 fontWeight: isSelected
                                     ? FontWeight.w600
                                     : FontWeight.normal,
@@ -615,7 +615,7 @@ class _TeachingsScreenState extends State<TeachingsScreen>
             Text(
               l10n.loading,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: MyKOGColors.textSecondary,
+                    color: context.appColors.textSecondary,
                   ),
             ),
           ],
@@ -631,13 +631,13 @@ class _TeachingsScreenState extends State<TeachingsScreen>
             Icon(
               Icons.search_off,
               size: 64.w,
-              color: MyKOGColors.textSecondary,
+              color: context.appColors.textSecondary,
             ),
             SizedBox(height: 16.h),
             Text(
               l10n.noTeachingsFound,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: MyKOGColors.textSecondary,
+                    color: context.appColors.textSecondary,
                   ),
             ),
             SizedBox(height: 8.h),
@@ -646,7 +646,7 @@ class _TeachingsScreenState extends State<TeachingsScreen>
                   ? l10n.translate('try_adjusting_search')
                   : l10n.checkBackLater,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: MyKOGColors.textTertiary,
+                    color: context.appColors.textTertiary,
                   ),
             ),
           ],
@@ -692,7 +692,7 @@ class _TeachingsScreenState extends State<TeachingsScreen>
             Text(
               l10n.loading,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: MyKOGColors.textSecondary,
+                    color: context.appColors.textSecondary,
                   ),
             ),
           ],
@@ -723,21 +723,21 @@ class _TeachingsScreenState extends State<TeachingsScreen>
           children: [
             Icon(
               Icons.church,
-              size: 64.w,
-              color: MyKOGColors.textSecondary,
+              size: 64,
+              color: context.appColors.textSecondary,
             ),
             SizedBox(height: 16.h),
             Text(
               l10n.noTeachingsFound,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: MyKOGColors.textSecondary,
+                    color: context.appColors.textSecondary,
                   ),
             ),
             SizedBox(height: 8.h),
             Text(
               '${l10n.noDataAvailable} - $typeCulte',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: MyKOGColors.textTertiary,
+                    color: context.appColors.textTertiary,
                   ),
               textAlign: TextAlign.center,
             ),
@@ -783,7 +783,7 @@ class _TeachingsScreenState extends State<TeachingsScreen>
             Text(
               l10n.loading,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: MyKOGColors.textSecondary,
+                    color: context.appColors.textSecondary,
                   ),
             ),
           ],
@@ -798,21 +798,21 @@ class _TeachingsScreenState extends State<TeachingsScreen>
           children: [
             Icon(
               Icons.download,
-              size: 64.w,
-              color: MyKOGColors.textSecondary,
+              size: 64,
+              color: context.appColors.textSecondary,
             ),
             SizedBox(height: 16.h),
             Text(
               l10n.noDownloadsYet,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: MyKOGColors.textSecondary,
+                    color: context.appColors.textSecondary,
                   ),
             ),
             SizedBox(height: 8.h),
             Text(
               l10n.downloadToListenOffline,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: MyKOGColors.textTertiary,
+                    color: context.appColors.textTertiary,
                   ),
             ),
           ],

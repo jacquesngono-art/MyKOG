@@ -41,7 +41,7 @@ class TeachingTile extends StatelessWidget {
           margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
           decoration: BoxDecoration(
             color: isCurrentlyPlaying
-                ? (isDark ? MyKOGColors.secondary : Colors.grey.shade100)
+                ? (isDark ? context.appColors.surfaceVariant : Colors.grey.shade100)
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(12.r),
             border: isCurrentlyPlaying
@@ -65,7 +65,7 @@ class TeachingTile extends StatelessWidget {
                     style: theme.textTheme.titleMedium?.copyWith(
                       color: isCurrentlyPlaying
                           ? MyKOGColors.accent
-                          : (isDark ? MyKOGColors.textPrimary : Colors.black87),
+                          : (isDark ? context.appColors.textPrimary : Colors.black87),
                       fontWeight:
                           isCurrentlyPlaying ? FontWeight.w600 : FontWeight.w500,
                     ),
@@ -98,7 +98,7 @@ class TeachingTile extends StatelessWidget {
                   teaching.speaker,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: isDark
-                        ? MyKOGColors.textSecondary
+                        ? context.appColors.textSecondary
                         : Colors.grey.shade600,
                   ),
                   maxLines: 1,
@@ -109,14 +109,14 @@ class TeachingTile extends StatelessWidget {
                   Container(
                     padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
                     decoration: BoxDecoration(
-                      color: MyKOGColors.primary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8.r),
+                      color: context.appColors.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       teaching.typeCulte!,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: MyKOGColors.primary,
-                        fontSize: 11.sp,
+                        color: context.appColors.primary,
+                        fontSize: 11,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -128,7 +128,7 @@ class TeachingTile extends StatelessWidget {
                       teaching.durationText,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: isDark
-                            ? MyKOGColors.textTertiary
+                            ? context.appColors.textTertiary
                             : Colors.grey.shade500,
                         fontSize: 12.sp,
                       ),
@@ -187,14 +187,60 @@ class TeachingTile extends StatelessWidget {
           ),
         ],
       ),
-      child: TeachingArtwork(
-        teaching: teaching,
-        width: 56.w,
-        height: 56.h,
-        borderRadius: 8.r,
-        showPlayingOverlay: true,
-        isPlaying: isPlaying,
-        iconSize: 24.sp,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Stack(
+          children: [
+            teaching.artworkUrl.startsWith('assets/')
+                ? Image.asset(
+                    teaching.artworkUrl,
+                    width: 56,
+                    height: 56,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      color: context.appColors.surfaceVariant,
+                      child: const Icon(
+                        Icons.music_note,
+                        color: MyKOGColors.accent,
+                        size: 24,
+                      ),
+                    ),
+                  )
+                : CachedNetworkImage(
+                    imageUrl: teaching.artworkUrl,
+                    width: 56,
+                    height: 56,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => Container(
+                      color: context.appColors.surfaceVariant,
+                      child: const Icon(
+                        Icons.music_note,
+                        color: MyKOGColors.accent,
+                        size: 24,
+                      ),
+                    ),
+                    errorWidget: (context, url, error) => Container(
+                      color: context.appColors.surfaceVariant,
+                      child: const Icon(
+                        Icons.music_note,
+                        color: MyKOGColors.accent,
+                        size: 24,
+                      ),
+                    ),
+                  ),
+            if (isPlaying)
+              Container(
+                color: Colors.black.withValues(alpha: 0.4),
+                child: const Center(
+                  child: Icon(
+                    Icons.graphic_eq,
+                    color: MyKOGColors.accent,
+                    size: 24,
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -206,7 +252,7 @@ class TeachingTile extends StatelessWidget {
       icon: Icon(
         Icons.more_vert,
         color: Theme.of(context).brightness == Brightness.dark
-            ? MyKOGColors.textSecondary
+            ? context.appColors.textSecondary
             : Colors.grey.shade600,
       ),
       onSelected: (value) => _handleMenuAction(context, value, userProvider),
@@ -221,7 +267,7 @@ class TeachingTile extends StatelessWidget {
                     : Icons.download,
                 color: DownloadService.isDownloaded(teaching.id)
                     ? Colors.red
-                    : MyKOGColors.textSecondary,
+                    : context.appColors.textSecondary,
               ),
               SizedBox(width: 12.w),
               Text(DownloadService.isDownloaded(teaching.id)
@@ -234,8 +280,8 @@ class TeachingTile extends StatelessWidget {
           value: 'add_to_queue',
           child: Row(
             children: [
-              Icon(Icons.queue_music, color: MyKOGColors.textSecondary),
-              SizedBox(width: 12.w),
+              Icon(Icons.queue_music, color: context.appColors.textSecondary),
+              const SizedBox(width: 12),
               Text(l10n.addToQueue),
             ],
           ),
@@ -250,7 +296,7 @@ class TeachingTile extends StatelessWidget {
                   final isFavorite = snapshot.data ?? false;
                   return Icon(
                     isFavorite ? Icons.favorite : Icons.favorite_border,
-                    color: isFavorite ? Colors.red : MyKOGColors.textSecondary,
+                    color: isFavorite ? Colors.red : context.appColors.textSecondary,
                   );
                 },
               ),
@@ -271,8 +317,8 @@ class TeachingTile extends StatelessWidget {
           value: 'share',
           child: Row(
             children: [
-              Icon(Icons.share, color: MyKOGColors.textSecondary),
-              SizedBox(width: 12.w),
+              Icon(Icons.share, color: context.appColors.textSecondary),
+              const SizedBox(width: 12),
               Text(l10n.share),
             ],
           ),

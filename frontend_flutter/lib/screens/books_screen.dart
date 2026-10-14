@@ -67,23 +67,20 @@ class _BooksScreenState extends State<BooksScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: MyKOGColors.primaryDark,
-      resizeToAvoidBottomInset: false,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(),
-            Expanded(
-              child: _isLoading
-                  ? _buildLoading()
-                  : _filteredBooks.isEmpty
-                      ? _buildEmpty()
-                      : _isGridView
-                          ? _buildGridView()
-                          : _buildListView(),
-            ),
-          ],
-        ),
+      backgroundColor: context.appColors.background,
+      body: Column(
+        children: [
+          _buildHeader(),
+          Expanded(
+            child: _isLoading
+                ? _buildLoading()
+                : _filteredBooks.isEmpty
+                    ? _buildEmpty()
+                    : _isGridView
+                        ? _buildGridView()
+                        : _buildListView(),
+          ),
+        ],
       ),
     );
   }
@@ -92,7 +89,7 @@ class _BooksScreenState extends State<BooksScreen> {
     return Container(
       padding: EdgeInsets.fromLTRB(16.w, 60.h, 16.w, 16.h),
       decoration: BoxDecoration(
-        color: MyKOGColors.primaryDark,
+        color: context.appColors.background,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.1),
@@ -107,15 +104,15 @@ class _BooksScreenState extends State<BooksScreen> {
           Row(
             children: [
               IconButton(
-                icon: const Icon(Icons.arrow_back,
-                    color: MyKOGColors.textPrimary),
+                icon: Icon(Icons.arrow_back,
+                    color: context.appColors.textPrimary),
                 onPressed: () => Navigator.pop(context),
               ),
               SizedBox(width: 8.w),
               Text(
                 'Books',
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      color: MyKOGColors.textPrimary,
+                      color: context.appColors.textPrimary,
                       fontWeight: FontWeight.bold,
                     ),
               ),
@@ -133,7 +130,7 @@ class _BooksScreenState extends State<BooksScreen> {
   Widget _buildViewToggle() {
     return Container(
       decoration: BoxDecoration(
-        color: MyKOGColors.secondary,
+        color: context.appColors.surfaceVariant,
         borderRadius: BorderRadius.circular(25.r),
       ),
       padding: EdgeInsets.all(4.w),
@@ -172,7 +169,7 @@ class _BooksScreenState extends State<BooksScreen> {
         child: Icon(
           icon,
           size: 20.w,
-          color: isSelected ? Colors.black : MyKOGColors.textSecondary,
+          color: isSelected ? Colors.black : context.appColors.textSecondary,
         ),
       ),
     );
@@ -181,7 +178,7 @@ class _BooksScreenState extends State<BooksScreen> {
   Widget _buildSearchBar() {
     return Container(
       decoration: BoxDecoration(
-        color: MyKOGColors.secondary,
+        color: context.appColors.surfaceVariant,
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(
           color: MyKOGColors.accent.withValues(alpha: 0.2),
@@ -191,14 +188,14 @@ class _BooksScreenState extends State<BooksScreen> {
       child: TextField(
         onChanged: (value) => setState(() => _searchQuery = value),
         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: MyKOGColors.textPrimary,
+              color: context.appColors.textPrimary,
             ),
         decoration: InputDecoration(
           hintText: 'Rechercher un livre...',
           hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: MyKOGColors.textSecondary,
+                color: context.appColors.textSecondary,
               ),
-          prefixIcon: Icon(Icons.search, color: MyKOGColors.textSecondary),
+          prefixIcon: Icon(Icons.search, color: context.appColors.textSecondary),
           border: InputBorder.none,
           contentPadding: EdgeInsets.symmetric(
             horizontal: 16.w,
@@ -219,7 +216,7 @@ class _BooksScreenState extends State<BooksScreen> {
           Text(
             'Chargement des livres...',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: MyKOGColors.textSecondary,
+                  color: context.appColors.textSecondary,
                 ),
           ),
         ],
@@ -235,13 +232,13 @@ class _BooksScreenState extends State<BooksScreen> {
           Icon(
             Icons.menu_book_outlined,
             size: 64.w,
-            color: MyKOGColors.textSecondary,
+            color: context.appColors.textSecondary,
           ),
           SizedBox(height: 16.h),
           Text(
             'Aucun livre trouvé',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: MyKOGColors.textSecondary,
+                  color: context.appColors.textSecondary,
                 ),
           ),
         ],
@@ -284,7 +281,7 @@ class _BooksScreenState extends State<BooksScreen> {
       onTap: () => _openBook(book),
       child: Container(
         decoration: BoxDecoration(
-          color: MyKOGColors.secondary,
+          color: context.appColors.surfaceVariant,
           borderRadius: BorderRadius.circular(16.r),
           border: Border.all(
             color: MyKOGColors.accent.withValues(alpha: 0.1),
@@ -299,7 +296,7 @@ class _BooksScreenState extends State<BooksScreen> {
               child: Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: MyKOGColors.primaryDark,
+                  color: context.appColors.background,
                   borderRadius:
                       BorderRadius.vertical(top: Radius.circular(16.r)),
                   gradient: LinearGradient(
@@ -307,7 +304,7 @@ class _BooksScreenState extends State<BooksScreen> {
                     end: Alignment.bottomRight,
                     colors: [
                       MyKOGColors.accent.withValues(alpha: 0.3),
-                      MyKOGColors.primaryDark,
+                      context.appColors.background,
                     ],
                   ),
                 ),
@@ -332,7 +329,7 @@ class _BooksScreenState extends State<BooksScreen> {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            color: MyKOGColors.textPrimary,
+                            color: context.appColors.textPrimary,
                             fontWeight: FontWeight.w600,
                           ),
                     ),
@@ -343,7 +340,7 @@ class _BooksScreenState extends State<BooksScreen> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: MyKOGColors.textSecondary,
+                              color: context.appColors.textSecondary,
                             ),
                       ),
                     const Spacer(),
@@ -353,14 +350,14 @@ class _BooksScreenState extends State<BooksScreen> {
                           Icon(
                             Icons.storage,
                             size: 12.w,
-                            color: MyKOGColors.textTertiary,
+                            color: context.appColors.textTertiary,
                           ),
                           SizedBox(width: 4.w),
                           Text(
                             book.fileSize!,
                             style:
                                 Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: MyKOGColors.textTertiary,
+                                      color: context.appColors.textTertiary,
                                       fontSize: 10.sp,
                                     ),
                           ),
@@ -386,7 +383,7 @@ class _BooksScreenState extends State<BooksScreen> {
         margin: EdgeInsets.only(bottom: 12.h),
         padding: EdgeInsets.all(12.w),
         decoration: BoxDecoration(
-          color: MyKOGColors.secondary,
+          color: context.appColors.surfaceVariant,
           borderRadius: BorderRadius.circular(16.r),
           border: Border.all(
             color: MyKOGColors.accent.withValues(alpha: 0.1),
@@ -399,14 +396,14 @@ class _BooksScreenState extends State<BooksScreen> {
               width: 60.w,
               height: 80.h,
               decoration: BoxDecoration(
-                color: MyKOGColors.primaryDark,
+                color: context.appColors.background,
                 borderRadius: BorderRadius.circular(10.r),
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
                     MyKOGColors.accent.withValues(alpha: 0.3),
-                    MyKOGColors.primaryDark,
+                    context.appColors.background,
                   ],
                 ),
               ),
@@ -428,7 +425,7 @@ class _BooksScreenState extends State<BooksScreen> {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          color: MyKOGColors.textPrimary,
+                          color: context.appColors.textPrimary,
                           fontWeight: FontWeight.w600,
                         ),
                   ),
@@ -437,7 +434,7 @@ class _BooksScreenState extends State<BooksScreen> {
                     Text(
                       book.author!,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: MyKOGColors.textSecondary,
+                            color: context.appColors.textSecondary,
                           ),
                     ),
                   SizedBox(height: 6.h),
@@ -447,14 +444,14 @@ class _BooksScreenState extends State<BooksScreen> {
                         Icon(
                           Icons.storage,
                           size: 12.w,
-                          color: MyKOGColors.textTertiary,
+                          color: context.appColors.textTertiary,
                         ),
                         SizedBox(width: 4.w),
                         Text(
                           book.fileSize!,
                           style:
                               Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: MyKOGColors.textTertiary,
+                                    color: context.appColors.textTertiary,
                                     fontSize: 10.sp,
                                   ),
                         ),
@@ -464,14 +461,14 @@ class _BooksScreenState extends State<BooksScreen> {
                         Icon(
                           Icons.article_outlined,
                           size: 12.w,
-                          color: MyKOGColors.textTertiary,
+                          color: context.appColors.textTertiary,
                         ),
                         SizedBox(width: 4.w),
                         Text(
                           '${book.pageCount} pages',
                           style:
                               Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: MyKOGColors.textTertiary,
+                                    color: context.appColors.textTertiary,
                                     fontSize: 10.sp,
                                   ),
                         ),
@@ -483,7 +480,7 @@ class _BooksScreenState extends State<BooksScreen> {
             ),
             Icon(
               Icons.chevron_right,
-              color: MyKOGColors.textSecondary,
+              color: context.appColors.textSecondary,
             ),
           ],
         ),

@@ -42,13 +42,14 @@ class UserProvider extends ChangeNotifier {
   // -----------------------------
   // INSCRIPTION UTILISATEUR
   // -----------------------------
-  Future<bool> registerUser(String name, String email) async {
+  Future<bool> registerUser(String name, String email,
+      {String? profileImageUrl}) async {
     try {
       final newUser = User(
         id: 'user-${DateTime.now().millisecondsSinceEpoch}',
         name: name,
         email: email,
-        profileImageUrl: null,
+        profileImageUrl: profileImageUrl,
         favoriteTeachingIds: [],
         downloadedTeachingIds: [],
         recentlyPlayedIds: [],

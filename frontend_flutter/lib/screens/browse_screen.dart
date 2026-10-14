@@ -125,7 +125,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
               Text(
                 l10n.loading,
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: MyKOGColors.textSecondary,
+                  color: context.appColors.textSecondary,
                 ),
               ),
             ],
@@ -190,8 +190,8 @@ class _BrowseScreenState extends State<BrowseScreen> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            MyKOGColors.primaryDark,
-            MyKOGColors.secondary,
+            context.appColors.background,
+            context.appColors.surfaceVariant,
           ],
         ),
       ),
@@ -201,7 +201,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
           Text(
             AppLocalizations.of(context)!.discover,
             style: theme.textTheme.headlineLarge?.copyWith(
-              color: MyKOGColors.textPrimary,
+              color: context.appColors.textPrimary,
               fontWeight: FontWeight.bold,
             ),
           ).animate().fadeIn().slideY(),
@@ -209,7 +209,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
           Text(
             AppLocalizations.of(context)!.exploreTeachings,
             style: theme.textTheme.bodyLarge?.copyWith(
-              color: MyKOGColors.textSecondary,
+              color: context.appColors.textSecondary,
             ),
           ).animate(delay: 200.ms).fadeIn().slideY(),
         ],
@@ -232,7 +232,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
           Text(
             title,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: MyKOGColors.textPrimary,
+                  color: context.appColors.textPrimary,
                   fontWeight: FontWeight.bold,
                 ),
           ),
@@ -257,9 +257,133 @@ class _BrowseScreenState extends State<BrowseScreen> {
   }
 
   Widget _buildTeachingCard(Teaching teaching, int index) {
-    return ExpandableTeachingCard(
-      teaching: teaching,
-      onPlay: (t) => _playTeaching(context, t),
+    return GestureDetector(
+      onTap: () => _playTeaching(context, teaching),
+      child: Container(
+        width: 140.w,
+        margin: EdgeInsets.only(right: 12.w),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12.r),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12.r),
+                  child: Stack(
+                    children: [
+                      teaching.artworkUrl.startsWith('assets/')
+                          ? Image.asset(
+                              teaching.artworkUrl,
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              height: double.infinity,
+                              errorBuilder: (context, error, stackTrace) => Container(
+                                color: context.appColors.surfaceVariant,
+                                child: Center(
+                                  child: Icon(
+                                    Icons.music_note,
+                                    color: MyKOGColors.accent,
+                                    size: 32.w,
+                                  ),
+                                ),
+                              ),
+                            )
+                          : CachedNetworkImage(
+                              imageUrl: teaching.artworkUrl,
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              height: double.infinity,
+                              placeholder: (context, url) => Container(
+                                color: context.appColors.surfaceVariant,
+                                child: Center(
+                                  child: Icon(
+                                    Icons.music_note,
+                                    color: MyKOGColors.accent,
+                                    size: 32.w,
+                                  ),
+                                ),
+                              ),
+                              errorWidget: (context, url, error) => Container(
+                                color: context.appColors.surfaceVariant,
+                                child: Center(
+                                  child: Icon(
+                                    Icons.music_note,
+                                    color: MyKOGColors.accent,
+                                    size: 32.w,
+                                  ),
+                                ),
+                              ),
+                            ),
+                      // Gradient overlay
+                      Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.transparent,
+                              Colors.black.withValues(alpha: 0.6),
+                            ],
+                          ),
+                        ),
+                      ),
+                      // Play count
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 6.w, vertical: 2.h),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.6),
+                            borderRadius: BorderRadius.circular(8.r),
+                          ),
+                          child: Text(
+                            '${teaching.playCount}',
+                            style:
+                                Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: Colors.white,
+                                      fontSize: 10.sp,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(height: 8.h),
+            Text(
+              teaching.title,
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: context.appColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+            SizedBox(height: 2.h),
+            Text(
+              teaching.speaker,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: context.appColors.textSecondary,
+                  ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
     )
         .animate(delay: (index * 100).ms)
         .fadeIn()
@@ -330,7 +454,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
               child: Text(
                 category,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: MyKOGColors.textPrimary,
+                      color: context.appColors.textPrimary,
                       fontWeight: FontWeight.w600,
                     ),
                 maxLines: 1,

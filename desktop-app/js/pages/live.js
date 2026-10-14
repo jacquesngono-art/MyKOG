@@ -1,7 +1,7 @@
 const LivePage = {
   currentTab: 'live',
   pollInterval: null,
-  hls: null,
+  livekitRoom: null,
   isPlayerActive: false,
   serverConfig: null,
 
@@ -100,6 +100,7 @@ const LivePage = {
 
     if (this.isPlayerActive) {
       this.initPlayer();
+      if (s.activeLive) LiveComments.mount(s.activeLive.id);
     }
   },
 
@@ -146,11 +147,15 @@ const LivePage = {
           </div>
         </div>
       </div>
+      <div class="live-comments-section" id="liveCommentsSection"></div>
     `;
   },
 
   renderLiveTab() {
     const s = Store.state;
+    if (this.isPlayerActive) {
+      return '';
+    }
     if (s.activeLive) {
       const stream = s.activeLive;
       return `
@@ -305,83 +310,115 @@ const LivePage = {
       return;
     }
 
-    if (this.hls) {
-      this.hls.destroy();
-      this.hls = null;
+    if (this.livekitRoom) {
+      this.livekitRoom.disconnect();
+      this.livekitRoom = null;
     }
 
-    this.showPlayerLoading('Chargement du flux...');
+    this.showPlayerLoading('Connexion au live...');
 
-    // Utiliser l'URL HLS du live
-    const hlsUrl = stream.hlsUrl || stream.streamUrl;
-    if (!hlsUrl) {
-      this.showPlayerError('URL de flux non disponible');
+    let tokenData;
+    try {
+      tokenData = await API.getViewerToken(stream.id);
+    } catch (err) {
+      this.showPlayerError('Impossible d\'obtenir le token: ' + (err.message || err));
       return;
     }
 
-    console.log('HLS URL:', hlsUrl);
-
-    // Charger HLS.js
-    if (typeof Hls === 'undefined') {
-      this.showPlayerError('hls.js non chargé');
+    const url = tokenData.url;
+    const token = tokenData.token;
+    if (!url || !token) {
+      this.showPlayerError('Token ou URL LiveKit non disponible');
       return;
     }
 
-    if (Hls.isSupported()) {
-      this.hls = new Hls({
-        enableWorker: true,
-        lowLatencyMode: true,
-        backBufferLength: 90,
-      });
+    if (typeof LivekitClient === 'undefined') {
+      this.showPlayerError('livekit-client non chargé');
+      return;
+    }
 
-      this.hls.loadSource(hlsUrl);
-      this.hls.attachMedia(video);
+    const Room = LivekitClient.Room;
+    const RoomEvent = LivekitClient.RoomEvent;
+    const Track = LivekitClient.Track;
 
-      this.hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        console.log('HLS manifest chargé');
-        this.hidePlayerOverlays();
+    this.livekitRoom = new Room({
+      adaptiveStream: true,
+      dynacast: true,
+    });
+
+    const attachVideoTrack = (track) => {
+      if (track.kind === Track.Kind.Video) {
+        console.log('🎥 Track vidéo reçue:', track.sid, track.dimensions);
+        track.attach(video);
         video.play().catch(err => {
           if (err.name !== 'AbortError') {
             console.warn('Autoplay bloqué:', err.message);
           }
         });
-      });
-
-      this.hls.on(Hls.Events.ERROR, (event, data) => {
-        console.error('HLS error:', data);
-        if (data.fatal) {
-          switch (data.type) {
-            case Hls.ErrorTypes.NETWORK_ERROR:
-              this.showPlayerError('Erreur réseau: impossible de charger le flux');
-              break;
-            case Hls.ErrorTypes.MEDIA_ERROR:
-              this.showPlayerError('Erreur média: format non supporté');
-              break;
-            default:
-              this.showPlayerError('Erreur de lecture du flux');
-              break;
-          }
-        }
-      });
-
-      this.hls.on(Hls.Events.FRAG_BUFFERED, () => {
-        const qualityEl = document.getElementById('playerQuality');
-        if (qualityEl) {
-          const level = this.hls.levels[this.hls.currentLevel];
-          if (level) {
-            qualityEl.textContent = `${level.width}x${level.height}`;
-          }
-        }
-      });
-    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-      // Safari/iOS support natif HLS
-      video.src = hlsUrl;
-      video.addEventListener('loadedmetadata', () => {
         this.hidePlayerOverlays();
-        video.play().catch(err => console.warn('Autoplay:', err));
+        const qualityEl = document.getElementById('playerQuality');
+        if (qualityEl && track.dimensions) {
+          qualityEl.textContent = `${track.dimensions.width}x${track.dimensions.height}`;
+        }
+      } else if (track.kind === Track.Kind.Audio) {
+        console.log('🔊 Track audio reçue:', track.sid);
+        track.attach(video);
+      }
+    };
+
+    this.livekitRoom.on(RoomEvent.TrackSubscribed, (track, publication, participant) => {
+      console.log('📡 TrackSubscribed:', publication.kind, 'from', participant.identity);
+      attachVideoTrack(track);
+    });
+
+    this.livekitRoom.on(RoomEvent.TrackUnsubscribed, (track, publication) => {
+      console.log('TrackUnsubscribed:', publication.kind);
+      try { track.detach(video); } catch (_) {}
+    });
+
+    this.livekitRoom.on(RoomEvent.Disconnected, () => {
+      console.log('Room déconnectée');
+      this.showPlayerError('Connexion perdue');
+    });
+
+    this.livekitRoom.on(RoomEvent.Reconnecting, () => {
+      this.showPlayerLoading('Reconnexion...');
+    });
+
+    this.livekitRoom.on(RoomEvent.Reconnected, () => {
+      console.log('Room reconnectée');
+      this.hidePlayerOverlays();
+    });
+
+    this.livekitRoom.on(RoomEvent.ParticipantConnected, (participant) => {
+      console.log('Participant connecté:', participant.identity);
+    });
+
+    try {
+      console.log('Connexion à LiveKit:', url, 'room:', tokenData.roomName);
+      await this.livekitRoom.connect(url, token);
+      console.log('✅ Connecté à la room. Participants:', this.livekitRoom.remoteParticipants.size);
+
+      // Vérifier les participants déjà présents (diffuseur déjà en train de streamer)
+      let hasVideo = false;
+      this.livekitRoom.remoteParticipants.forEach(participant => {
+        console.log('Participant distant:', participant.identity, 'tracks:', participant.trackPublications.size);
+        participant.trackPublications.forEach(pub => {
+          if (pub.track) {
+            console.log('  - Track existante:', pub.kind, 'subscribed:', pub.isSubscribed);
+            attachVideoTrack(pub.track);
+            if (pub.kind === Track.Kind.Video) hasVideo = true;
+          }
+        });
       });
-    } else {
-      this.showPlayerError('HLS non supporté par ce navigateur');
+
+      // Ne masquer le loading que si on a une vidéo, sinon attendre
+      if (!hasVideo) {
+        this.showPlayerLoading('En attente du diffuseur...');
+      }
+    } catch (err) {
+      console.error('Erreur connexion LiveKit:', err);
+      this.showPlayerError('Erreur de connexion LiveKit: ' + (err.message || err));
     }
   },
 
@@ -416,9 +453,19 @@ const LivePage = {
 
   closePlayer() {
     this.isPlayerActive = false;
-    if (this.hls) {
-      this.hls.destroy();
-      this.hls = null;
+    if (this.livekitRoom) {
+      const video = document.getElementById('liveVideoPlayer');
+      this.livekitRoom.remoteParticipants.forEach(participant => {
+        participant.trackPublications.forEach(pub => {
+          if (pub.track && video) {
+            try {
+              pub.track.detach(video);
+            } catch (_) {}
+          }
+        });
+      });
+      this.livekitRoom.disconnect();
+      this.livekitRoom = null;
     }
     const video = document.getElementById('liveVideoPlayer');
     if (video) {
@@ -430,6 +477,7 @@ const LivePage = {
     if (stream) {
       API.leaveLive(stream.id).catch(() => {});
     }
+    if (typeof LiveComments !== 'undefined') LiveComments.unmount();
     this.renderContent(document.getElementById('page-live'));
   },
 

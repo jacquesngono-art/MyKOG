@@ -49,7 +49,7 @@ class FavoritesFolderSection extends StatelessWidget {
               Text(
                 l10n.myFavorites,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: MyKOGColors.textPrimary,
+                  color: context.appColors.textPrimary,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -473,16 +473,35 @@ class _FavoriteFolderCardState extends State<_FavoriteFolderCard>
               : null,
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(9.r),
-          child: url.isNotEmpty
-              ? ResolvedArtworkImage(
-                  url: url,
-                  fit: BoxFit.cover,
-                  placeholder: _placeholderBox(),
-                )
-              : _placeholderBox(),
+          borderRadius: BorderRadius.circular(9),
+          child: _buildArtworkImage(url, width, height),
         ),
       ),
+    );
+  }
+
+  Widget _buildArtworkImage(String url, double width, double height) {
+    if (url.isEmpty) {
+      return _placeholderBox();
+    }
+    if (url.startsWith('assets/')) {
+      return Image.asset(
+        url,
+        width: width,
+        height: height,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => _placeholderBox(),
+      );
+    }
+    return CachedNetworkImage(
+      imageUrl: url,
+      width: width,
+      height: height,
+      fit: BoxFit.cover,
+      memCacheWidth: (width * 3).round(),
+      memCacheHeight: (height * 3).round(),
+      placeholder: (_, __) => _placeholderBox(),
+      errorWidget: (_, __, ___) => _placeholderBox(),
     );
   }
 
@@ -820,7 +839,7 @@ class _NewFavoriteSlotState extends State<_NewFavoriteSlot>
                             duration: const Duration(milliseconds: 200),
                             style: TextStyle(
                               color: _hovered
-                                  ? MyKOGColors.textPrimary
+                                  ? context.appColors.textPrimary
                                   : const Color(0xB3FFFFFF),
                               fontSize: 13.sp,
                               fontWeight: FontWeight.w600,
@@ -942,23 +961,8 @@ class _FavoriteActionSheet extends StatelessWidget {
                   children: [
                     // Artwork
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(10.r),
-                      child: teaching.artworkUrl.isNotEmpty
-                          ? ResolvedArtworkImage(
-                              url: teaching.artworkUrl,
-                              width: 52.w,
-                              height: 52.h,
-                              fit: BoxFit.cover,
-                            )
-                          : Container(
-                              width: 52.w,
-                              height: 52.h,
-                              color: const Color(0xFF2A2A2A),
-                              child: Icon(
-                                Icons.music_note_rounded,
-                                color: MyKOGColors.accent.withValues(alpha: 0.5),
-                              ),
-                            ),
+                      borderRadius: BorderRadius.circular(10),
+                      child: _buildSheetArtwork(teaching.artworkUrl),
                     ),
                     SizedBox(width: 14.w),
                     Expanded(
@@ -1056,6 +1060,43 @@ class _FavoriteActionSheet extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildSheetArtwork(String url) {
+    if (url.isEmpty) {
+      return _sheetArtworkPlaceholder();
+    }
+    if (url.startsWith('assets/')) {
+      return Image.asset(
+        url,
+        width: 52,
+        height: 52,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => _sheetArtworkPlaceholder(),
+      );
+    }
+    return CachedNetworkImage(
+      imageUrl: url,
+      width: 52,
+      height: 52,
+      fit: BoxFit.cover,
+      memCacheWidth: 156,
+      memCacheHeight: 156,
+      placeholder: (_, __) => _sheetArtworkPlaceholder(),
+      errorWidget: (_, __, ___) => _sheetArtworkPlaceholder(),
+    );
+  }
+
+  Widget _sheetArtworkPlaceholder() {
+    return Container(
+      width: 52,
+      height: 52,
+      color: const Color(0xFF2A2A2A),
+      child: Icon(
+        Icons.music_note_rounded,
+        color: MyKOGColors.accent.withValues(alpha: 0.5),
       ),
     );
   }

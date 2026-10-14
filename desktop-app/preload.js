@@ -12,4 +12,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
 
   openPdf: (url) => ipcRenderer.invoke('open-pdf', url),
+
+  fetchPdfBytes: (url) => ipcRenderer.invoke('fetch-pdf-bytes', url),
 });

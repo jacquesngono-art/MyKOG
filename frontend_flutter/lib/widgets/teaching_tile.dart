@@ -40,7 +40,7 @@ class TeachingTile extends StatelessWidget {
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           decoration: BoxDecoration(
             color: isCurrentlyPlaying
-                ? (isDark ? MyKOGColors.secondary : Colors.grey.shade100)
+                ? (isDark ? context.appColors.surfaceVariant : Colors.grey.shade100)
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
             border: isCurrentlyPlaying
@@ -64,7 +64,7 @@ class TeachingTile extends StatelessWidget {
                     style: theme.textTheme.titleMedium?.copyWith(
                       color: isCurrentlyPlaying
                           ? MyKOGColors.accent
-                          : (isDark ? MyKOGColors.textPrimary : Colors.black87),
+                          : (isDark ? context.appColors.textPrimary : Colors.black87),
                       fontWeight:
                           isCurrentlyPlaying ? FontWeight.w600 : FontWeight.w500,
                     ),
@@ -97,7 +97,7 @@ class TeachingTile extends StatelessWidget {
                   teaching.speaker,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: isDark
-                        ? MyKOGColors.textSecondary
+                        ? context.appColors.textSecondary
                         : Colors.grey.shade600,
                   ),
                   maxLines: 1,
@@ -108,13 +108,13 @@ class TeachingTile extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
-                      color: MyKOGColors.primary.withValues(alpha: 0.1),
+                      color: context.appColors.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       teaching.typeCulte!,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: MyKOGColors.primary,
+                        color: context.appColors.primary,
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
                       ),
@@ -127,7 +127,7 @@ class TeachingTile extends StatelessWidget {
                       teaching.durationText,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: isDark
-                            ? MyKOGColors.textTertiary
+                            ? context.appColors.textTertiary
                             : Colors.grey.shade500,
                         fontSize: 12,
                       ),
@@ -197,7 +197,7 @@ class TeachingTile extends StatelessWidget {
                     height: 56,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) => Container(
-                      color: MyKOGColors.secondary,
+                      color: context.appColors.surfaceVariant,
                       child: const Icon(
                         Icons.music_note,
                         color: MyKOGColors.accent,
@@ -211,7 +211,7 @@ class TeachingTile extends StatelessWidget {
                     height: 56,
                     fit: BoxFit.cover,
                     placeholder: (context, url) => Container(
-                      color: MyKOGColors.secondary,
+                      color: context.appColors.surfaceVariant,
                       child: const Icon(
                         Icons.music_note,
                         color: MyKOGColors.accent,
@@ -219,7 +219,7 @@ class TeachingTile extends StatelessWidget {
                       ),
                     ),
                     errorWidget: (context, url, error) => Container(
-                      color: MyKOGColors.secondary,
+                      color: context.appColors.surfaceVariant,
                       child: const Icon(
                         Icons.music_note,
                         color: MyKOGColors.accent,
@@ -251,7 +251,7 @@ class TeachingTile extends StatelessWidget {
       icon: Icon(
         Icons.more_vert,
         color: Theme.of(context).brightness == Brightness.dark
-            ? MyKOGColors.textSecondary
+            ? context.appColors.textSecondary
             : Colors.grey.shade600,
       ),
       onSelected: (value) => _handleMenuAction(context, value, userProvider),
@@ -266,7 +266,7 @@ class TeachingTile extends StatelessWidget {
                     : Icons.download,
                 color: DownloadService.isDownloaded(teaching.id)
                     ? Colors.red
-                    : MyKOGColors.textSecondary,
+                    : context.appColors.textSecondary,
               ),
               const SizedBox(width: 12),
               Text(DownloadService.isDownloaded(teaching.id)
@@ -279,7 +279,7 @@ class TeachingTile extends StatelessWidget {
           value: 'add_to_queue',
           child: Row(
             children: [
-              Icon(Icons.queue_music, color: MyKOGColors.textSecondary),
+              Icon(Icons.queue_music, color: context.appColors.textSecondary),
               const SizedBox(width: 12),
               Text(l10n.addToQueue),
             ],
@@ -295,7 +295,7 @@ class TeachingTile extends StatelessWidget {
                   final isFavorite = snapshot.data ?? false;
                   return Icon(
                     isFavorite ? Icons.favorite : Icons.favorite_border,
-                    color: isFavorite ? Colors.red : MyKOGColors.textSecondary,
+                    color: isFavorite ? Colors.red : context.appColors.textSecondary,
                   );
                 },
               ),
@@ -316,7 +316,7 @@ class TeachingTile extends StatelessWidget {
           value: 'share',
           child: Row(
             children: [
-              Icon(Icons.share, color: MyKOGColors.textSecondary),
+              Icon(Icons.share, color: context.appColors.textSecondary),
               const SizedBox(width: 12),
               Text(l10n.share),
             ],

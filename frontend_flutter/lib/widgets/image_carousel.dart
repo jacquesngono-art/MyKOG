@@ -185,8 +185,8 @@ class _ImageCarouselState extends State<ImageCarousel> {
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        MyKOGColors.primaryDark,
-                        MyKOGColors.secondary,
+                        context.appColors.background,
+                        context.appColors.surfaceVariant,
                       ],
                     ),
                   ),
@@ -203,8 +203,8 @@ class _ImageCarouselState extends State<ImageCarousel> {
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        MyKOGColors.primaryDark,
-                        MyKOGColors.secondary,
+                        context.appColors.background,
+                        context.appColors.surfaceVariant,
                       ],
                     ),
                   ),

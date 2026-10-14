@@ -157,7 +157,7 @@ class _DownloadProgressWidgetState extends State<DownloadProgressWidget> {
     }
 
     return IconButton(
-      icon: const Icon(Icons.download, color: MyKOGColors.textSecondary),
+      icon: Icon(Icons.download, color: context.appColors.textSecondary),
       onPressed: _startDownload,
       tooltip: l10n.download,
     );
@@ -175,7 +175,7 @@ class _DownloadProgressWidgetState extends State<DownloadProgressWidget> {
           CircularProgressIndicator(
             value: _progress?.progress ?? 0.0,
             strokeWidth: 2,
-            backgroundColor: MyKOGColors.textSecondary.withOpacity(0.3),
+            backgroundColor: context.appColors.textSecondary.withOpacity(0.3),
             valueColor: const AlwaysStoppedAnimation<Color>(MyKOGColors.accent),
           ),
           // Bouton annuler
@@ -185,13 +185,13 @@ class _DownloadProgressWidgetState extends State<DownloadProgressWidget> {
               width: 24,
               height: 24,
               decoration: BoxDecoration(
-                color: MyKOGColors.secondary,
+                color: context.appColors.surfaceVariant,
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 Icons.close,
                 size: 16,
-                color: MyKOGColors.textPrimary,
+                color: context.appColors.textPrimary,
               ),
             ),
           ),

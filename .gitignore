@@ -1,0 +1,19 @@
+# Dependances
+node_modules/
+
+# Sorties de build / compilation
+build/
+dist/
+out/
+.next/
+.gradle/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+Pods/
+DerivedData/
+
+# Caches
+coverage/
+.npm/
+.cache/

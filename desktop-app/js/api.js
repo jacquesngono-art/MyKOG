@@ -120,7 +120,27 @@ const API = {
     return this.request(`/lives/${id}/publisher-token`, { method: 'POST' });
   },
 
+  // --- Commentaires des lives ---
+  async getComments(liveId) {
+    return this.request(`/lives/${liveId}/comments`);
+  },
+  async postComment(liveId, data) {
+    return this.request(`/lives/${liveId}/comments`, { method: 'POST', body: data });
+  },
+  async voteComment(liveId, commentId, delta) {
+    return this.request(`/lives/${liveId}/comments/${commentId}/vote`, { method: 'POST', body: { delta } });
+  },
+  async updateComment(liveId, commentId, content) {
+    return this.request(`/lives/${liveId}/comments/${commentId}`, { method: 'PUT', body: { content } });
+  },
+  async deleteComment(liveId, commentId) {
+    return this.request(`/lives/${liveId}/comments/${commentId}`, { method: 'DELETE' });
+  },
+
   // --- Users (connexion / profil) ---
+  async loginByPhone(phone, name) {
+    return this.request('/users/login', { method: 'POST', body: { phone, name } });
+  },
   async login(userData) {
     return this.request('/users', { method: 'POST', body: userData });
   },
@@ -245,7 +265,8 @@ const API = {
 
   getTypeCultes(teachings) {
     const types = [...new Set((teachings || []).map(t => t.typeCulte).filter(Boolean))];
-    const order = ["Culte d'Impact", 'Culte Prophétique', "Culte d'Enseignement", 'Conférence', 'Séminaire'];
+    // Ordre canonique partagé avec le dashboard admin
+    const order = ['Culte de Louange', 'Culte de Prière', "Culte d'Impact", 'Culte Prophétique', "Culte d'Enseignement", 'Étude Biblique', 'Conférence', 'Séminaire', 'Autre'];
     return types.sort((a, b) => {
       const ai = order.indexOf(a);
       const bi = order.indexOf(b);

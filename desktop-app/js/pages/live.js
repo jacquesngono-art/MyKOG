@@ -100,6 +100,7 @@ const LivePage = {
 
     if (this.isPlayerActive) {
       this.initPlayer();
+      if (s.activeLive) LiveComments.mount(s.activeLive.id);
     }
   },
 
@@ -146,11 +147,15 @@ const LivePage = {
           </div>
         </div>
       </div>
+      <div class="live-comments-section" id="liveCommentsSection"></div>
     `;
   },
 
   renderLiveTab() {
     const s = Store.state;
+    if (this.isPlayerActive) {
+      return '';
+    }
     if (s.activeLive) {
       const stream = s.activeLive;
       return `
@@ -472,6 +477,7 @@ const LivePage = {
     if (stream) {
       API.leaveLive(stream.id).catch(() => {});
     }
+    if (typeof LiveComments !== 'undefined') LiveComments.unmount();
     this.renderContent(document.getElementById('page-live'));
   },
 

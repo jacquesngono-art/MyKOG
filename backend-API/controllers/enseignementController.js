@@ -67,9 +67,9 @@ const createEnseignement = async (req, res) => {
       tags: tags ? tags.split(',').map(tag => tag.trim()) : [],
       playCount: 0,
       rating: 0.0,
-      isNew: true, // Par défaut, marqué comme nouveau
-      isFeatured: false, // Par défaut, pas mis en avant
-      publishedAt: publishedAt,
+      isNew: req.body.isNew !== undefined ? (req.body.isNew === 'true' || req.body.isNew === true) : true, // Par défaut, marqué comme nouveau
+      isFeatured: req.body.isFeatured === 'true' || req.body.isFeatured === true, // Par défaut, pas mis en avant
+      publishedAt: req.body.publishedAt ? new Date(req.body.publishedAt) : publishedAt,
       createdAt: now,
       updatedAt: now,
       mois: mois,

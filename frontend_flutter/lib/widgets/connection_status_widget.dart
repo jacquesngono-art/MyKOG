@@ -116,7 +116,7 @@ class _ConnectionStatusWidgetState extends State<ConnectionStatusWidget> {
               Text(
                 '• ${_getModeText()}',
                 style: TextStyle(
-                  color: MyKOGColors.textSecondary,
+                  color: context.appColors.textSecondary,
                   fontSize: 11.sp,
                 ),
               ),
@@ -136,7 +136,7 @@ class _ConnectionStatusWidgetState extends State<ConnectionStatusWidget> {
               SizedBox(width: 4.w),
               Icon(
                 Icons.keyboard_arrow_down_rounded,
-                color: MyKOGColors.textSecondary,
+                color: context.appColors.textSecondary,
                 size: 16.w,
               ),
             ],
@@ -150,7 +150,7 @@ class _ConnectionStatusWidgetState extends State<ConnectionStatusWidget> {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
       decoration: BoxDecoration(
-        color: MyKOGColors.secondary,
+        color: context.appColors.surfaceVariant,
         borderRadius: BorderRadius.circular(20.r),
         border: Border.all(
           color: MyKOGColors.accent.withValues(alpha: 0.2),
@@ -172,7 +172,7 @@ class _ConnectionStatusWidgetState extends State<ConnectionStatusWidget> {
           Text(
             'Vérification...',
             style: TextStyle(
-              color: MyKOGColors.textSecondary,
+              color: context.appColors.textSecondary,
               fontSize: 12.sp,
             ),
           ),
@@ -191,8 +191,8 @@ class _ConnectionStatusWidgetState extends State<ConnectionStatusWidget> {
 
   String _getModeText() {
     switch (_currentMode) {
-      case ApiConfig.modeRender:
-        return 'Render';
+      case ApiConfig.modeVps:
+        return 'VPS';
       case ApiConfig.modeUsb:
         return 'USB';
       case ApiConfig.modeWifi:
@@ -281,8 +281,8 @@ class CompactConnectionStatusWidget extends StatelessWidget {
 
   String _getCompactModeText(String mode) {
     switch (mode) {
-      case ApiConfig.modeRender:
-        return '☁️ Render';
+      case ApiConfig.modeVps:
+        return '☁️ VPS';
       case ApiConfig.modeUsb:
         return '🔌 USB';
       case ApiConfig.modeWifi:

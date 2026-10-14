@@ -22,9 +22,21 @@ function toDate(value) {
 }
 
 function generateStreamKey() {
-  const timestamp = Date.now();
-  const random = Math.random().toString(36).substring(2, 8);
-  return `mykog_${timestamp}_${random}`;
+  return STREAM_CONFIG.DEFAULT_STREAM_KEY;
+}
+
+// Réutiliser l'Ingress existant pour la room (clé permanente), sinon le créer une fois
+async function getOrCreateIngress(roomName, name, identity) {
+  try {
+    const existing = await livekit.listIngress(roomName);
+    const found = (existing || []).find(i => i.roomName === roomName && i.streamKey);
+    if (found) {
+      return { ingressId: found.ingressId, url: found.url, streamKey: found.streamKey };
+    }
+  } catch (err) {
+    console.error('Erreur listIngress:', err.message);
+  }
+  return await livekit.createRtmpIngress(roomName, name, identity);
 }
 
 function formatLiveStream(id, data, includeLiveKit = false) {
@@ -108,17 +120,17 @@ const createLiveStream = async (req, res) => {
 
     const docRef = await db.collection('liveStreams').add(liveStreamData);
 
-    // Créer un Ingress WHIP pour OBS
+    // Ingress RTMP permanent — réutilisé entre les lives (clé OBS stable)
     let ingressInfo = null;
     try {
-      ingressInfo = await livekit.createWhipIngress(roomName, `live-${docRef.id}`, `broadcaster-${docRef.id}`);
+      ingressInfo = await getOrCreateIngress(roomName, `live-${docRef.id}`, `broadcaster-${docRef.id}`);
       await docRef.update({
         ingressId: ingressInfo.ingressId,
         whipUrl: ingressInfo.url,
         ingressStreamKey: ingressInfo.streamKey,
       });
     } catch (err) {
-      console.error('Erreur création Ingress WHIP:', err.message);
+      console.error('Erreur création Ingress RTMP:', err.message);
     }
 
     res.status(201).json({
@@ -128,7 +140,7 @@ const createLiveStream = async (req, res) => {
       livekit: {
         url: livekit.getLiveKitUrl(),
         roomName,
-        whipUrl: ingressInfo ? ingressInfo.url : `http://185.98.128.123:3001/whip`,
+        whipUrl: ingressInfo ? ingressInfo.url : `rtmp://185.98.128.123:1935/live`,
         streamKey: ingressInfo ? ingressInfo.streamKey : null,
         ingressId: ingressInfo ? ingressInfo.ingressId : null,
       },
@@ -292,9 +304,9 @@ const getPublisherToken = async (req, res) => {
       });
     }
 
-    // Sinon créer un Ingress WHIP à la volée
+    // Sinon créer/réutiliser l'Ingress RTMP permanent
     try {
-      const ingress = await livekit.createWhipIngress(roomName, `live-${id}`, `broadcaster-${id}`);
+      const ingress = await getOrCreateIngress(roomName, `live-${id}`, `broadcaster-${id}`);
       await doc.ref.update({
         ingressId: ingress.ingressId,
         whipUrl: ingress.url,
@@ -316,7 +328,7 @@ const getPublisherToken = async (req, res) => {
         token,
         url: livekit.getLiveKitUrl(),
         roomName,
-        whipUrl: `http://185.98.128.123:3001/whip`,
+        whipUrl: `rtmp://185.98.128.123:1935/live`,
       });
     }
   } catch (error) {
@@ -515,13 +527,26 @@ const getViewerCount = async (req, res) => {
   }
 };
 
-// Obtenir les infos serveur (URL LiveKit)
-const getServerInfo = (req, res) => {
+// Obtenir les infos serveur (URL LiveKit + clé de stream permanente pour OBS)
+const getServerInfo = async (req, res) => {
   try {
+    const roomName = livekit.generateRoomName(STREAM_CONFIG.DEFAULT_STREAM_KEY);
+    let streamKey = null;
+    let ingressId = null;
+    try {
+      const ingress = await getOrCreateIngress(roomName, 'mykog-rtmp', 'broadcaster');
+      streamKey = ingress.streamKey;
+      ingressId = ingress.ingressId;
+    } catch (err) {
+      console.error('Erreur getOrCreateIngress (server-info):', err.message);
+    }
     res.json({
       livekitUrl: livekit.getLiveKitUrl(),
-      whipUrl: 'http://185.98.128.123:3001/whip',
+      rtmpUrl: 'rtmp://185.98.128.123:1935/live',
+      whipUrl: 'https://vps123057.serveur-vps.net/whip',
       defaultStreamKey: STREAM_CONFIG.DEFAULT_STREAM_KEY,
+      streamKey,
+      ingressId,
     });
   } catch (error) {
     console.error('Erreur infos serveur:', error);
@@ -545,7 +570,6 @@ const deleteLiveStream = async (req, res) => {
 
     const data = doc.data();
     const roomName = data.roomName || livekit.generateRoomName(data.streamKey);
-    if (data.ingressId) await livekit.deleteIngress(data.ingressId);
     await livekit.deleteRoom(roomName);
     await ref.delete();
 
@@ -565,7 +589,6 @@ const deleteAllLiveStreams = async (req, res) => {
     for (const doc of snapshot.docs) {
       const data = doc.data();
       const roomName = data.roomName || livekit.generateRoomName(data.streamKey);
-      if (data.ingressId) await livekit.deleteIngress(data.ingressId);
       await livekit.deleteRoom(roomName);
       await doc.ref.delete();
       ids.push(doc.id);
@@ -577,6 +600,150 @@ const deleteAllLiveStreams = async (req, res) => {
     res.status(500).json({ error: 'Erreur lors de la suppression des live streams' });
   }
 };
+
+// === Fin automatique d'un live quand le broadcaster s'arrête (OBS) ===
+// Supprime le doc Firestore, ses commentaires et la room LiveKit.
+// L'Ingress permanent n'est JAMAIS supprimé (clé OBS stable).
+
+// Crée/réactive un doc live quand OBS démarre (ingress_started)
+async function ensureLiveForRoom(roomName) {
+  try {
+    const snapshot = await db.collection('liveStreams').where('roomName', '==', roomName).get();
+    if (!snapshot.empty) {
+      for (const doc of snapshot.docs) {
+        if (doc.data().status !== 'live') {
+          await doc.ref.update({ status: 'live', startedAt: new Date(), updatedAt: new Date() });
+        }
+      }
+      return;
+    }
+    const now = new Date();
+    await db.collection('liveStreams').add({
+      title: 'MyKOG — En direct',
+      description: 'Diffusion en direct',
+      pastor: 'MyKOG',
+      streamUrl: `${livekit.getLiveKitUrl()}/${roomName}`,
+      thumbnailUrl: '',
+      status: 'live',
+      scheduledAt: now,
+      startedAt: now,
+      createdAt: now,
+      updatedAt: now,
+      viewerCount: 0,
+      streamKey: STREAM_CONFIG.DEFAULT_STREAM_KEY,
+      livekitUrl: livekit.getLiveKitUrl(),
+      roomName,
+      ingressId: STREAM_CONFIG.INGRESS_ID || null,
+    });
+    console.log(`Live auto-créé pour room ${roomName} (broadcaster démarré)`);
+  } catch (err) {
+    console.error('Erreur ensureLiveForRoom:', err.message);
+  }
+}
+
+async function endLiveByRoomName(roomName, reason = 'stream_ended') {
+  try {
+    const snapshot = await db.collection('liveStreams').where('roomName', '==', roomName).get();
+    for (const doc of snapshot.docs) {
+      if (doc.data().status !== 'live') continue;
+      // Supprimer tous les commentaires du live
+      const comments = await doc.ref.collection('comments').get();
+      for (const c of comments.docs) await c.ref.delete();
+      await doc.ref.delete();
+      console.log(`Live ${doc.id} supprimé (${reason})`);
+    }
+    await livekit.deleteRoom(roomName);
+  } catch (err) {
+    console.error('Erreur endLiveByRoomName:', err.message);
+  }
+}
+
+// Endpoint webhook LiveKit — événements ingress_ended / room_finished
+const livekitWebhook = async (req, res) => {
+  try {
+    const receiver = livekit.getWebhookReceiver();
+    const authHeader = req.get('Authorization') || '';
+    const rawBody = Buffer.isBuffer(req.body) ? req.body.toString('utf-8') : (req.body || '');
+    const event = await receiver.receive(rawBody, authHeader);
+
+    const roomName = event.ingressInfo?.roomName || event.room?.name;
+    if (event.event === 'ingress_started' && roomName) {
+      console.log(`Webhook ingress_started → live actif (room: ${roomName})`);
+      await ensureLiveForRoom(roomName);
+    } else if (
+      event.event === 'participant_joined' &&
+      (event.participant?.identity || '').startsWith('broadcaster') &&
+      roomName
+    ) {
+      // Secours: le broadcaster a rejoint sans ingress_started
+      await ensureLiveForRoom(roomName);
+    } else if (
+      (event.event === 'ingress_ended' || event.event === 'room_finished') &&
+      roomName
+    ) {
+      console.log(`Webhook ${event.event} → fin du live (room: ${roomName})`);
+      await endLiveByRoomName(roomName, event.event);
+    }
+    res.json({ received: true });
+  } catch (err) {
+    console.error('Webhook LiveKit invalide:', err.message);
+    res.status(400).json({ error: 'Webhook invalide' });
+  }
+};
+
+// Watcher de secours: si le broadcaster a disparu de la room pendant ~90s
+const _roomWatch = new Map(); // roomName -> { seen, missed }
+const WATCH_INTERVAL_MS = 30000;
+const WATCH_MAX_MISSES = 3;
+
+async function _sweepLiveRooms() {
+  try {
+    const snapshot = await db.collection('liveStreams').where('status', '==', 'live').get();
+    for (const doc of snapshot.docs) {
+      const roomName = doc.data().roomName;
+      if (!roomName) continue;
+
+      const participants = await livekit.listParticipants(roomName);
+      const hasBroadcaster = (participants || []).some(p =>
+        (p.identity || '').startsWith('broadcaster')
+      );
+
+      const st = _roomWatch.get(roomName) || { seen: false, missed: 0 };
+      if (hasBroadcaster) {
+        st.seen = true;
+        st.missed = 0;
+      } else if (st.seen) {
+        st.missed++;
+        if (st.missed >= WATCH_MAX_MISSES) {
+          _roomWatch.delete(roomName);
+          console.log(`Watcher: broadcaster absent → fin du live (room: ${roomName})`);
+          await endLiveByRoomName(roomName, 'broadcaster_left');
+          continue;
+        }
+      }
+      _roomWatch.set(roomName, st);
+    }
+
+    // Secours: room avec un broadcaster mais sans doc Firestore
+    const rooms = await livekit.listRooms();
+    const liveRoomNames = new Set(snapshot.docs.map(d => d.data().roomName));
+    for (const room of rooms || []) {
+      const roomName = room.name;
+      if (!roomName || liveRoomNames.has(roomName)) continue;
+      const participants = await livekit.listParticipants(roomName);
+      const hasBroadcaster = (participants || []).some(p =>
+        (p.identity || '').startsWith('broadcaster')
+      );
+      if (hasBroadcaster) {
+        console.log(`Watcher: broadcaster sans doc → création live (room: ${roomName})`);
+        await ensureLiveForRoom(roomName);
+      }
+    }
+  } catch (err) {
+    console.error('Erreur watcher rooms:', err.message);
+  }
+}
+setInterval(_sweepLiveRooms, WATCH_INTERVAL_MS).unref();
 
 module.exports = {
   createLiveStream,
@@ -593,4 +760,5 @@ module.exports = {
   getViewerCount,
   deleteLiveStream,
   deleteAllLiveStreams,
+  livekitWebhook,
 };

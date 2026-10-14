@@ -54,7 +54,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     final isLast = _pageIndex == 2;
 
     return Scaffold(
-      backgroundColor: MyKOGColors.primaryDark,
+      backgroundColor: context.appColors.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -107,7 +107,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
           style: GoogleFonts.poppins(
             fontSize: 24.sp,
             fontWeight: FontWeight.bold,
-            color: MyKOGColors.textPrimary,
+            color: context.appColors.textPrimary,
           ),
           textAlign: TextAlign.center,
         ),
@@ -116,7 +116,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
           subtitle,
           style: GoogleFonts.inter(
             fontSize: 16.sp,
-            color: MyKOGColors.textSecondary,
+            color: context.appColors.textSecondary,
           ),
           textAlign: TextAlign.center,
         ),
@@ -135,7 +135,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
           height: 8.h,
           width: _pageIndex == index ? 24.w : 8.w,
           decoration: BoxDecoration(
-            color: _pageIndex == index ? MyKOGColors.accent : MyKOGColors.textTertiary,
+            color: _pageIndex == index ? MyKOGColors.accent : context.appColors.textTertiary,
             borderRadius: BorderRadius.circular(4.r),
           ),
         ),

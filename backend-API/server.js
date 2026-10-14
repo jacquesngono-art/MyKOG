@@ -15,6 +15,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
 // --- ROUTES ---
+app.use("/api/auth", require("./routes/auth"));
 app.use("/api/enseignements", require("./routes/enseignements"));
 app.use("/api/annonces", require("./routes/annonces"));
 app.use("/api/lives", require("./routes/lives"));
@@ -23,6 +24,8 @@ app.use("/api/users", require("./routes/users"));
 app.use("/api/notifications", require("./routes/notifications"));
 app.use("/api/text-resumes", require("./routes/textResumes"));
 app.use("/api/upload", require("./routes/upload"));
+app.use("/api/files", require("./routes/files"));
+app.use("/api/storage", require("./routes/storage"));
 
 // --- ROUTE DE TEST ---
 app.get("/", (req, res) => {

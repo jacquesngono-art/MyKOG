@@ -1,4 +1,4 @@
-const { AccessToken, RoomServiceClient, IngressClient, IngressInput } = require('livekit-server-sdk');
+const { AccessToken, RoomServiceClient, IngressClient, IngressInput, WebhookReceiver } = require('livekit-server-sdk');
 
 const LIVEKIT_URL = process.env.LIVEKIT_URL || 'wss://vps123057.serveur-vps.net';
 const API_KEY = process.env.LIVEKIT_API_KEY;
@@ -6,6 +6,7 @@ const API_SECRET = process.env.LIVEKIT_API_SECRET;
 
 let roomService = null;
 let ingressClient = null;
+let webhookReceiver = null;
 
 function getRoomService() {
   if (!roomService) {
@@ -31,6 +32,13 @@ function getIngressClient() {
 
 function getLiveKitUrl() {
   return LIVEKIT_URL;
+}
+
+function getWebhookReceiver() {
+  if (!webhookReceiver) {
+    webhookReceiver = new WebhookReceiver(API_KEY, API_SECRET);
+  }
+  return webhookReceiver;
 }
 
 function generateRoomName(streamKey) {
@@ -107,6 +115,14 @@ async function getParticipantCount(roomName) {
   return room ? room.numParticipants : 0;
 }
 
+async function listParticipants(roomName) {
+  try {
+    return await getRoomService().listParticipants(roomName);
+  } catch (err) {
+    return [];
+  }
+}
+
 async function createWhipIngress(roomName, name, identity) {
   try {
     const ingress = await getIngressClient().createIngress(IngressInput.WHIP_INPUT, {
@@ -170,6 +186,7 @@ async function deleteIngress(ingressId) {
 
 module.exports = {
   getLiveKitUrl,
+  getWebhookReceiver,
   generateRoomName,
   createPublisherToken,
   createViewerToken,
@@ -177,6 +194,7 @@ module.exports = {
   getRoomInfo,
   deleteRoom,
   getParticipantCount,
+  listParticipants,
   createWhipIngress,
   createRtmpIngress,
   listIngress,

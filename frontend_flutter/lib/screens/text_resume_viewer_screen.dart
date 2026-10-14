@@ -99,12 +99,12 @@ class _TextResumeViewerScreenState extends State<TextResumeViewerScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: MyKOGColors.primaryDark,
+      backgroundColor: context.appColors.background,
       appBar: AppBar(
-        backgroundColor: MyKOGColors.primaryDark,
+        backgroundColor: context.appColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: MyKOGColors.textPrimary),
+          icon: Icon(Icons.arrow_back, color: context.appColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(
@@ -113,7 +113,7 @@ class _TextResumeViewerScreenState extends State<TextResumeViewerScreen> {
             Text(
               widget.textResume.title,
               style: theme.textTheme.titleMedium?.copyWith(
-                color: MyKOGColors.textPrimary,
+                color: context.appColors.textPrimary,
                 fontWeight: FontWeight.bold,
               ),
               maxLines: 1,
@@ -123,7 +123,7 @@ class _TextResumeViewerScreenState extends State<TextResumeViewerScreen> {
               Text(
                 'Page ${_currentPage + 1} / $_totalPages',
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: MyKOGColors.textSecondary,
+                  color: context.appColors.textSecondary,
                 ),
               ),
           ],
@@ -131,22 +131,22 @@ class _TextResumeViewerScreenState extends State<TextResumeViewerScreen> {
         actions: [
           if (_totalPages > 0) ...[
             IconButton(
-              icon: const Icon(Icons.first_page, color: MyKOGColors.textPrimary),
+              icon: Icon(Icons.first_page, color: context.appColors.textPrimary),
               onPressed: () => _goToPage(0),
               tooltip: 'Première page',
             ),
             IconButton(
-              icon: const Icon(Icons.chevron_left, color: MyKOGColors.textPrimary),
+              icon: Icon(Icons.chevron_left, color: context.appColors.textPrimary),
               onPressed: _previousPage,
               tooltip: 'Page précédente',
             ),
             IconButton(
-              icon: const Icon(Icons.chevron_right, color: MyKOGColors.textPrimary),
+              icon: Icon(Icons.chevron_right, color: context.appColors.textPrimary),
               onPressed: _nextPage,
               tooltip: 'Page suivante',
             ),
             IconButton(
-              icon: const Icon(Icons.last_page, color: MyKOGColors.textPrimary),
+              icon: Icon(Icons.last_page, color: context.appColors.textPrimary),
               onPressed: () => _goToPage(_totalPages - 1),
               tooltip: 'Dernière page',
             ),
@@ -163,7 +163,7 @@ class _TextResumeViewerScreenState extends State<TextResumeViewerScreen> {
                   Text(
                     'Chargement du PDF...',
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: MyKOGColors.textSecondary,
+                      color: context.appColors.textSecondary,
                     ),
                   ),
                 ],
@@ -183,14 +183,14 @@ class _TextResumeViewerScreenState extends State<TextResumeViewerScreen> {
                       Text(
                         'Erreur de chargement',
                         style: theme.textTheme.titleMedium?.copyWith(
-                          color: MyKOGColors.textPrimary,
+                          color: context.appColors.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         _errorMessage ?? 'Impossible de charger le PDF',
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: MyKOGColors.textSecondary,
+                          color: context.appColors.textSecondary,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -226,7 +226,7 @@ class _TextResumeViewerScreenState extends State<TextResumeViewerScreen> {
                           vertical: 12,
                         ),
                         decoration: BoxDecoration(
-                          color: MyKOGColors.secondary,
+                          color: context.appColors.surfaceVariant,
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withValues(alpha: 0.1),
@@ -240,21 +240,21 @@ class _TextResumeViewerScreenState extends State<TextResumeViewerScreen> {
                           children: [
                             TextButton.icon(
                               onPressed: _previousPage,
-                              icon: const Icon(
+                              icon: Icon(
                                 Icons.chevron_left,
-                                color: MyKOGColors.textPrimary,
+                                color: context.appColors.textPrimary,
                               ),
                               label: Text(
                                 'Précédent',
                                 style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: MyKOGColors.textPrimary,
+                                  color: context.appColors.textPrimary,
                                 ),
                               ),
                             ),
                             Text(
                               '${_currentPage + 1} / $_totalPages',
                               style: theme.textTheme.bodyMedium?.copyWith(
-                                color: MyKOGColors.textPrimary,
+                                color: context.appColors.textPrimary,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -263,12 +263,12 @@ class _TextResumeViewerScreenState extends State<TextResumeViewerScreen> {
                               label: Text(
                                 'Suivant',
                                 style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: MyKOGColors.textPrimary,
+                                  color: context.appColors.textPrimary,
                                 ),
                               ),
-                              icon: const Icon(
+                              icon: Icon(
                                 Icons.chevron_right,
-                                color: MyKOGColors.textPrimary,
+                                color: context.appColors.textPrimary,
                               ),
                             ),
                           ],

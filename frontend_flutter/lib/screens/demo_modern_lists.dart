@@ -13,11 +13,11 @@ class DemoModernListsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: MyKOGColors.primaryDark,
+      backgroundColor: context.appColors.background,
       appBar: AppBar(
         title: const Text('Design Moderne'),
-        backgroundColor: MyKOGColors.primaryDark,
-        foregroundColor: MyKOGColors.textPrimary,
+        backgroundColor: context.appColors.background,
+        foregroundColor: context.appColors.textPrimary,
         elevation: 0,
       ),
       body: ListView(
@@ -49,7 +49,7 @@ class DemoModernListsScreen extends StatelessWidget {
     return Text(
       title,
       style: TextStyle(
-        color: MyKOGColors.textPrimary,
+        color: context.appColors.textPrimary,
         fontSize: 20.sp,
         fontWeight: FontWeight.bold,
       ),

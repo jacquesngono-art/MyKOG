@@ -2,12 +2,16 @@ const express = require('express');
 const router = express.Router();
 const {
   createOrUpdateUser,
+  loginUser,
   getAllUsers,
   getUserById,
   updateUser,
   deleteUser,
   getUserStats,
 } = require('../controllers/userController');
+
+// Connexion par numéro de téléphone
+router.post('/login', loginUser);
 
 // Route pour créer ou mettre à jour un utilisateur
 router.post('/', createOrUpdateUser);

@@ -44,7 +44,7 @@ class ModernTeachingTile extends StatelessWidget {
             padding: EdgeInsets.all(12.w),
             decoration: BoxDecoration(
               color: isCurrentlyPlaying
-                  ? MyKOGColors.secondary.withValues(alpha: 0.4)
+                  ? context.appColors.surfaceVariant.withValues(alpha: 0.4)
                   : Colors.transparent,
               borderRadius: BorderRadius.circular(16.r),
               border: Border.all(
@@ -72,7 +72,7 @@ class ModernTeachingTile extends StatelessWidget {
                         style: GoogleFonts.poppins(
                           color: isCurrentlyPlaying
                               ? MyKOGColors.accent
-                              : MyKOGColors.textPrimary,
+                              : context.appColors.textPrimary,
                           fontSize: 16.sp,
                           fontWeight: FontWeight.w600,
                           height: 1.3,
@@ -86,7 +86,7 @@ class ModernTeachingTile extends StatelessWidget {
                       Text(
                         '${teaching.speaker}${teaching.typeCulte != null && teaching.typeCulte!.isNotEmpty ? ' • ${teaching.typeCulte}' : ''}',
                         style: GoogleFonts.manrope(
-                          color: MyKOGColors.textSecondary,
+                          color: context.appColors.textSecondary,
                           fontSize: 13.sp,
                           fontWeight: FontWeight.w400,
                         ),
@@ -121,7 +121,7 @@ class ModernTeachingTile extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: [
             MyKOGColors.accent.withValues(alpha: 0.3),
-            MyKOGColors.primaryDark,
+            context.appColors.background,
           ],
         ),
         boxShadow: [
@@ -143,15 +143,16 @@ class ModernTeachingTile extends StatelessWidget {
                     height: 64.w,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) =>
-                        _buildPlaceholder(),
+                        _buildPlaceholder(context),
                   )
                 : CachedNetworkImage(
                     imageUrl: teaching.artworkUrl,
                     width: 64.w,
                     height: 64.w,
                     fit: BoxFit.cover,
-                    placeholder: (context, url) => _buildPlaceholder(),
-                    errorWidget: (context, url, error) => _buildPlaceholder(),
+                    placeholder: (context, url) => _buildPlaceholder(context),
+                    errorWidget: (context, url, error) =>
+                        _buildPlaceholder(context),
                   ),
 
             // Overlay de lecture
@@ -189,7 +190,7 @@ class ModernTeachingTile extends StatelessWidget {
     );
   }
 
-  Widget _buildPlaceholder() {
+  Widget _buildPlaceholder(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -197,7 +198,7 @@ class ModernTeachingTile extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: [
             MyKOGColors.accent.withValues(alpha: 0.3),
-            MyKOGColors.primaryDark,
+            context.appColors.background,
           ],
         ),
       ),
@@ -219,7 +220,7 @@ class ModernTeachingTile extends StatelessWidget {
             style: theme.textTheme.titleMedium?.copyWith(
               color: isCurrentlyPlaying
                   ? MyKOGColors.accent
-                  : MyKOGColors.textPrimary,
+                  : context.appColors.textPrimary,
               fontWeight: FontWeight.w600,
               fontSize: 16.sp,
             ),
@@ -263,14 +264,14 @@ class ModernTeachingTile extends StatelessWidget {
         Icon(
           Icons.person_outline_rounded,
           size: 14.w,
-          color: MyKOGColors.textSecondary,
+          color: context.appColors.textSecondary,
         ),
         SizedBox(width: 4.w),
         Expanded(
           child: Text(
             teaching.speaker,
             style: theme.textTheme.bodySmall?.copyWith(
-              color: MyKOGColors.textSecondary,
+              color: context.appColors.textSecondary,
               fontSize: 13.sp,
             ),
             maxLines: 1,
@@ -284,17 +285,17 @@ class ModernTeachingTile extends StatelessWidget {
           Container(
             padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
             decoration: BoxDecoration(
-              color: MyKOGColors.primary.withValues(alpha: 0.15),
+              color: context.appColors.primary.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(8.r),
               border: Border.all(
-                color: MyKOGColors.primary.withValues(alpha: 0.3),
+                color: context.appColors.primary.withValues(alpha: 0.3),
                 width: 0.5.w,
               ),
             ),
             child: Text(
               teaching.typeCulte!,
               style: theme.textTheme.bodySmall?.copyWith(
-                color: MyKOGColors.primary,
+                color: context.appColors.primary,
                 fontSize: 11.sp,
                 fontWeight: FontWeight.w500,
               ),
@@ -412,7 +413,7 @@ class ModernTeachingTile extends StatelessWidget {
           icon: Container(
             padding: EdgeInsets.all(8.w),
             decoration: BoxDecoration(
-              color: MyKOGColors.secondary,
+              color: context.appColors.surfaceVariant,
               shape: BoxShape.circle,
               border: Border.all(
                 color: MyKOGColors.accent.withValues(alpha: 0.3),
@@ -421,7 +422,7 @@ class ModernTeachingTile extends StatelessWidget {
             ),
             child: Icon(
               Icons.more_vert_rounded,
-              color: MyKOGColors.textSecondary,
+              color: context.appColors.textSecondary,
               size: 20.w,
             ),
           ),
@@ -438,7 +439,7 @@ class ModernTeachingTile extends StatelessWidget {
                         : Icons.download_rounded,
                     color: DownloadService.isDownloaded(teaching.id)
                         ? Colors.red
-                        : MyKOGColors.textSecondary,
+                        : context.appColors.textSecondary,
                   ),
                   const SizedBox(width: 12),
                   Text(DownloadService.isDownloaded(teaching.id)
@@ -452,7 +453,7 @@ class ModernTeachingTile extends StatelessWidget {
               child: Row(
                 children: [
                   Icon(Icons.queue_music_rounded,
-                      color: MyKOGColors.textSecondary),
+                      color: context.appColors.textSecondary),
                   const SizedBox(width: 12),
                   Text('Ajouter à la file'),
                 ],
@@ -471,7 +472,7 @@ class ModernTeachingTile extends StatelessWidget {
                             ? Icons.favorite_rounded
                             : Icons.favorite_border_rounded,
                         color:
-                            isFavorite ? Colors.red : MyKOGColors.textSecondary,
+                            isFavorite ? Colors.red : context.appColors.textSecondary,
                       );
                     },
                   ),
@@ -492,7 +493,7 @@ class ModernTeachingTile extends StatelessWidget {
               value: 'share',
               child: Row(
                 children: [
-                  Icon(Icons.share_rounded, color: MyKOGColors.textSecondary),
+                  Icon(Icons.share_rounded, color: context.appColors.textSecondary),
                   const SizedBox(width: 12),
                   Text('Partager'),
                 ],
@@ -556,16 +557,17 @@ class ModernTeachingTile extends StatelessWidget {
                     height: 80.w,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) =>
-                        _buildLibraryPlaceholder(),
+                        _buildLibraryPlaceholder(context),
                   )
                 : CachedNetworkImage(
                     imageUrl: teaching.artworkUrl,
                     width: 80.w,
                     height: 80.w,
                     fit: BoxFit.cover,
-                    placeholder: (context, url) => _buildLibraryPlaceholder(),
+                    placeholder: (context, url) =>
+                        _buildLibraryPlaceholder(context),
                     errorWidget: (context, url, error) =>
-                        _buildLibraryPlaceholder(),
+                        _buildLibraryPlaceholder(context),
                   ),
 
             // Overlay de lecture
@@ -602,7 +604,7 @@ class ModernTeachingTile extends StatelessWidget {
     );
   }
 
-  Widget _buildLibraryPlaceholder() {
+  Widget _buildLibraryPlaceholder(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -610,7 +612,7 @@ class ModernTeachingTile extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: [
             MyKOGColors.accent.withValues(alpha: 0.4),
-            MyKOGColors.primaryDark,
+            context.appColors.background,
           ],
         ),
       ),
@@ -629,7 +631,7 @@ class ModernTeachingTile extends StatelessWidget {
     return PopupMenuButton<String>(
       icon: Icon(
         Icons.more_vert_rounded,
-        color: MyKOGColors.textSecondary,
+        color: context.appColors.textSecondary,
         size: 24.w,
       ),
       onSelected: (value) =>
@@ -645,7 +647,7 @@ class ModernTeachingTile extends StatelessWidget {
                     : Icons.download_rounded,
                 color: DownloadService.isDownloaded(teaching.id)
                     ? Colors.red
-                    : MyKOGColors.textSecondary,
+                    : context.appColors.textSecondary,
               ),
               const SizedBox(width: 12),
               Text(DownloadService.isDownloaded(teaching.id)
@@ -659,7 +661,7 @@ class ModernTeachingTile extends StatelessWidget {
           child: Row(
             children: [
               Icon(Icons.queue_music_rounded,
-                  color: MyKOGColors.textSecondary),
+                  color: context.appColors.textSecondary),
               const SizedBox(width: 12),
               Text('Ajouter à la file'),
             ],
@@ -677,7 +679,7 @@ class ModernTeachingTile extends StatelessWidget {
                     isFavorite
                         ? Icons.favorite_rounded
                         : Icons.favorite_border_rounded,
-                    color: isFavorite ? Colors.red : MyKOGColors.textSecondary,
+                    color: isFavorite ? Colors.red : context.appColors.textSecondary,
                   );
                 },
               ),
@@ -698,7 +700,7 @@ class ModernTeachingTile extends StatelessWidget {
           value: 'share',
           child: Row(
             children: [
-              Icon(Icons.share_rounded, color: MyKOGColors.textSecondary),
+              Icon(Icons.share_rounded, color: context.appColors.textSecondary),
               const SizedBox(width: 12),
               Text('Partager'),
             ],
@@ -723,14 +725,14 @@ class ModernTeachingTile extends StatelessWidget {
           border: Border.all(
             color: isPlaying
                 ? MyKOGColors.accent
-                : MyKOGColors.textSecondary.withValues(alpha: 0.3),
+                : context.appColors.textSecondary.withValues(alpha: 0.3),
             width: 1.5.w,
           ),
         ),
         child: Center(
           child: Icon(
             isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
-            color: isPlaying ? Colors.black : MyKOGColors.textSecondary,
+            color: isPlaying ? Colors.black : context.appColors.textSecondary,
             size: 20.w,
           ),
         ),

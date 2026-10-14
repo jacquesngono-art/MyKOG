@@ -70,7 +70,7 @@ class ProfileScreen extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: isDark
-              ? [MyKOGColors.primaryDark, MyKOGColors.secondary]
+              ? [context.appColors.background, context.appColors.surfaceVariant]
               : [theme.colorScheme.surface, theme.colorScheme.primaryContainer],
         ),
       ),
@@ -116,7 +116,7 @@ class ProfileScreen extends StatelessWidget {
                   width: 36.w,
                   height: 36.h,
                   decoration: BoxDecoration(
-                    color: MyKOGColors.secondary,
+                    color: context.appColors.surfaceVariant,
                     shape: BoxShape.circle,
                     border: Border.all(
                       color: MyKOGColors.accent,

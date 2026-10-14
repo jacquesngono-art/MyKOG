@@ -28,8 +28,8 @@ class SafeImage extends StatelessWidget {
         width: width,
         height: height,
         fit: fit,
-        placeholder: (context, url) => _buildPlaceholder(),
-        errorWidget: (context, url, error) => _buildPlaceholder(),
+        placeholder: (context, url) => _buildPlaceholder(context),
+        errorWidget: (context, url, error) => _buildPlaceholder(context),
       );
     }
 
@@ -40,19 +40,19 @@ class SafeImage extends StatelessWidget {
         width: width,
         height: height,
         fit: fit,
-        errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
+        errorBuilder: (context, error, stackTrace) => _buildPlaceholder(context),
       );
     }
 
     // Par défaut, afficher le placeholder
-    return _buildPlaceholder();
+    return _buildPlaceholder(context);
   }
 
-  Widget _buildPlaceholder() {
+  Widget _buildPlaceholder(BuildContext context) {
     return Container(
       width: width,
       height: height,
-      color: MyKOGColors.secondary,
+      color: context.appColors.surfaceVariant,
       child: const Icon(
         Icons.music_note,
         color: MyKOGColors.accent,

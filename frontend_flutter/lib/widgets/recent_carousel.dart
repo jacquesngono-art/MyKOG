@@ -32,7 +32,7 @@ class RecentCarousel extends StatelessWidget {
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: Theme.of(context).brightness == Brightness.dark
-              ? MyKOGColors.secondary
+              ? context.appColors.surfaceVariant
               : Colors.grey.shade100,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
@@ -57,7 +57,7 @@ class RecentCarousel extends StatelessWidget {
                     Text(
                       l10n.recentlyPlayed,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: MyKOGColors.textPrimary,
+                        color: context.appColors.textPrimary,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -80,7 +80,7 @@ class RecentCarousel extends StatelessWidget {
                     Text(
                       l10n.startListening,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: MyKOGColors.textPrimary,
+                        color: context.appColors.textPrimary,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -88,7 +88,7 @@ class RecentCarousel extends StatelessWidget {
                     Text(
                       l10n.recentTeachingsAppearHere,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: MyKOGColors.textSecondary,
+                        color: context.appColors.textSecondary,
                       ),
                     ),
                   ],
@@ -120,7 +120,7 @@ class RecentCarousel extends StatelessWidget {
                 Text(
                   l10n.recentlyPlayed,
                   style: theme.textTheme.titleLarge?.copyWith(
-                    color: MyKOGColors.textPrimary,
+                    color: context.appColors.textPrimary,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -167,7 +167,7 @@ class RecentCarousel extends StatelessWidget {
             decoration: BoxDecoration(
               color: isCurrentlyPlaying
                   ? (isDark
-                      ? MyKOGColors.secondary
+                      ? context.appColors.surfaceVariant
                       : Colors.grey.shade100)
                   : Colors.transparent,
               borderRadius: BorderRadius.circular(16),
@@ -199,8 +199,8 @@ class RecentCarousel extends StatelessWidget {
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        MyKOGColors.primaryDark,
-                        MyKOGColors.secondary,
+                        context.appColors.background,
+                        context.appColors.surfaceVariant,
                       ],
                     ),
                   ),
@@ -291,7 +291,7 @@ class RecentCarousel extends StatelessWidget {
                               color: isCurrentlyPlaying
                                   ? MyKOGColors.accent
                                   : (isDark
-                                      ? MyKOGColors.textPrimary
+                                      ? context.appColors.textPrimary
                                       : Colors.black87),
                               fontWeight: isCurrentlyPlaying
                                   ? FontWeight.w600
@@ -308,7 +308,7 @@ class RecentCarousel extends StatelessWidget {
                           teaching.speaker,
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: isDark
-                                ? MyKOGColors.textSecondary
+                                ? context.appColors.textSecondary
                                 : Colors.grey.shade600,
                             fontSize: 11,
                           ),
@@ -326,13 +326,13 @@ class RecentCarousel extends StatelessWidget {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: MyKOGColors.primary.withValues(alpha: 0.1),
+                              color: context.appColors.primary.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
                               teaching.typeCulte!,
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: MyKOGColors.primary,
+                                color: context.appColors.primary,
                                 fontSize: 10,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -376,7 +376,7 @@ class RecentCarousel extends StatelessWidget {
 
   Widget _buildPlaceholderArtwork(BuildContext context) {
     return Container(
-      color: MyKOGColors.secondary,
+      color: context.appColors.surfaceVariant,
       child: Center(
         child: Icon(
           Icons.music_note,

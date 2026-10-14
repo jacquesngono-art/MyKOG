@@ -23,16 +23,16 @@ class _AudioPlayerScreenState extends State<AudioPlayerScreen> {
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      backgroundColor: MyKOGColors.primaryDark,
+      backgroundColor: context.appColors.background,
       body: Consumer2<AudioPlayerProvider, UserProvider>(
         builder: (context, audioProvider, userProvider, child) {
           final teaching = audioProvider.currentTeaching;
 
           if (teaching == null) {
-            return const Center(
+            return Center(
               child: Text(
                 'No audio playing',
-                style: TextStyle(color: MyKOGColors.textPrimary),
+                style: TextStyle(color: context.appColors.textPrimary),
               ),
             );
           }
@@ -83,14 +83,14 @@ class _AudioPlayerScreenState extends State<AudioPlayerScreen> {
             onPressed: () => Navigator.of(context).pop(),
             icon: Icon(
               Icons.keyboard_arrow_down,
-              color: MyKOGColors.textPrimary,
+              color: context.appColors.textPrimary,
               size: 32.w,
             ),
           ),
           Text(
             'Now Playing',
             style: theme.textTheme.titleMedium?.copyWith(
-              color: MyKOGColors.textPrimary,
+              color: context.appColors.textPrimary,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -98,7 +98,7 @@ class _AudioPlayerScreenState extends State<AudioPlayerScreen> {
             onPressed: () => _showQueue(context),
             icon: Icon(
               Icons.queue_music,
-              color: MyKOGColors.textPrimary,
+              color: context.appColors.textPrimary,
               size: 24.w,
             ),
           ),
@@ -136,7 +136,7 @@ class _AudioPlayerScreenState extends State<AudioPlayerScreen> {
                   teaching.artworkUrl,
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) => Container(
-                    color: MyKOGColors.secondary,
+                    color: context.appColors.surfaceVariant,
                     child: Icon(
                       Icons.music_note,
                       color: MyKOGColors.accent,
@@ -148,7 +148,7 @@ class _AudioPlayerScreenState extends State<AudioPlayerScreen> {
                   imageUrl: teaching.artworkUrl,
                   fit: BoxFit.cover,
                   placeholder: (context, url) => Container(
-                    color: MyKOGColors.secondary,
+                    color: context.appColors.surfaceVariant,
                     child: const Center(
                       child: Icon(
                         Icons.music_note,
@@ -158,7 +158,7 @@ class _AudioPlayerScreenState extends State<AudioPlayerScreen> {
                     ),
                   ),
                   errorWidget: (context, url, error) => Container(
-                    color: MyKOGColors.secondary,
+                    color: context.appColors.surfaceVariant,
                     child: const Center(
                       child: Icon(
                         Icons.music_note,
@@ -185,7 +185,7 @@ class _AudioPlayerScreenState extends State<AudioPlayerScreen> {
             child: Text(
               teaching.title,
               style: theme.textTheme.headlineMedium?.copyWith(
-                color: MyKOGColors.textPrimary,
+                color: context.appColors.textPrimary,
                 fontWeight: FontWeight.bold,
               ),
               textAlign: TextAlign.center,
@@ -195,7 +195,7 @@ class _AudioPlayerScreenState extends State<AudioPlayerScreen> {
           Text(
             teaching.speaker,
             style: theme.textTheme.titleMedium?.copyWith(
-              color: MyKOGColors.textSecondary,
+              color: context.appColors.textSecondary,
             ),
             textAlign: TextAlign.center,
             maxLines: 1,
@@ -222,7 +222,7 @@ class _AudioPlayerScreenState extends State<AudioPlayerScreen> {
                     icon: Icon(
                       isFavorite ? Icons.favorite : Icons.favorite_border,
                       color:
-                          isFavorite ? Colors.red : MyKOGColors.textSecondary,
+                          isFavorite ? Colors.red : context.appColors.textSecondary,
                       size: 28.w,
                     ),
                   );
@@ -238,7 +238,7 @@ class _AudioPlayerScreenState extends State<AudioPlayerScreen> {
                 },
                 icon: Icon(
                   Icons.share,
-                  color: MyKOGColors.textSecondary,
+                  color: context.appColors.textSecondary,
                   size: 28.w,
                 ),
               ),
@@ -259,7 +259,7 @@ class _AudioPlayerScreenState extends State<AudioPlayerScreen> {
             data: SliderTheme.of(context).copyWith(
               activeTrackColor: MyKOGColors.accent,
               inactiveTrackColor:
-                  MyKOGColors.textTertiary.withValues(alpha: 0.3),
+                  context.appColors.textTertiary.withValues(alpha: 0.3),
               thumbColor: MyKOGColors.accent,
               overlayColor: MyKOGColors.accent.withValues(alpha: 0.2),
               thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
@@ -287,13 +287,13 @@ class _AudioPlayerScreenState extends State<AudioPlayerScreen> {
                 Text(
                   audioProvider.positionText,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: MyKOGColors.textSecondary,
+                        color: context.appColors.textSecondary,
                       ),
                 ),
                 Text(
                   audioProvider.durationText,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: MyKOGColors.textSecondary,
+                        color: context.appColors.textSecondary,
                       ),
                 ),
               ],
@@ -322,7 +322,7 @@ class _AudioPlayerScreenState extends State<AudioPlayerScreen> {
                     Icons.shuffle,
                     color: audioProvider.isShuffleOn
                         ? MyKOGColors.accent
-                        : MyKOGColors.textSecondary,
+                        : context.appColors.textSecondary,
                     size: 24.w,
                   ),
                 ),
@@ -333,7 +333,7 @@ class _AudioPlayerScreenState extends State<AudioPlayerScreen> {
                   onPressed: audioProvider.seekBackward,
                   icon: Icon(
                     Icons.replay_10,
-                    color: MyKOGColors.textPrimary,
+                    color: context.appColors.textPrimary,
                     size: 28.w,
                   ),
                 ),
@@ -346,8 +346,8 @@ class _AudioPlayerScreenState extends State<AudioPlayerScreen> {
                 icon: Icon(
                   Icons.skip_previous,
                   color: audioProvider.hasPrevious
-                      ? MyKOGColors.textPrimary
-                      : MyKOGColors.textTertiary,
+                      ? context.appColors.textPrimary
+                      : context.appColors.textTertiary,
                   size: 32.w,
                 ),
               ),
@@ -388,8 +388,8 @@ class _AudioPlayerScreenState extends State<AudioPlayerScreen> {
                 icon: Icon(
                   Icons.skip_next,
                   color: audioProvider.hasNext
-                      ? MyKOGColors.textPrimary
-                      : MyKOGColors.textTertiary,
+                      ? context.appColors.textPrimary
+                      : context.appColors.textTertiary,
                   size: 32.w,
                 ),
               ),
@@ -400,7 +400,7 @@ class _AudioPlayerScreenState extends State<AudioPlayerScreen> {
                   onPressed: audioProvider.seekForward,
                   icon: Icon(
                     Icons.forward_10,
-                    color: MyKOGColors.textPrimary,
+                    color: context.appColors.textPrimary,
                     size: 28.w,
                   ),
                 ),
@@ -414,7 +414,7 @@ class _AudioPlayerScreenState extends State<AudioPlayerScreen> {
                       : Icons.repeat,
                   color: audioProvider.repeatMode != AudioRepeatMode.off
                       ? MyKOGColors.accent
-                      : MyKOGColors.textSecondary,
+                      : context.appColors.textSecondary,
                   size: 24.w,
                 ),
               ),
@@ -428,7 +428,7 @@ class _AudioPlayerScreenState extends State<AudioPlayerScreen> {
   void _showQueue(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: MyKOGColors.secondary,
+      backgroundColor: context.appColors.surfaceVariant,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
       ),
@@ -458,7 +458,7 @@ class QueueBottomSheet extends StatelessWidget {
                   width: 40.w,
                   height: 4.h,
                   decoration: BoxDecoration(
-                    color: MyKOGColors.textTertiary,
+                    color: context.appColors.textTertiary,
                     borderRadius: BorderRadius.circular(2.r),
                   ),
                 ),
@@ -471,7 +471,7 @@ class QueueBottomSheet extends StatelessWidget {
                   Text(
                     'Up Next',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: MyKOGColors.textPrimary,
+                          color: context.appColors.textPrimary,
                           fontWeight: FontWeight.bold,
                         ),
                   ),
@@ -496,7 +496,7 @@ class QueueBottomSheet extends StatelessWidget {
                           'Queue is empty',
                           style:
                               Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                    color: MyKOGColors.textSecondary,
+                                    color: context.appColors.textSecondary,
                                   ),
                         ),
                       )
@@ -513,7 +513,7 @@ class QueueBottomSheet extends StatelessWidget {
                               height: 48,
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(6),
-                                color: MyKOGColors.surface,
+                                color: context.appColors.surface,
                               ),
                               child: teaching.artworkUrl.startsWith('assets/')
                                   ? ClipRRect(
@@ -524,7 +524,7 @@ class QueueBottomSheet extends StatelessWidget {
                                         errorBuilder:
                                             (context, error, stackTrace) =>
                                                 Container(
-                                          color: MyKOGColors.secondary,
+                                          color: context.appColors.surfaceVariant,
                                           child: const Icon(
                                             Icons.music_note,
                                             color: MyKOGColors.accent,
@@ -559,7 +559,7 @@ class QueueBottomSheet extends StatelessWidget {
                                   ?.copyWith(
                                     color: isCurrentlyPlaying
                                         ? MyKOGColors.accent
-                                        : MyKOGColors.textPrimary,
+                                        : context.appColors.textPrimary,
                                     fontWeight: isCurrentlyPlaying
                                         ? FontWeight.w600
                                         : FontWeight.normal,
@@ -573,7 +573,7 @@ class QueueBottomSheet extends StatelessWidget {
                                   .textTheme
                                   .bodySmall
                                   ?.copyWith(
-                                    color: MyKOGColors.textSecondary,
+                                    color: context.appColors.textSecondary,
                                   ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -590,7 +590,7 @@ class QueueBottomSheet extends StatelessWidget {
                                     },
                                     icon: Icon(
                                       Icons.close,
-                                      color: MyKOGColors.textTertiary,
+                                      color: context.appColors.textTertiary,
                                       size: 20,
                                     ),
                                   ),

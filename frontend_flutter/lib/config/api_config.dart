@@ -15,7 +15,7 @@ class ApiConfig {
       'hotspot_phone'; // Hotspot téléphone → ordinateur
   static const String modeHotspotComputer =
       'hotspot_computer'; // Hotspot ordinateur → téléphone
-  static const String modeRender = 'render'; // Backend hébergé sur Render
+  static const String modeVps = 'vps'; // Backend hébergé sur le VPS
 
   // IPs par défaut selon le mode (seront détectées automatiquement)
   static const Map<String, String> defaultIPs = {
@@ -25,11 +25,16 @@ class ApiConfig {
         '192.168.43.3', // IP de l'ordinateur quand connecté au hotspot du téléphone
     modeHotspotComputer:
         '192.168.137.1', // IP typique quand ordinateur crée hotspot
-    modeRender: 'mykog-backend-api.onrender.com', // Backend sur Render
+    modeVps: 'vps123057.serveur-vps.net', // Backend sur VPS (mode cloud)
   };
 
   // Port du serveur
   static const int port = 3000;
+
+  // Endpoint public du backend MyKOG hébergé sur le VPS (Nginx → PM2 mykog-api)
+  static const String vpsBaseUrl =
+      'https://vps123057.serveur-vps.net/mykog-api';
+  static const String vpsHost = 'vps123057.serveur-vps.net';
 
   // Mode de connexion actuel (détection automatique USB/WiFi)
   static String _currentMode = modeUsb; // Par défaut USB si détecté, sinon WiFi
@@ -37,23 +42,20 @@ class ApiConfig {
   // IP de base actuelle
   static String? _currentIP;
 
-  /// Obtenir l'URL de base de l'API - Render ou Local (fallback)
+  /// Obtenir l'URL de base de l'API - VPS uniquement (fallback local USB/dev)
   static Future<String> getBaseUrl() async {
-    // Essayer Render d'abord
-    const renderUrl = 'https://mykog-backend-api.onrender.com';
-    
-    // Test rapide de Render (timeout court)
+    // Endpoint VPS MyKOG (backend hébergé)
     try {
-      final renderWorks = await _testQuickConnection(renderUrl);
-      if (renderWorks) {
-        debugPrint('🌐 URL API (Render): $renderUrl');
-        return renderUrl;
+      final vpsWorks = await _testQuickConnection(vpsBaseUrl);
+      if (vpsWorks) {
+        debugPrint('🌐 URL API (VPS): $vpsBaseUrl');
+        return vpsBaseUrl;
       }
     } catch (e) {
-      debugPrint('⚠️ Render endormi, fallback local');
+      debugPrint('⚠️ VPS injoignable, fallback local');
     }
-    
-    // Fallback vers localhost
+
+    // Fallback vers localhost (USB / dev)
     const localUrl = 'http://localhost:3000';
     debugPrint('🌐 URL API (Local fallback): $localUrl');
     return localUrl;
@@ -77,14 +79,14 @@ class ApiConfig {
     }
   }
 
-  /// Détecter automatiquement le mode de connexion (USB, WiFi ou Render)
+  /// Détecter automatiquement le mode de connexion (USB, WiFi ou VPS)
   static Future<String> detectConnectionMode() async {
     try {
-      // En premier, tester si Render est accessible
-      final renderTest = await testRenderConnection();
-      if (renderTest) {
-        debugPrint('☁️ Mode Render détecté (backend en ligne fonctionne)');
-        return modeRender;
+      // En premier, tester si le backend VPS est accessible
+      final vpsTest = await testVpsConnection();
+      if (vpsTest) {
+        debugPrint('☁️ Mode VPS détecté (backend en ligne fonctionne)');
+        return modeVps;
       }
 
       // Tester d'abord si localhost fonctionne (USB avec adb reverse)
@@ -110,17 +112,16 @@ class ApiConfig {
     }
   }
 
-  /// Obtenir l'IP actuelle - UNQUEMENT Render
+  /// Obtenir l'IP actuelle - UNIQUEMENT le VPS
   static Future<String> getCurrentIP() async {
-    debugPrint('🔍 Configuration Render uniquement...');
+    debugPrint('🔍 Configuration VPS uniquement...');
     
-    // TOUJOURS utiliser Render
-    const renderIP = 'mykog-backend-api.onrender.com';
-    _currentIP = renderIP;
-    _currentMode = modeRender;
+    // TOUJOURS utiliser le VPS
+    _currentIP = vpsHost;
+    _currentMode = modeVps;
     
-    debugPrint('☁️ Render forcé: $renderIP');
-    return renderIP;
+    debugPrint('☁️ VPS forcé: $vpsHost');
+    return vpsHost;
   }
 
   /// Définir l'IP manuellement
@@ -184,25 +185,25 @@ class ApiConfig {
         '🔄 Cache complètement réinitialisé, IP forcée: $_currentIP (mode: $_currentMode)');
   }
 
-  /// Forcer le mode Render (toujours utilisé maintenant)
-  static Future<void> forceRenderMode() async {
-    _currentIP = 'mykog-backend-api.onrender.com';
-    _currentMode = modeRender;
+  /// Forcer le mode cloud (backend VPS, toujours utilisé maintenant)
+  static Future<void> forceVpsMode() async {
+    _currentIP = vpsHost;
+    _currentMode = modeVps;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_ipKey, _currentIP!);
     await prefs.setString(_connectionModeKey, _currentMode);
-    debugPrint('☁️ Mode Render forcé (par défaut): mykog-backend-api.onrender.com');
+    debugPrint('☁️ Mode VPS forcé (par défaut): $vpsHost');
   }
 
-  /// Tester la connexion à l'API Render (HTTPS)
-  static Future<bool> testRenderConnection() async {
+  /// Tester la connexion à l'API VPS (HTTPS)
+  static Future<bool> testVpsConnection() async {
     try {
-      const url = 'https://mykog-backend-api.onrender.com/api/enseignements';
-      debugPrint('🔍 Test connexion Render vers: $url');
+      const url = '$vpsBaseUrl/api/enseignements';
+      debugPrint('🔍 Test connexion VPS vers: $url');
 
       final client = HttpClient();
       client.connectionTimeout =
-          const Duration(seconds: 10); // Timeout plus long pour Render
+          const Duration(seconds: 10); // Timeout plus long pour le VPS
       client.idleTimeout = const Duration(seconds: 10);
 
       final request = await client
@@ -216,14 +217,14 @@ class ApiConfig {
       // Accepter 200 (OK) ou 404 (route existe mais pas de données)
       final isValid = statusCode == 200 || statusCode == 404;
       if (isValid) {
-        debugPrint('✅ Test connexion Render: Status: $statusCode');
+        debugPrint('✅ Test connexion VPS: Status: $statusCode');
       } else {
         debugPrint(
-            '⚠️ Test connexion Render: Status: $statusCode (non valide)');
+            '⚠️ Test connexion VPS: Status: $statusCode (non valide)');
       }
       return isValid;
     } catch (e) {
-      debugPrint('❌ Test connexion Render échoué: $e');
+      debugPrint('❌ Test connexion VPS échoué: $e');
       return false;
     }
   }
@@ -284,12 +285,11 @@ class ApiConfig {
       _currentMode = detectedMode;
     }
 
-    if (_currentMode == modeRender) {
-      // Mode Render : retourner directement l'URL de Render
-      debugPrint(
-          '✅ Mode Render: utilisation de mykog-backend-api.onrender.com');
-      await setIP('mykog-backend-api.onrender.com', mode: modeRender);
-      return 'mykog-backend-api.onrender.com';
+    if (_currentMode == modeVps) {
+      // Mode cloud : retourner directement l'hôte du VPS
+      debugPrint('✅ Mode VPS: utilisation de $vpsHost');
+      await setIP(vpsHost, mode: modeVps);
+      return vpsHost;
     }
 
     if (_currentMode == modeUsb) {
@@ -329,11 +329,11 @@ class ApiConfig {
     return null;
   }
 
-  /// Initialiser l'API pour utiliser Render uniquement
-  static Future<void> initializeRenderOnly() async {
-    debugPrint('🚀 Initialisation API Render uniquement...');
-    await forceRenderMode();
-    debugPrint('✅ API configurée pour Render uniquement');
+  /// Initialiser l'API pour utiliser le VPS uniquement
+  static Future<void> initializeVpsOnly() async {
+    debugPrint('🚀 Initialisation API VPS uniquement...');
+    await forceVpsMode();
+    debugPrint('✅ API configurée pour le VPS uniquement');
   }
 
   /// Obtenir toutes les informations de connexion

@@ -86,7 +86,7 @@ class _BadgeWidgetState extends State<BadgeWidget>
                       color: widget.badgeColor ?? Colors.green,
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: MyKOGColors.primaryDark,
+                        color: context.appColors.background,
                         width: 1.5,
                       ),
                       boxShadow: [
@@ -107,7 +107,7 @@ class _BadgeWidgetState extends State<BadgeWidget>
                     color: widget.badgeColor ?? Colors.green,
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: MyKOGColors.primaryDark,
+                      color: context.appColors.background,
                       width: 1.5,
                     ),
                   ),

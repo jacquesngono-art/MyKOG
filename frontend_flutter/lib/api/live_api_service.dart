@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../models/live_stream.dart';
+import '../models/live_comment.dart';
 import '../config/api_config.dart';
 
 class LiveApiService {
@@ -195,5 +196,223 @@ class LiveApiService {
       debugPrint('Erreur updateLiveStatus: $e');
       return false;
     }
+  }
+
+  /// Obtenir un token viewer LiveKit pour rejoindre un live
+  /// Retourne: { id, token, url, roomName, identity }
+  Future<Map<String, dynamic>> getViewerToken(String liveId,
+      {String? userId}) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse('${await baseUrl}/$liveId/token'),
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode({
+              if (userId != null) 'userId': userId,
+            }),
+          )
+          .timeout(_timeout);
+
+      if (response.statusCode == 200) {
+        return Map<String, dynamic>.from(json.decode(response.body));
+      } else {
+        throw Exception(_extractError(response));
+      }
+    } on SocketException catch (e) {
+      debugPrint('SocketException getViewerToken: $e');
+      throw Exception('Aucune connexion internet.');
+    } on TimeoutException catch (e) {
+      debugPrint('TimeoutException getViewerToken: $e');
+      throw Exception('La requête a expiré.');
+    } catch (e) {
+      debugPrint('Erreur getViewerToken: $e');
+      rethrow;
+    }
+  }
+
+  /// Obtenir un token publisher LiveKit pour diffuser (OBS / app desktop)
+  /// Retourne: { id, url, roomName, whipUrl, streamKey, ingressId }
+  /// ou { id, token, url, roomName, whipUrl } en fallback WebRTC
+  Future<Map<String, dynamic>> getPublisherToken(String liveId) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse('${await baseUrl}/$liveId/publisher-token'),
+            headers: {'Content-Type': 'application/json'},
+          )
+          .timeout(_timeout);
+
+      if (response.statusCode == 200) {
+        return Map<String, dynamic>.from(json.decode(response.body));
+      } else {
+        throw Exception(_extractError(response));
+      }
+    } on SocketException catch (e) {
+      debugPrint('SocketException getPublisherToken: $e');
+      throw Exception('Aucune connexion internet.');
+    } on TimeoutException catch (e) {
+      debugPrint('TimeoutException getPublisherToken: $e');
+      throw Exception('La requête a expiré.');
+    } catch (e) {
+      debugPrint('Erreur getPublisherToken: $e');
+      rethrow;
+    }
+  }
+
+  /// Obtenir les informations du serveur de streaming
+  /// Retourne: { livekitUrl, whipUrl, defaultStreamKey }
+  Future<Map<String, dynamic>> getServerInfo() async {
+    try {
+      final response = await http
+          .get(Uri.parse('${await baseUrl}/server-info'))
+          .timeout(_timeout);
+
+      if (response.statusCode == 200) {
+        return Map<String, dynamic>.from(json.decode(response.body));
+      } else {
+        throw Exception(_extractError(response));
+      }
+    } on SocketException catch (e) {
+      debugPrint('SocketException getServerInfo: $e');
+      throw Exception('Aucune connexion internet.');
+    } on TimeoutException catch (e) {
+      debugPrint('TimeoutException getServerInfo: $e');
+      throw Exception('La requête a expiré.');
+    } catch (e) {
+      debugPrint('Erreur getServerInfo: $e');
+      rethrow;
+    }
+  }
+
+  /// Récupérer les commentaires d'un live (arbre imbriqué)
+  Future<List<LiveComment>> getComments(String liveId) async {
+    try {
+      final response = await http
+          .get(Uri.parse('${await baseUrl}/$liveId/comments'))
+          .timeout(_timeout);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final List list = data['comments'] ?? [];
+        return list
+            .map((c) => LiveComment.fromJson(Map<String, dynamic>.from(c)))
+            .toList();
+      }
+      return [];
+    } catch (e) {
+      debugPrint('Erreur getComments: $e');
+      return [];
+    }
+  }
+
+  /// Poster un commentaire (ou une réponse si parentId fourni)
+  Future<LiveComment?> postComment(
+    String liveId, {
+    required String content,
+    String? author,
+    String? userId,
+    String? avatar,
+    String? parentId,
+  }) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse('${await baseUrl}/$liveId/comments'),
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode({
+              'content': content,
+              if (author != null) 'author': author,
+              if (userId != null) 'userId': userId,
+              if (avatar != null) 'avatar': avatar,
+              if (parentId != null) 'parentId': parentId,
+            }),
+          )
+          .timeout(_timeout);
+
+      if (response.statusCode == 201) {
+        final data = json.decode(response.body);
+        return LiveComment.fromJson(
+            Map<String, dynamic>.from(data['comment']));
+      }
+      throw Exception(_extractError(response));
+    } catch (e) {
+      debugPrint('Erreur postComment: $e');
+      rethrow;
+    }
+  }
+
+  /// Voter sur un commentaire (+1 ou -1)
+  Future<int?> voteComment(String liveId, String commentId, int delta) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse(
+                '${await baseUrl}/$liveId/comments/$commentId/vote'),
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode({'delta': delta}),
+          )
+          .timeout(_timeout);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return data['votes'] as int?;
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Erreur voteComment: $e');
+      return null;
+    }
+  }
+
+  /// Modifier un commentaire
+  Future<LiveComment?> updateComment(
+      String liveId, String commentId, String content) async {
+    try {
+      final response = await http
+          .put(
+            Uri.parse('${await baseUrl}/$liveId/comments/$commentId'),
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode({'content': content}),
+          )
+          .timeout(_timeout);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return LiveComment.fromJson(
+            Map<String, dynamic>.from(data['comment']));
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Erreur updateComment: $e');
+      return null;
+    }
+  }
+
+  /// Supprimer un commentaire (et ses réponses)
+  Future<bool> deleteComment(String liveId, String commentId) async {
+    try {
+      final response = await http
+          .delete(
+            Uri.parse('${await baseUrl}/$liveId/comments/$commentId'),
+          )
+          .timeout(_timeout);
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint('Erreur deleteComment: $e');
+      return false;
+    }
+  }
+
+  /// Extraire le message d'erreur d'une réponse HTTP
+  String _extractError(http.Response response) {
+    try {
+      final body = json.decode(response.body);
+      if (body is Map && body['error'] != null) {
+        return body['error'].toString();
+      }
+    } catch (_) {
+      // Ignorer les erreurs de parsing
+    }
+    return 'Erreur HTTP ${response.statusCode}';
   }
 }

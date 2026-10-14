@@ -15,7 +15,15 @@ const {
   getViewerCount,
   deleteLiveStream,
   deleteAllLiveStreams,
+  livekitWebhook,
 } = require('../controllers/liveController');
+const {
+  getComments,
+  createComment,
+  voteComment,
+  updateComment,
+  deleteComment,
+} = require('../controllers/commentController');
 
 /**
  * @openapi
@@ -71,6 +79,15 @@ router.get('/active', getActiveLive);
  *                   type: string
  */
 router.get('/server-info', getServerInfo);
+
+/**
+ * @openapi
+ * /api/lives/webhook:
+ *   post:
+ *     summary: Webhook LiveKit (fin d'ingress / room terminée → suppression du live)
+ *     tags: [Lives]
+ */
+router.post('/webhook', express.raw({ type: 'application/webhook+json' }), livekitWebhook);
 
 /**
  * @openapi
@@ -151,6 +168,41 @@ router.post('/:id/token', getViewerToken);
  *         description: Token publisher généré
  */
 router.post('/:id/publisher-token', getPublisherToken);
+
+/**
+ * @openapi
+ * /api/lives/{id}/comments:
+ *   get:
+ *     summary: Récupérer les commentaires d'un live (arbre imbriqué)
+ *     tags: [Lives]
+ *   post:
+ *     summary: Poster un commentaire sur un live
+ *     tags: [Lives]
+ */
+router.get('/:id/comments', getComments);
+router.post('/:id/comments', createComment);
+
+/**
+ * @openapi
+ * /api/lives/{id}/comments/{commentId}/vote:
+ *   post:
+ *     summary: Voter sur un commentaire (delta +1 ou -1)
+ *     tags: [Lives]
+ */
+router.post('/:id/comments/:commentId/vote', voteComment);
+
+/**
+ * @openapi
+ * /api/lives/{id}/comments/{commentId}:
+ *   put:
+ *     summary: Modifier un commentaire
+ *     tags: [Lives]
+ *   delete:
+ *     summary: Supprimer un commentaire et ses réponses
+ *     tags: [Lives]
+ */
+router.put('/:id/comments/:commentId', updateComment);
+router.delete('/:id/comments/:commentId', deleteComment);
 
 /**
  * @openapi

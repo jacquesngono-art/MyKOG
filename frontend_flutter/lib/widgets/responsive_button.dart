@@ -112,7 +112,7 @@ class ResponsiveIconButton extends StatelessWidget {
           child: Icon(
             icon,
             size: iconSize * ResponsiveUtils.scaleFactor,
-            color: color ?? (isPrimary ? MyKOGColors.accent : MyKOGColors.textSecondary),
+            color: color ?? (isPrimary ? MyKOGColors.accent : context.appColors.textSecondary),
           ),
         ),
       ),
@@ -146,7 +146,7 @@ class ResponsiveText extends StatelessWidget {
           GoogleFonts.inter(
             fontSize: ResponsiveUtils.textSizeMd * ResponsiveUtils.scaleFactor,
             fontWeight: FontWeight.normal,
-            color: MyKOGColors.textPrimary,
+            color: context.appColors.textPrimary,
           ),
       textAlign: textAlign,
       maxLines: maxLines,

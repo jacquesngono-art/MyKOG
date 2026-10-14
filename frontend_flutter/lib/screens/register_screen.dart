@@ -1,12 +1,17 @@
+import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
 
 import '../providers/user_provider.dart';
 import '../theme.dart';
 import '../main_app.dart';
 import '../utils/country_data.dart';
 import '../services/first_launch_service.dart';
+import '../config/api_config.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -20,6 +25,46 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final phoneCtrl = TextEditingController();
   bool loading = false;
   Country selectedCountry = CountryData.countries.first; // Cameroun par défaut
+  File? _photoFile;
+  final _picker = ImagePicker();
+
+  /// Choisir une photo depuis la galerie
+  Future<void> _pickPhoto() async {
+    try {
+      final picked = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 512,
+        maxHeight: 512,
+        imageQuality: 80,
+      );
+      if (picked != null && mounted) {
+        setState(() => _photoFile = File(picked.path));
+      }
+    } catch (e) {
+      debugPrint('Erreur sélection photo: $e');
+    }
+  }
+
+  /// Uploader la photo vers /api/upload → retourne l'URL stable /api/files/{key}
+  Future<String?> _uploadPhoto() async {
+    if (_photoFile == null) return null;
+    try {
+      final base = await ApiConfig.getBaseUrl();
+      final request = http.MultipartRequest('POST', Uri.parse('$base/api/upload'))
+        ..files.add(
+            await http.MultipartFile.fromPath('file', _photoFile!.path));
+      final res = await request.send().timeout(const Duration(seconds: 30));
+      if (res.statusCode == 201) {
+        final body = json.decode(await res.stream.bytesToString());
+        if (body['key'] != null) {
+          return '$base/api/files/${Uri.encodeComponent(body['key'])}';
+        }
+      }
+    } catch (e) {
+      debugPrint('⚠️ Upload photo de profil échoué: $e');
+    }
+    return null;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,9 +72,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [MyKOGColors.primaryDark, MyKOGColors.secondary],
+            colors: [context.appColors.background, context.appColors.surfaceVariant],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -48,7 +93,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     height: 1.2,
                   ),
                 ).animate().fadeIn().slideY(),
-                const SizedBox(height: 40),
+                const SizedBox(height: 32),
+                _avatarPicker(),
+                const SizedBox(height: 24),
                 _inputField("Nom", nameCtrl),
                 const SizedBox(height: 20),
                 _phoneFieldWithCountry(),
@@ -61,6 +108,49 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
       ),
     );
+  }
+
+  Widget _avatarPicker() {
+    return Center(
+      child: GestureDetector(
+        onTap: _pickPhoto,
+        child: Column(
+          children: [
+            Container(
+              width: 88,
+              height: 88,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.08),
+                border: Border.all(
+                  color: MyKOGColors.accent.withValues(alpha: 0.6),
+                  width: 2,
+                  style: _photoFile == null
+                      ? BorderStyle.solid
+                      : BorderStyle.solid,
+                ),
+                image: _photoFile != null
+                    ? DecorationImage(
+                        image: FileImage(_photoFile!), fit: BoxFit.cover)
+                    : null,
+              ),
+              child: _photoFile == null
+                  ? Icon(Icons.add_a_photo_outlined,
+                      color: Colors.white.withValues(alpha: 0.7), size: 32)
+                  : null,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _photoFile == null
+                  ? 'Ajouter une photo (optionnel)'
+                  : 'Changer la photo',
+              style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.7), fontSize: 13),
+            ),
+          ],
+        ),
+      ),
+    ).animate().fadeIn();
   }
 
   Widget _inputField(String label, TextEditingController ctrl, {bool isPhone = false}) {
@@ -160,7 +250,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void _showCountryPicker() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: MyKOGColors.primaryDark,
+      backgroundColor: context.appColors.background,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -340,8 +430,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
               setState(() => loading = true);
 
               try {
+                // Upload de la photo de profil si choisie
+                final photoUrl = await _uploadPhoto();
+
                 // Utiliser le numéro de téléphone complet (avec code pays) comme email pour la compatibilité avec le modèle User
-                await context.read<UserProvider>().registerUser(name, fullPhoneNumber);
+                await context.read<UserProvider>().registerUser(
+                    name, fullPhoneNumber,
+                    profileImageUrl: photoUrl);
                 
                 // Marquer l'inscription comme complétée
                 await FirstLaunchService.setRegistrationCompleted();

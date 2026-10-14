@@ -85,8 +85,8 @@ class _DownloadsManagementScreenState extends State<DownloadsManagementScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.manageDownloads),
-        backgroundColor: MyKOGColors.primaryDark,
-        foregroundColor: MyKOGColors.textPrimary,
+        backgroundColor: context.appColors.background,
+        foregroundColor: context.appColors.textPrimary,
         elevation: 0,
       ),
       body: _isLoading
@@ -219,7 +219,7 @@ class _DownloadsManagementScreenState extends State<DownloadsManagementScreen> {
         Text(
           'Informations',
           style: theme.textTheme.titleLarge?.copyWith(
-            color: MyKOGColors.textPrimary,
+            color: context.appColors.textPrimary,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -259,7 +259,7 @@ class _DownloadsManagementScreenState extends State<DownloadsManagementScreen> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: MyKOGColors.secondary,
+        color: context.appColors.surfaceVariant,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: MyKOGColors.accent.withOpacity(0.2),
@@ -288,14 +288,14 @@ class _DownloadsManagementScreenState extends State<DownloadsManagementScreen> {
                 Text(
                   title,
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: MyKOGColors.textSecondary,
+                    color: context.appColors.textSecondary,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   value,
                   style: theme.textTheme.titleMedium?.copyWith(
-                    color: MyKOGColors.textPrimary,
+                    color: context.appColors.textPrimary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -370,7 +370,7 @@ class _DownloadsManagementScreenState extends State<DownloadsManagementScreen> {
                   'Les enseignements téléchargés sont disponibles hors ligne. '
                   'Vous pouvez les écouter sans connexion internet.',
                   style: TextStyle(
-                    color: MyKOGColors.textSecondary,
+                    color: context.appColors.textSecondary,
                     fontSize: 13,
                   ),
                 ),

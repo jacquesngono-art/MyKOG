@@ -1,7 +1,74 @@
-const { app, BrowserWindow, ipcMain, Notification, Tray, Menu, nativeImage, shell, protocol } = require('electron');
+const { app, BrowserWindow, ipcMain, Notification, Tray, Menu, nativeImage, shell, protocol, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
+
+// ── Mises à jour automatiques (electron-updater) ──────────────
+let autoUpdater = null;
+try {
+  autoUpdater = require('electron-updater').autoUpdater;
+} catch {
+  console.warn('⚠️ electron-updater non disponible');
+}
+
+function setupAutoUpdate() {
+  // Uniquement dans l'app packagée (pas en `npm start` / dev)
+  if (!autoUpdater || !app.isPackaged) return;
+
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = true;
+  autoUpdater.logger = console;
+
+  autoUpdater.on('update-available', (info) => {
+    console.log(`⬇️ Mise à jour ${info.version} — téléchargement en cours...`);
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('update-status', { status: 'downloading', version: info.version });
+    }
+  });
+
+  autoUpdater.on('update-not-available', () => {
+    console.log('✅ MyKOG est à jour');
+  });
+
+  autoUpdater.on('download-progress', (p) => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('update-status', { status: 'progress', percent: Math.round(p.percent) });
+    }
+  });
+
+  autoUpdater.on('update-downloaded', async (info) => {
+    console.log(`✅ Mise à jour ${info.version} prête à installer`);
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('update-status', { status: 'downloaded', version: info.version });
+    }
+    try {
+      const { response } = await dialog.showMessageBox({
+        type: 'info',
+        title: 'Mise à jour MyKOG',
+        message: `La version ${info.version} a été téléchargée.`,
+        detail: 'Redémarrer maintenant pour l\'installer ?',
+        buttons: ['Redémarrer maintenant', 'Plus tard'],
+        defaultId: 0,
+        cancelId: 1,
+      });
+      if (response === 0) {
+        isQuitting = true;
+        autoUpdater.quitAndInstall();
+      }
+      // "Plus tard" → installée automatiquement à la prochaine fermeture
+    } catch (err) {
+      console.warn('⚠️ Dialog mise à jour:', err.message);
+    }
+  });
+
+  autoUpdater.on('error', (err) => {
+    console.warn('⚠️ Auto-update erreur:', err.message);
+  });
+
+  // Vérification au démarrage + toutes les 4h
+  autoUpdater.checkForUpdates().catch(() => {});
+  setInterval(() => autoUpdater.checkForUpdates().catch(() => {}), 4 * 3600 * 1000);
+}
 
 let mainWindow;
 let tray = null;
@@ -239,6 +306,15 @@ ipcMain.handle('open-pdf', async (_event, url) => {
   return { success: true };
 });
 
+// Récupère les bytes d'un PDF côté main (pas de restriction CORS)
+// Utilisé pour générer la miniature de la 1ère page avec pdf.js
+ipcMain.handle('fetch-pdf-bytes', async (_event, url) => {
+  if (!url || typeof url !== 'string' || !/^https?:\/\//.test(url)) return null;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return Buffer.from(await res.arrayBuffer());
+});
+
 app.whenReady().then(() => {
   protocol.handle('mykog-pdf', (request) => {
     const filePath = decodeURIComponent(request.url.slice('mykog-pdf://'.length));
@@ -252,10 +328,12 @@ app.whenReady().then(() => {
       return new Response('Fichier non trouvé', { status: 404 });
     }
   });
+  Menu.setApplicationMenu(null);
   initFirebaseAdmin();
   createWindow();
   createTray();
   setupNotificationsListener();
+  setupAutoUpdate();
 });
 
 app.on('before-quit', () => {

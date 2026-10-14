@@ -125,7 +125,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
               Text(
                 l10n.loading,
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: MyKOGColors.textSecondary,
+                  color: context.appColors.textSecondary,
                 ),
               ),
             ],
@@ -190,8 +190,8 @@ class _BrowseScreenState extends State<BrowseScreen> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            MyKOGColors.primaryDark,
-            MyKOGColors.secondary,
+            context.appColors.background,
+            context.appColors.surfaceVariant,
           ],
         ),
       ),
@@ -201,7 +201,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
           Text(
             AppLocalizations.of(context)!.discover,
             style: theme.textTheme.headlineLarge?.copyWith(
-              color: MyKOGColors.textPrimary,
+              color: context.appColors.textPrimary,
               fontWeight: FontWeight.bold,
             ),
           ).animate().fadeIn().slideY(),
@@ -209,7 +209,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
           Text(
             AppLocalizations.of(context)!.exploreTeachings,
             style: theme.textTheme.bodyLarge?.copyWith(
-              color: MyKOGColors.textSecondary,
+              color: context.appColors.textSecondary,
             ),
           ).animate(delay: 200.ms).fadeIn().slideY(),
         ],
@@ -232,7 +232,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
           Text(
             title,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: MyKOGColors.textPrimary,
+                  color: context.appColors.textPrimary,
                   fontWeight: FontWeight.bold,
                 ),
           ),
@@ -288,7 +288,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
                               width: double.infinity,
                               height: double.infinity,
                               errorBuilder: (context, error, stackTrace) => Container(
-                                color: MyKOGColors.secondary,
+                                color: context.appColors.surfaceVariant,
                                 child: Center(
                                   child: Icon(
                                     Icons.music_note,
@@ -304,7 +304,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
                               width: double.infinity,
                               height: double.infinity,
                               placeholder: (context, url) => Container(
-                                color: MyKOGColors.secondary,
+                                color: context.appColors.surfaceVariant,
                                 child: Center(
                                   child: Icon(
                                     Icons.music_note,
@@ -314,7 +314,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
                                 ),
                               ),
                               errorWidget: (context, url, error) => Container(
-                                color: MyKOGColors.secondary,
+                                color: context.appColors.surfaceVariant,
                                 child: Center(
                                   child: Icon(
                                     Icons.music_note,
@@ -368,7 +368,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
             Text(
               teaching.title,
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: MyKOGColors.textPrimary,
+                    color: context.appColors.textPrimary,
                     fontWeight: FontWeight.w600,
                   ),
             ),
@@ -376,7 +376,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
             Text(
               teaching.speaker,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: MyKOGColors.textSecondary,
+                    color: context.appColors.textSecondary,
                   ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -454,7 +454,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
               child: Text(
                 category,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: MyKOGColors.textPrimary,
+                      color: context.appColors.textPrimary,
                       fontWeight: FontWeight.w600,
                     ),
                 maxLines: 1,

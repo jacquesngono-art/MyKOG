@@ -35,7 +35,7 @@ class MiniPlayer extends StatelessWidget {
               horizontal: 16.h,
             ),
             decoration: BoxDecoration(
-              color: MyKOGColors.secondary,
+              color: context.appColors.surfaceVariant,
               borderRadius: BorderRadius.circular(12.r),
               border: Border.all(
                 color: MyKOGColors.accent.withValues(alpha: 0.3),
@@ -55,7 +55,7 @@ class MiniPlayer extends StatelessWidget {
                 LinearProgressIndicator(
                   value: progress,
                   backgroundColor:
-                      MyKOGColors.textTertiary.withValues(alpha: 0.3),
+                      context.appColors.textTertiary.withValues(alpha: 0.3),
                   valueColor: AlwaysStoppedAnimation<Color>(MyKOGColors.accent),
                   minHeight: 2.h,
                 ),
@@ -74,7 +74,7 @@ class MiniPlayer extends StatelessWidget {
                                   height: 40.h,
                                   fit: BoxFit.cover,
                                   errorBuilder: (context, error, stackTrace) => Container(
-                                    color: MyKOGColors.secondary,
+                                    color: context.appColors.surfaceVariant,
                                     child: const Icon(
                                       Icons.music_note,
                                       color: MyKOGColors.accent,
@@ -90,7 +90,7 @@ class MiniPlayer extends StatelessWidget {
                                   placeholder: (context, url) => Container(
                                     width: 40.w,
                                     height: 40.h,
-                                    color: MyKOGColors.surface,
+                                    color: context.appColors.surface,
                                     child: Icon(
                                       Icons.music_note,
                                       color: MyKOGColors.accent,
@@ -101,7 +101,7 @@ class MiniPlayer extends StatelessWidget {
                                       Container(
                                     width: 40.w,
                                     height: 40.h,
-                                    color: MyKOGColors.surface,
+                                    color: context.appColors.surface,
                                     child: Icon(
                                       Icons.music_note,
                                       color: MyKOGColors.accent,
@@ -123,7 +123,7 @@ class MiniPlayer extends StatelessWidget {
                                     .textTheme
                                     .titleSmall
                                     ?.copyWith(
-                                      color: MyKOGColors.textPrimary,
+                                      color: context.appColors.textPrimary,
                                       fontWeight: FontWeight.w600,
                                     ),
                                 maxLines: 1,
@@ -136,7 +136,7 @@ class MiniPlayer extends StatelessWidget {
                                     .textTheme
                                     .bodySmall
                                     ?.copyWith(
-                                      color: MyKOGColors.textSecondary,
+                                      color: context.appColors.textSecondary,
                                     ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -154,7 +154,7 @@ class MiniPlayer extends StatelessWidget {
                                 onPressed: audioProvider.skipToPrevious,
                                 icon: Icon(
                                   Icons.skip_previous,
-                                  color: MyKOGColors.textPrimary,
+                                  color: context.appColors.textPrimary,
                                   size: 24,
                                 ),
                                 constraints: const BoxConstraints(
@@ -196,7 +196,7 @@ class MiniPlayer extends StatelessWidget {
                                 onPressed: audioProvider.skipToNext,
                                 icon: Icon(
                                   Icons.skip_next,
-                                  color: MyKOGColors.textPrimary,
+                                  color: context.appColors.textPrimary,
                                   size: 24,
                                 ),
                                 constraints: const BoxConstraints(
